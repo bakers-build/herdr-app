@@ -5,8 +5,6 @@
 //
 // The slots are `{ use, export?, with? }` descriptors naming the published
 // package; the loader resolves each name (config dir → cwd → CLI install).
-// `@bakers-build/addon-herdr` default-exports the executor, so the worktree
-// slot names `export: 'herdrWorkspace'`.
 
 /** @type {import('@bakers-build/core').ProjectConfig} */
 export default {
@@ -18,9 +16,20 @@ export default {
   // Metrics are unaffected either way.
   capture_logs: true,
   server: { use: '@bakers-build/addon-remote-drupal' },
-  executor: { use: '@bakers-build/addon-herdr-core' },
-  addons: [{ use: '@bakers-build/addon-herdr' }],
-  worktree: { use: '@bakers-build/addon-herdr', export: 'herdrWorkspace' },
+  // herdr-core runs each agent in a herdr-core terminal; Git workspace makes the worktree.
+  // Runs fetch, push, open PRs, read checks and merge only through the forge tools; the
+  // conductor's own `gh` login supplies the token, which no run sees.
+  addons: [
+    '@bakers-build/addon-herdr-core',
+    '@bakers-build/addon-workspace-git',
+    {
+      use: '@bakers-build/addon-forge',
+      with: {
+        merge: { main: { method: 'squash', delete_source: true } },
+        backend: { use: '@bakers-build/addon-forge-github', with: { repository: 'bakers-build/herdr-app', auth: 'gh' } },
+      },
+    },
+  ],
   // The agent plugins every run gets: the bakers skills and the superpowers recipe.
   marketplaces: [
     { url: 'https://github.com/bakers-build/bakers-build.git', ref: 'next', plugins: ['bakers'] },

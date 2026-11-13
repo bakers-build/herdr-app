@@ -1,1 +1,3 @@
 .bakers/log.txt
+.bakers-worktrees/
+.bakers/project.config.bootstrapped.json
