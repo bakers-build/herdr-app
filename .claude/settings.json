@@ -1,0 +1,35 @@
+{
+  "extraKnownMarketplaces": {
+    "bakers": {
+      "source": { "source": "github", "repo": "bakers-build/bakers-build", "ref": "next" }
+    },
+    "superpowers-dev": {
+      "source": { "source": "github", "repo": "obra/superpowers", "ref": "v7.0.0" }
+    }
+  },
+  "enabledPlugins": {
+    "bakers@bakers": true,
+    "superpowers@superpowers-dev": true
+  },
+  "permissions": {
+    "deny": [
+      "Artifact",
+      "ArtifactComments",
+      "ArtifactData",
+      "Workflow",
+      "ScheduleWakeup",
+      "SendFeedback",
+      "SendMessage",
+      "RemoteTrigger",
+      "CronCreate",
+      "CronDelete",
+      "CronList",
+      "EnterWorktree",
+      "ExitWorktree",
+      "ReportFindings",
+      "DesignSync",
+      "ShareOnboardingGuide",
+      "PushNotification"
+    ]
+  }
+}

@@ -21,4 +21,9 @@ export default {
   executor: { use: '@bakers-build/addon-herdr-core' },
   addons: [{ use: '@bakers-build/addon-herdr' }],
   worktree: { use: '@bakers-build/addon-herdr', export: 'herdrWorkspace' },
+  // The agent plugins every run gets: the bakers skills and the superpowers recipe.
+  marketplaces: [
+    { url: 'https://github.com/bakers-build/bakers-build.git', ref: 'next', plugins: ['bakers'] },
+    { url: 'https://github.com/obra/superpowers.git', ref: 'v7.0.0', plugins: ['superpowers'] },
+  ],
 };
