@@ -1,15 +1,31 @@
 {
   "extraKnownMarketplaces": {
     "bakers": {
-      "source": { "source": "github", "repo": "bakers-build/bakers-build", "ref": "next" }
+      "source": {
+        "source": "github",
+        "repo": "bakers-build/bakers-build",
+        "ref": "next"
+      }
     },
     "superpowers-dev": {
-      "source": { "source": "github", "repo": "obra/superpowers", "ref": "v7.0.0" }
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers",
+        "ref": "v7.0.0"
+      }
+    },
+    "mattpocock": {
+      "source": {
+        "source": "github",
+        "repo": "mattpocock/skills",
+        "ref": "v1.3.2"
+      }
     }
   },
   "enabledPlugins": {
     "bakers@bakers": true,
-    "superpowers@superpowers-dev": true
+    "superpowers@superpowers-dev": true,
+    "mattpocock-skills@mattpocock": true
   },
   "permissions": {
     "deny": [

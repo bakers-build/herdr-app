@@ -151,3 +151,18 @@ bakers v0.9.1-next.5
 {"level":30,"time":1794608255054,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
 {"level":30,"time":1794608260701,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}
 {"level":30,"time":1794608261566,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
+{"level":30,"time":1794608267201,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}
+{"level":30,"time":1794608268045,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
+{"level":30,"time":1794608273674,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}
+{"level":30,"time":1794608274568,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
+{"level":30,"time":1794608280198,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}
+{"level":30,"time":1794608281060,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
+{"level":30,"time":1794608286739,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}
+{"level":30,"time":1794608287673,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
+{"level":30,"time":1794608293308,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}
+{"level":30,"time":1794608294173,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
+{"level":30,"time":1794608299797,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}
+{"level":30,"time":1794608300669,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
+{"level":30,"time":1794608306350,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}
+{"level":30,"time":1794608307225,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"idle, nothing to claim"}
+{"level":30,"time":1794608312872,"bb_version":"0.9.1-next.5","conductorId":"cw-framework-herdr-app-conductor","active":0,"machineLoad":6,"capacity":10,"msg":"conductor tick"}

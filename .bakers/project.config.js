@@ -25,5 +25,6 @@ export default {
   marketplaces: [
     { url: 'https://github.com/bakers-build/bakers-build.git', ref: 'next', plugins: ['bakers'] },
     { url: 'https://github.com/obra/superpowers.git', ref: 'v7.0.0', plugins: ['superpowers'] },
+    { url: 'https://github.com/mattpocock/skills.git', ref: 'v1.3.2', plugins: ['mattpocock-skills'] },
   ],
 };
