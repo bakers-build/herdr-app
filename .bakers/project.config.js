@@ -18,7 +18,7 @@ export default {
   // Metrics are unaffected either way.
   capture_logs: true,
   server: { use: '@bakers-build/addon-remote-drupal' },
-  executor: { use: '@bakers-build/addon-herdr' },
+  executor: { use: '@bakers-build/addon-herdr-core' },
   addons: [{ use: '@bakers-build/addon-herdr' }],
   worktree: { use: '@bakers-build/addon-herdr', export: 'herdrWorkspace' },
 };
