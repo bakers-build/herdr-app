@@ -16,12 +16,11 @@ export default {
   // Metrics are unaffected either way.
   capture_logs: true,
   server: { use: '@bakers-build/addon-remote-drupal' },
-  // herdr-core runs each agent in a herdr-core terminal; Git workspace makes the worktree.
+  // herdr (TUI) runs each agent in a visible herdr terminal and makes the per-ticket worktree.
   // Runs fetch, push, open PRs, read checks and merge only through the forge tools; the
   // conductor's own `gh` login supplies the token, which no run sees.
   addons: [
-    '@bakers-build/addon-herdr-core',
-    '@bakers-build/addon-workspace-git',
+    '@bakers-build/addon-herdr',
     {
       use: '@bakers-build/addon-forge',
       with: {
