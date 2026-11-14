@@ -1,0 +1,59 @@
+# Lint, format check, type check and test the mods on every push and PR.
+# Follows Herdr's ci.yml (herdrdev/herdr-app v0.1.15): pinned Bun, actions pinned
+# to commits, read-only token, and caches that only pushes to main save, so PR
+# caches can't evict the one everybody restores. See docs/conventions.md.
+name: ci
+
+on:
+  # Every branch, unlike Herdr (master only): each push gets checked.
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push cancels older runs of the same PR or ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUN_VERSION: 1.4.4
+  SAVE_CACHES: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+jobs:
+  # Herdr's stable check name.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+      - name: Restore dependency cache
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-${{ env.BUN_VERSION }}-
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Lint
+        run: bun run lint
+      - name: Format check
+        run: bun run format:check
+      - name: Type check
+        run: bun run typecheck
+      - name: Test
+        run: bun run test
+      - name: Save dependency cache
+        if: env.SAVE_CACHES == 'true' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ steps.cache.outputs.cache-primary-key }}
