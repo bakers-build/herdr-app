@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!types", "!node_modules", "!.bakers"]
+    "includes": ["**", "!types", "!node_modules", "!.bakers", "!**/*.md"]
   },
   "formatter": {
     "enabled": true,
