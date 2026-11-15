@@ -4,13 +4,14 @@
 // folded to their first line) and the composer at the bottom.
 // Keys: A acts on the card, E edits, G shows the agent; cmd-Enter and Esc in the composer.
 import { div, svg } from "gpui-kit";
-import { h_flex, v_flex } from "gpui-base";
-import { props, run, theme } from "herdr";
+import { h_flex, Input, InputState, Textarea, TextareaState, v_flex } from "gpui-base";
+import { notify, props, run, theme } from "herdr";
 import { machineOf, NO_TERMINAL, runTerminal } from "../lib/agent.js";
-import { getStore, ready } from "../lib/context.js";
+import { api, getStore, ready } from "../lib/context.js";
 import { age, firstLine, toMs } from "../lib/format.js";
 import { renderMarkdown } from "../lib/markdown.js";
 import { openConfirm, openMenu, openPicker } from "../lib/overlay.js";
+import { pin } from "../lib/tabs.js";
 import { button, dot, heading, icons, mono, UI_FONT } from "../lib/theme.js";
 import { Composer } from "./composer.js";
 
@@ -42,8 +43,10 @@ export default class Ticket {
     }
   }
 
-  /** Overridden by the composer task: the first keystroke pins the tab. */
-  onType() {}
+  /** Typing in the tab pins it (a preview becomes a pinned tab). */
+  onType() {
+    pin(this.id);
+  }
 
   terminal() {
     return runTerminal(this.id, this.detail?.ticket?.id);
@@ -82,13 +85,76 @@ export default class Ticket {
     ]);
   }
 
-  /** Overridden by the edit task. */
-  edit() {}
+  /** The fingerprint the edit warning compares. @param {any} tk */
+  stamp(tk) {
+    return JSON.stringify([
+      tk?.revision ?? tk?.changed ?? null,
+      tk?.title ?? "",
+      tk?.description ?? "",
+    ]);
+  }
+
+  /** E or a click: title and description become editable. */
+  edit() {
+    if (!this.detail || this.editing) return;
+    const tk = this.detail.ticket;
+    const title = InputState.new({ value: tk.title ?? "" });
+    const description = TextareaState.new({ value: tk.description ?? "", rows: 10 });
+    title.on("change", () => this.onType());
+    description.on("change", () => this.onType());
+    this.editing = { title, description, stamp: this.stamp(tk), warned: false, error: null };
+    title.focus();
+  }
+
+  /** cmd-Enter: saves title and description; warns once when the ticket changed meanwhile. @param {any} cx */
+  save(cx) {
+    const ed = this.editing;
+    if (!ed) return;
+    cx.spawn(async (cx) => {
+      try {
+        if (!ed.warned) {
+          const now = await api.readTicket(this.id);
+          if (this.stamp(now) !== ed.stamp) {
+            ed.warned = true;
+            ed.error = `${this.id} changed since you started editing. cmd-Enter again saves over it.`;
+            cx.notify();
+            return;
+          }
+        }
+        await api.updateTicket(this.id, {
+          title: ed.title.value(),
+          description: ed.description.value(),
+        });
+        this.editing = null;
+        await this.load();
+      } catch (/** @type {any} */ e) {
+        ed.error = `Not saved: ${e?.message ?? e}`;
+      }
+      cx.notify();
+    });
+  }
 
   /** @param {any} e @param {any} cx */
   onKey(e, cx) {
-    if (this.composer.focused || this.editing) return;
     const k = e.keystroke;
+    if (this.editing) {
+      if (k === "cmd-enter") this.save(cx);
+      else if (k === "escape") this.editing = null;
+      else return;
+      cx.stop_propagation();
+      cx.notify();
+      return;
+    }
+    if (this.composer.focused) {
+      if (k === "cmd-enter") {
+        if (this.composer.mode === "answer") this.send(cx);
+        else this.comment(cx);
+      } else if (k === "escape") this.composer.plain();
+      else return;
+      cx.stop_propagation();
+      cx.notify();
+      return;
+    }
     if (k === "a") this.act();
     else if (k === "e") this.edit();
     else if (k === "g") this.showAgent();
@@ -293,9 +359,29 @@ export default class Ticket {
       );
   }
 
-  /** Overridden by the edit task: the title and description fields. */
-  editor(_t) {
-    return null;
+  /** The title and description fields while editing. @param {any} t */
+  editor(t) {
+    const ed = this.editing;
+    if (!ed) return null;
+    const field = (/** @type {string} */ id) =>
+      div()
+        .id(id)
+        .p(8)
+        .rounded(6)
+        .border(1)
+        .border_color(t.border)
+        .bg(t.surface)
+        .text_color(t.foreground);
+    return v_flex()
+      .id("editor")
+      .gap(8)
+      .child(field("edit-title").text_size(22).font_semibold().child(Input.new(ed.title).w_full()))
+      .child(heading("Description"))
+      .child(field("edit-description").text_size(13).child(Textarea.new(ed.description).w_full()))
+      .when(Boolean(ed.error), (el) =>
+        el.child(div().text_size(11).text_color(t.blocked).child(ed.error)),
+      )
+      .child(div().text_size(11).text_color(t.muted).child("cmd-Enter saves, Esc cancels"));
   }
 
   render() {
@@ -356,10 +442,51 @@ export default class Ticket {
               .child(this.comments(t)),
           ),
       )
-      .child(this.composer.render({ send: () => this.send(), comment: () => this.comment() }));
+      .child(
+        this.composer.render({ send: (cx) => this.send(cx), comment: (cx) => this.comment(cx) }),
+      );
   }
 
-  /** Overridden by the composer task. */
-  send() {}
-  comment() {}
+  /** Send answer: the comment, then (checked) unfreeze and remove Question, then a toast. */
+  /** @param {any} cx */
+  send(cx) {
+    this.post(this.composer.unfreeze, cx);
+  }
+
+  /** Just comment, or Comment in comment mode. */
+  /** @param {any} cx */
+  comment(cx) {
+    this.post(false, cx);
+  }
+
+  /** Three calls, not atomic: a failure after the comment names the failed step. @param {boolean} unfreeze @param {any} cx */
+  post(unfreeze, cx) {
+    const c = this.composer;
+    const body = c.text.value().trim();
+    if (!body || c.busy) return;
+    c.busy = true;
+    c.error = null;
+    const answering = c.mode === "answer";
+    cx.spawn(async (cx) => {
+      let posted = false;
+      try {
+        await api.publishComment(this.id, body, "comment");
+        posted = true;
+        if (answering && unfreeze)
+          await api.updateTicket(this.id, { frozen: false, labels_remove: ["Question"] });
+        c.text.set_value("");
+        c.plain();
+        if (answering)
+          notify({ title: `Answered ${this.id}, the run continues`, level: "success" });
+        await this.load();
+      } catch (/** @type {any} */ e) {
+        c.error = posted
+          ? `Comment posted; unfreezing failed: ${e?.message ?? e}`
+          : `Not sent: ${e?.message ?? e}`;
+      } finally {
+        c.busy = false;
+        cx.notify();
+      }
+    });
+  }
 }

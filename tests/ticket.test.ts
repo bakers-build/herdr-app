@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend } from "./fixtures/shop";
+import { ticketTab } from "./fixtures/shop";
 import {
   click,
   closest,
@@ -24,16 +24,6 @@ beforeEach(() => {
   ctx._resetForTests();
   tabs._resetForTests();
 });
-
-export async function ticketTab(id = "SHOP-41", extra: Record<string, unknown> = {}) {
-  activeSpace();
-  backend(extra);
-  env.spaces[0].tabs.push({ id: "t5", name: `${id} working`, index: 2, active: true });
-  const Bakers = await load("bakers/main.js");
-  const copy = mount(Bakers, { view: "ticket", ticket: id });
-  await flush();
-  return copy;
-}
 
 test("header: identifier, state pill, Frozen, agent line, Edit and ...", async () => {
   env.terminals = [{ address: "studio-mac/t7", labels: { "bakers.ticket": "SHOP-41" } }];

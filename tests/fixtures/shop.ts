@@ -1,5 +1,5 @@
 // The acme-shop project of the wireframe frames, served by a fake bakers CLI.
-import { cli, env } from "../harness";
+import { cli, env, flush, load, mount } from "../harness";
 
 export const NOW = Date.now();
 const ago = (min: number) => new Date(NOW - min * 60000).toISOString();
@@ -157,4 +157,15 @@ export function activeSpace(folder = "/work/acme-shop") {
   ];
   env.files[`${folder}/.bakers/project.config.js`] =
     "export default {\n  schema_version: 1,\n  project: { name: 'acme-shop' },\n};\n";
+}
+
+/** A ticket tab on the given ticket, loaded. */
+export async function ticketTab(id = "SHOP-41", extra: Record<string, unknown> = {}) {
+  activeSpace();
+  backend(extra);
+  env.spaces[0].tabs.push({ id: "t5", name: `${id} working`, index: 2, active: true });
+  const Bakers = await load("bakers/main.js");
+  const copy = mount(Bakers, { view: "ticket", ticket: id });
+  await flush();
+  return copy;
 }

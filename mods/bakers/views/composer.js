@@ -33,7 +33,7 @@ export class Composer {
     this.mode = "comment";
   }
 
-  /** @param {{ send: () => void, comment: () => void }} on */
+  /** @param {{ send: (cx: any) => void, comment: (cx: any) => void }} on */
   render(on) {
     const t = theme();
     const answering = this.mode === "answer";
@@ -113,10 +113,13 @@ export class Composer {
                       .child("cmd-Enter sends, Esc back to a plain comment"),
                   )
                   .child(
-                    button("just-comment", "Just comment", () => on.comment(), { h: 26, size: 12 }),
+                    button("just-comment", "Just comment", (_e, cx) => on.comment(cx), {
+                      h: 26,
+                      size: 12,
+                    }),
                   )
                   .child(
-                    button("send-answer", "Send answer", () => on.send(), {
+                    button("send-answer", "Send answer", (_e, cx) => on.send(cx), {
                       h: 26,
                       size: 12,
                       primary: true,
@@ -134,7 +137,7 @@ export class Composer {
                       .child("cmd-Enter sends"),
                   )
                   .child(
-                    button("send-comment", "Comment", () => on.comment(), {
+                    button("send-comment", "Comment", (_e, cx) => on.comment(cx), {
                       h: 26,
                       size: 12,
                       primary: true,
