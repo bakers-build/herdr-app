@@ -1,9 +1,11 @@
-// The bakers mod is cut into vertical slices (docs/architecture.md):
-//   core/      the kernel: CLI, session (project and store), tabs, kit, menu, dialog
-//   features/  one folder per function, each with its UI parts, bakers calls and actions
-//   screens/   compose features into a placement; no bakers calls of their own
-// Imports point down only: screens -> features -> core. A feature never imports another
-// feature, core never imports a feature or a screen.
+// The bakers mod's layers (docs/architecture.md):
+//   core/        technique: CLI call, error kinds, Herdr tabs and layout, action registry, theme
+//   form/        form handling: state, submit in steps, partial failures, keys, registry
+//   components/  generic drawing, no entity
+//   entity/<e>/  data, rules, actions (the only bakers calls), presenter/ (views: props),
+//                form/ (form definitions)
+//   ui/          the Herdr placements: fetch, map, draw, wire
+// Imports point down: core <- form <- components <- entity <- ui.
 import { expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
@@ -20,10 +22,8 @@ async function files(dir: string): Promise<string[]> {
   return out;
 }
 
-function layer(path: string) {
-  const [top, slice] = relative(ROOT, path).split("/");
-  return { top, slice };
-}
+const rel = (p: string) => relative(ROOT, p);
+const top = (p: string) => rel(p).split("/")[0];
 
 async function edges() {
   const list: { from: string; to: string }[] = [];
@@ -35,45 +35,74 @@ async function edges() {
   return list;
 }
 
-test("the mod has only main.js, core/, features/ and screens/", async () => {
+const show = (bad: { from: string; to: string }[]) =>
+  bad.map((e) => `${rel(e.from)} -> ${rel(e.to)}`);
+
+const ALLOWED: Record<string, string[]> = {
+  core: ["core"],
+  form: ["core", "form"],
+  components: ["core", "form", "components"],
+  entity: ["core", "form", "entity"],
+  ui: ["core", "form", "components", "entity", "ui"],
+};
+
+test("the mod has main.js, core, form, components, entity and ui", async () => {
   const tops = (await readdir(ROOT)).filter((n) => !n.startsWith(".")).sort();
-  expect(tops).toEqual(["core", "features", "icons", "main.js", "mod.json", "screens"]);
+  expect(tops).toEqual([
+    "components",
+    "core",
+    "entity",
+    "form",
+    "icons",
+    "main.js",
+    "mod.json",
+    "ui",
+  ]);
 });
 
-test("core imports nothing outside core", async () => {
+test("imports point down: core <- form <- components <- entity <- ui", async () => {
   const bad = (await edges()).filter(
-    (e) => layer(e.from).top === "core" && layer(e.to).top !== "core",
+    (e) => top(e.from) in ALLOWED && !ALLOWED[top(e.from)].includes(top(e.to)),
   );
-  expect(bad.map((e) => `${relative(ROOT, e.from)} -> ${relative(ROOT, e.to)}`)).toEqual([]);
+  expect(show(bad)).toEqual([]);
 });
 
-test("a feature imports only core and its own folder", async () => {
+test("an entity imports another entity only through its data.js", async () => {
   const bad = (await edges()).filter((e) => {
-    const a = layer(e.from);
-    const b = layer(e.to);
-    return (
-      a.top === "features" && !(b.top === "core" || (b.top === "features" && b.slice === a.slice))
-    );
+    const [a, ea] = rel(e.from).split("/");
+    const [b, eb, file] = rel(e.to).split("/");
+    return a === "entity" && b === "entity" && ea !== eb && file !== "data.js";
   });
-  expect(bad.map((e) => `${relative(ROOT, e.from)} -> ${relative(ROOT, e.to)}`)).toEqual([]);
+  expect(show(bad)).toEqual([]);
 });
 
-test("screens import features and core, never another screen", async () => {
-  const bad = (await edges()).filter(
-    (e) => layer(e.from).top === "screens" && layer(e.to).top === "screens",
-  );
-  expect(bad.map((e) => `${relative(ROOT, e.from)} -> ${relative(ROOT, e.to)}`)).toEqual([]);
+test("ui files do not import each other", async () => {
+  const bad = (await edges()).filter((e) => top(e.from) === "ui" && top(e.to) === "ui");
+  expect(show(bad)).toEqual([]);
 });
 
-test("screens make no bakers calls of their own", async () => {
+test("presenters, form definitions, form handling and entity logic draw nothing", async () => {
   const bad: string[] = [];
-  for (const f of await files(join(ROOT, "screens"))) {
-    const src = await readFile(f, "utf8");
-    if (/core\/cli\.js|bakers_/.test(src)) bad.push(relative(ROOT, f));
+  for (const f of await files(ROOT)) {
+    const r = rel(f);
+    const pure = r.startsWith("form/") || (r.startsWith("entity/") && !r.endsWith("/data.js"));
+    if (pure && /from "gpui-(kit|base)"/.test(await readFile(f, "utf8"))) bad.push(r);
   }
   expect(bad).toEqual([]);
 });
 
-test("there is one mod: the tab bar is a view of bakers", async () => {
+test("only entity data.js and actions.js talk to bakers", async () => {
+  const bad: string[] = [];
+  for (const f of await files(ROOT)) {
+    const r = rel(f);
+    const src = await readFile(f, "utf8");
+    const talks = /core\/cli\.js|"bakers_/.test(src);
+    const may = /^entity\/[^/]+\/(data|actions)\.js$/.test(r) || r === "core/cli.js";
+    if (talks && !may) bad.push(r);
+  }
+  expect(bad).toEqual([]);
+});
+
+test("there is one mod", async () => {
   expect(await readdir(resolve(import.meta.dir, "../mods"))).toEqual(["bakers"]);
 });

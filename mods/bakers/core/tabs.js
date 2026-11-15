@@ -1,4 +1,4 @@
-// Ticket tabs in the active space. Herdr's TabInfo carries no props and run() returns no
+// core/tabs: ticket tabs in the active space. Herdr's TabInfo carries no props and run() returns no
 // tab id (herdr.d.ts v0.1.15), so a ticket tab is recognised by its name, "<ID> <state>"
 // or "<ID> closed", and the Tickets tab by the name "Tickets". The preview tab is the
 // ticket identifier in shared("bakers.preview") = {id, index}; index is where the
@@ -7,7 +7,6 @@ import { focused, run, setShared, shared, spaces } from "herdr";
 
 const NAME = /^([A-Z][A-Z0-9_]*-\d+) (\S+)$/;
 const TICKETS = "Tickets";
-const CLOSED = ["done", "cancelled"];
 const PENDING_MS = 3000;
 
 /** Ticket tabs asked for whose tab has not shown up yet: identifier -> time. */
@@ -15,11 +14,6 @@ let pending = new Map();
 
 export function _resetForTests() {
   pending = new Map();
-}
-
-/** @param {{ id: string, state: string, closed?: boolean }} t */
-export function tabName(t) {
-  return t.closed || CLOSED.includes(t.state) ? `${t.id} closed` : `${t.id} ${t.state}`;
 }
 
 /** @param {string} name @returns {{ id: string, state: string } | null} */
@@ -73,10 +67,13 @@ export function reconcile() {
 
 /**
  * Opens a ticket as the preview tab, or pinned; an open ticket is only selected.
- * @param {{ id: string, state: string, closed?: boolean }} t
+ * The name comes from the ticket presenter (entity/ticket/presenter/tab.js).
+ * @param {string} id
+ * @param {string} name
  * @param {{ pin?: boolean }} [opts]
  */
-export function openTicket(t, opts = {}) {
+export function openTicket(id, name, opts = {}) {
+  const t = { id };
   const open = openTickets().find((o) => o.id === t.id);
   const p = preview();
   if (open) {
@@ -98,7 +95,7 @@ export function openTicket(t, opts = {}) {
     }
   }
   pending.set(t.id, Date.now());
-  run("tab.new", { mod: "bakers", props: { view: "ticket", ticket: t.id }, name: tabName(t) });
+  run("tab.new", { mod: "bakers", props: { view: "ticket", ticket: t.id }, name });
   if (!opts.pin) setShared("bakers.preview", { id: t.id, index });
 }
 
@@ -108,14 +105,13 @@ export function pin(id) {
 }
 
 /**
- * Renames ticket tabs whose state changed.
- * @param {(id: string) => ({ id: string, state: string, closed?: boolean } | null)} lookup
+ * Renames ticket tabs whose name changed (the state moved on).
+ * @param {(id: string) => string | null} nameOf the presenter's tab name, null when unknown
  */
-export function syncNames(lookup) {
+export function syncNames(nameOf) {
   for (const o of openTickets()) {
-    const row = lookup(o.id);
-    if (!row) continue;
-    const want = tabName(row);
+    const want = nameOf(o.id);
+    if (!want) continue;
     if (want !== o.tab.name) run("tab.rename", { id: o.tab.id, name: want });
   }
 }

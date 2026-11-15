@@ -81,27 +81,3 @@ export async function call(tool, args = {}) {
     throw new BakersError(tool, 0, `bakers returned unreadable output for ${tool}`);
   }
 }
-
-/** Every ticket of a project, all pages. @param {string} project */
-export async function listTickets(project) {
-  const out = [];
-  let offset = 0;
-  for (let page = 0; page < 50; page++) {
-    const r = await call("bakers_ticket_list", { project, limit: 100, offset });
-    out.push(...(r?.tickets ?? []));
-    if (r?.next_offset == null || r.next_offset <= offset) break;
-    offset = r.next_offset;
-  }
-  return out;
-}
-
-// The reads the kernel itself needs. Every feature calls its own tools with call().
-
-/** @param {string} ticket */
-export const readTicket = (ticket) => call("bakers_ticket_read", { ticket, newest: 50 });
-/** @param {string} ticket */
-export const listRuns = async (ticket) =>
-  (await call("bakers_ticket_runs_list", { ticket, limit: 20 }))?.runs ?? [];
-export const listProjects = async () => (await call("bakers_project_list", {}))?.projects ?? [];
-/** @param {string} project key or UUID */
-export const readProject = (project) => call("bakers_project_read", { project });

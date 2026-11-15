@@ -169,3 +169,14 @@ export async function ticketTab(id = "SHOP-41", extra: Record<string, unknown> =
   await flush();
   return copy;
 }
+
+const projectData: any = await import("../../mods/bakers/entity/project/data.js");
+const ticketData: any = await import("../../mods/bakers/entity/ticket/data.js");
+const tabsModel: any = await import("../../mods/bakers/core/tabs.js");
+
+/** Forgets the window's project, store and pending tabs between tests. */
+export function resetMod() {
+  projectData._resetForTests();
+  ticketData._resetForTests();
+  tabsModel._resetForTests();
+}

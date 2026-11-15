@@ -142,7 +142,7 @@ test("install copies the mods, writes the bakers layout and merges keys; --dry-r
     "routed by props().view",
   );
   expect(
-    await readFile(join(home, "mods", "bakers", "features", "tabs-bar", "tabs-bar.js"), "utf8"),
+    await readFile(join(home, "mods", "bakers", "ui", "layout", "tabs-bar.js"), "utf8"),
   ).toContain("bakers tab bar");
   const again = await install({ home, dryRun: false, log: () => {} });
   expect(again.written.filter((p: string) => !p.includes("/mods/"))).toEqual([]);

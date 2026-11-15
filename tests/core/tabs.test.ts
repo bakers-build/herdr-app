@@ -25,12 +25,6 @@ beforeEach(() => {
   tabs._resetForTests();
 });
 
-test("tabName follows the state; done and cancelled read closed", () => {
-  expect(tabs.tabName({ id: "SHOP-41", state: "working" })).toBe("SHOP-41 working");
-  expect(tabs.tabName({ id: "SHOP-49", state: "done" })).toBe("SHOP-49 closed");
-  expect(tabs.tabName({ id: "SHOP-50", state: "cancelled" })).toBe("SHOP-50 closed");
-});
-
 test("ensureTicketsTab creates the Tickets tab when missing", () => {
   space(tab("t1", "1", 1));
   tabs.ensureTicketsTab();
@@ -57,7 +51,7 @@ test("reconcile keeps the Tickets tab at index 1", () => {
 
 test("openTicket as preview opens a ticket tab and remembers the preview", () => {
   space(tab("t0", "Tickets", 1));
-  tabs.openTicket({ id: "SHOP-41", state: "working" }, { pin: false });
+  tabs.openTicket("SHOP-41", "SHOP-41 working", { pin: false });
   expect(runs()).toEqual([
     [
       "tab.new",
@@ -70,7 +64,7 @@ test("openTicket as preview opens a ticket tab and remembers the preview", () =>
 test("the next preview replaces the old one at its index", () => {
   space(tab("t0", "Tickets", 1), tab("t5", "SHOP-41 working", 2), tab("t6", "1", 3));
   env.shared["bakers.preview"] = { id: "SHOP-41", index: null };
-  tabs.openTicket({ id: "SHOP-56", state: "plan" }, { pin: false });
+  tabs.openTicket("SHOP-56", "SHOP-56 plan", { pin: false });
   expect(runs()).toEqual([
     ["tab.close", { id: "t5" }],
     [
@@ -88,8 +82,8 @@ test("the next preview replaces the old one at its index", () => {
 
 test("an open ticket is only selected, never opened twice", () => {
   space(tab("t0", "Tickets", 1), tab("t5", "SHOP-41 working", 2));
-  tabs.openTicket({ id: "SHOP-41", state: "working" }, { pin: false });
-  tabs.openTicket({ id: "SHOP-41", state: "working" }, { pin: true });
+  tabs.openTicket("SHOP-41", "SHOP-41 working", { pin: false });
+  tabs.openTicket("SHOP-41", "SHOP-41 working", { pin: true });
   expect(runs()).toEqual([
     ["tab.select", { id: "t5" }],
     ["tab.select", { id: "t5" }],
@@ -98,16 +92,16 @@ test("an open ticket is only selected, never opened twice", () => {
 
 test("a double Enter before the tab appears opens one preview", () => {
   space(tab("t0", "Tickets", 1));
-  tabs.openTicket({ id: "SHOP-41", state: "working" }, { pin: false });
-  tabs.openTicket({ id: "SHOP-41", state: "working" }, { pin: false });
-  tabs.openTicket({ id: "SHOP-41", state: "working" }, { pin: true });
+  tabs.openTicket("SHOP-41", "SHOP-41 working", { pin: false });
+  tabs.openTicket("SHOP-41", "SHOP-41 working", { pin: false });
+  tabs.openTicket("SHOP-41", "SHOP-41 working", { pin: true });
   expect(runs().filter((r) => r[0] === "tab.new").length).toBe(1);
 });
 
 test("pinning clears the preview", () => {
   space(tab("t0", "Tickets", 1), tab("t5", "SHOP-41 working", 2));
   env.shared["bakers.preview"] = { id: "SHOP-41", index: null };
-  tabs.openTicket({ id: "SHOP-41", state: "working" }, { pin: true });
+  tabs.openTicket("SHOP-41", "SHOP-41 working", { pin: true });
   expect(env.shared["bakers.preview"]).toBe(null);
   env.shared["bakers.preview"] = { id: "SHOP-41", index: null };
   tabs.pin("SHOP-41");
@@ -121,12 +115,12 @@ test("syncNames renames on a state change and after done; nothing when unchanged
     tab("t6", "SHOP-49 review", 3),
     tab("t7", "SHOP-56 plan", 4),
   );
-  const rows: Record<string, any> = {
-    "SHOP-41": { id: "SHOP-41", state: "working" },
-    "SHOP-49": { id: "SHOP-49", state: "done" },
-    "SHOP-56": { id: "SHOP-56", state: "plan" },
+  const names: Record<string, string> = {
+    "SHOP-41": "SHOP-41 working",
+    "SHOP-49": "SHOP-49 closed",
+    "SHOP-56": "SHOP-56 plan",
   };
-  tabs.syncNames((id: string) => rows[id]);
+  tabs.syncNames((id: string) => names[id]);
   expect(runs()).toEqual([
     ["tab.rename", { id: "t5", name: "SHOP-41 working" }],
     ["tab.rename", { id: "t6", name: "SHOP-49 closed" }],
