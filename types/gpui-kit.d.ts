@@ -10,6 +10,10 @@ export interface Element {
 }
 
 export function div(): Element;
+/** Confirmed in herdr-app v0.1.15 vendor/gpui-kit/crates/shell/src/typings.rs. */
+export function svg(path: string): Element;
+/** Confirmed in herdr-app v0.1.15 vendor/gpui-kit/crates/shell/src/typings.rs. */
+export function image(path: string): Element;
 
 export class View {
   render(...args: any[]): Element;
