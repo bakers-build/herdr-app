@@ -1,4 +1,4 @@
-// Installs the bakers mods into Herdr: copies mods/bakers and mods/bakers-tabs into the
+// Installs the bakers mod into Herdr: copies mods/bakers into the
 // Herdr home ($HERDR_APP_HOME, else ~/.config/herdr-app), writes layouts/bakers.json from
 // layouts/main.json (or --from <name>) and merges the bakers keys into keys.json without
 // overwriting a binding the developer already has. Idempotent; --dry-run writes nothing.
@@ -6,7 +6,7 @@
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { bakersLayout, mergeKeys } from "../mods/bakers/lib/layout.js";
+import { bakersLayout, mergeKeys } from "./layout.js";
 
 type Options = { home?: string; from?: string; dryRun?: boolean; log?: (line: string) => void };
 
@@ -47,7 +47,7 @@ export async function install(options: Options = {}) {
   const written: string[] = [];
   const repo = new URL("..", import.meta.url).pathname;
 
-  for (const mod of ["bakers", "bakers-tabs"]) {
+  for (const mod of ["bakers"]) {
     const to = join(o.home, "mods", mod);
     if (o.dryRun) o.log(`would copy mods/${mod} to ${to}`);
     else {

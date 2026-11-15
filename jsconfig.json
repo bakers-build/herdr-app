@@ -16,5 +16,11 @@
       "gpui-base": ["./types/gpui-base.d.ts"]
     }
   },
-  "include": ["mods/**/*.js", "tests/**/*.ts", "scripts/**/*.ts", "types/**/*.d.ts"]
+  "include": [
+    "mods/**/*.js",
+    "tests/**/*.ts",
+    "scripts/**/*.ts",
+    "scripts/**/*.js",
+    "types/**/*.d.ts"
+  ]
 }

@@ -1,32 +1,51 @@
-// The bakers mod: one mod placed in several blocks, routed by props().view.
-// rail, sidebar and status sit in the layout; list (the Tickets tab) and ticket (a ticket
-// tab) are tab mods; panel is the right panel's ticket child; goto, picker, confirm and
-// new-ticket open as overlays. Shared code lives in lib/, one file per view in views/.
+// The bakers mod: one mod in several places, routed by props().view, as Herdr's win98 mod
+// routes its roles (herdr-app v0.1.15 defaults/mods/win98/main.js).
+//
+//   core/      the kernel: CLI, session (project and store), tabs, views, kit, menu, dialog
+//   features/  one folder per function, each with its UI parts, bakers calls and actions
+//   screens/   compose features into a placement: ticket tab, panel, sidebar, status
+//
+// Imports point down only: screens -> features -> core (tests/architecture.test.ts).
+// Importing every feature here also registers its menu actions and dialogs, so an overlay
+// copy (a menu, a dialog) can run what any slice asked for. docs/architecture.md has more.
 import { div, View } from "gpui-kit";
 import { props } from "herdr";
-import Confirm from "./views/confirm.js";
-import Goto from "./views/goto.js";
-import List from "./views/list.js";
-import NewTicket from "./views/new-ticket.js";
-import Panel from "./views/panel.js";
-import Picker from "./views/picker.js";
-import Rail from "./views/rail.js";
-import Sidebar from "./views/sidebar.js";
-import Status from "./views/status.js";
-import Ticket from "./views/ticket.js";
+import Dialog from "./core/dialog.js";
+import Menu from "./core/menu.js";
+import "./features/freeze/freeze.js";
+import Goto from "./features/goto/goto.js";
+import List from "./features/list/tickets.js";
+import Rail from "./features/needs/rail.js";
+import NewTicket from "./features/new-ticket/new-ticket.js";
+import ProjectPicker from "./features/project/project.js";
+import { LabelPicker } from "./features/properties/properties.js";
+import { ConductorPicker } from "./features/run/run.js";
+import "./features/state/state.js";
+import BakersTabs from "./features/tabs-bar/tabs-bar.js";
+import Panel from "./screens/panel.js";
+import Sidebar from "./screens/sidebar.js";
+import Status from "./screens/status.js";
+import TicketTab from "./screens/ticket-tab.js";
 
 /** @type {Record<string, any>} */
 const VIEWS = {
+  // layout blocks
   rail: Rail,
   sidebar: Sidebar,
   status: Status,
-  list: List,
-  goto: Goto,
-  ticket: Ticket,
+  tabs: BakersTabs,
   panel: Panel,
-  picker: Picker,
-  confirm: Confirm,
+  // tabs
+  list: List,
+  ticket: TicketTab,
+  // overlays
+  goto: Goto,
+  menu: Menu,
+  dialog: Dialog,
   "new-ticket": NewTicket,
+  "project-picker": ProjectPicker,
+  "conductor-picker": ConductorPicker,
+  "label-picker": LabelPicker,
 };
 
 export default class Bakers extends View {

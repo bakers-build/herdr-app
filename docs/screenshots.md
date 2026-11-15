@@ -10,8 +10,7 @@ Ticketbearbeitung (Wireframes)".
    answers) and start Herdr Desktop once, so `~/.config/herdr-app/layouts/main.json` exists.
 2. In this repository: `bun install`, then `bun run install:herdr`. It prints any key it kept
    because you already use it (`kept your key: ...`). Check `herdr-app status` for errors.
-3. Run `herdr-app check ~/.config/herdr-app/mods/bakers` and
-   `herdr-app check ~/.config/herdr-app/mods/bakers-tabs`; both must pass.
+3. Run `herdr-app check ~/.config/herdr-app/mods/bakers`; it must pass.
 4. Switch layouts: `herdr-app do layout.switch --name bakers` (or cmd-shift-L).
 5. Size the window to 1440 x 900 logical pixels at zoom 1 (`app.zoom_reset`).
 6. Open a space whose folder holds the project's `.bakers/project.config.js`, so the mods
