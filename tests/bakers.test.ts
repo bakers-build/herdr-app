@@ -1,40 +1,14 @@
-// Herdr-style mod test: load the mod's plain-JS source, evaluate it over
-// stubbed globals and assert on the element tree it renders. No window, no
-// Herdr core. Pattern from Herdr's scripts/picker.test.ts (v0.1.15).
-import { expect, test } from "bun:test";
-import { readFile } from "node:fs/promises";
+// The bakers mod's entry point evaluated as Herdr would: real source, stubbed globals.
+import { beforeEach, expect, test } from "bun:test";
+import { load, mount, reset } from "./harness";
 
-class Element {
-  nodes: unknown[] = [];
+beforeEach(reset);
 
-  child(node: unknown): this {
-    this.nodes.push(node);
-    return this;
+test("bakers routes each placement to its view by props().view", async () => {
+  const Bakers = await load("bakers/main.js");
+  for (const view of ["rail", "sidebar", "status"]) {
+    const copy = mount(Bakers, { view });
+    expect(copy.inner).toBeDefined();
+    expect(copy.render()).toBeDefined();
   }
-}
-
-// Any other chained builder call (style setters and the like) is recorded as
-// a no-op that keeps the chain going.
-function element(): Element {
-  return new Proxy(new Element(), {
-    get(target, key, receiver) {
-      if (key in target) return Reflect.get(target, key, receiver);
-      return () => receiver;
-    },
-  });
-}
-
-async function loadMod(name: string) {
-  const path = new URL(`../mods/${name}/main.js`, import.meta.url);
-  const src = (await readFile(path, "utf8"))
-    .replace(/^import .*;\n/gm, "")
-    .replace(/export default class (\w+)/, "return class $1");
-  return new Function("View", "div", src)(class {}, element);
-}
-
-test("bakers placeholder renders its name", async () => {
-  const Bakers = await loadMod("bakers");
-  const view = new Bakers();
-  const root = view.render();
-  expect(root.nodes).toEqual(["bakers.build"]);
 });

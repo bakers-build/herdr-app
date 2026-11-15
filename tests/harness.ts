@@ -225,17 +225,10 @@ export function cx(): any {
   return c;
 }
 
-/** Awaits every task spawned so far, including tasks those tasks spawned. */
-export async function flush() {
-  for (let i = 0; i < 20; i++) {
-    const pending = env.tasks.splice(0);
-    if (!pending.length) {
-      await new Promise((r) => setImmediate(r));
-      if (!env.tasks.length) return;
-      continue;
-    }
-    await Promise.allSettled(pending);
-  }
+/** Lets spawned tasks run: a number of macrotask turns (a command loop never settles). */
+export async function flush(turns = 40) {
+  for (let i = 0; i < turns; i++) await new Promise((r) => setTimeout(r, 0));
+  env.tasks.length = 0;
 }
 
 /** Runs timers registered with cx.timer.after (and once each `every`). */
