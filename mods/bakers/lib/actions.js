@@ -3,7 +3,7 @@
 // Herdr command, never through the opener's memory.
 import { setShared, shared } from "herdr";
 import { chooseProject, getStore, ready } from "./context.js";
-import { openNewTicket } from "./overlay.js";
+import { openConfirm, openNewTicket } from "./overlay.js";
 import { closeAll, closeFinished } from "./tabs.js";
 
 export async function refresh() {
@@ -22,16 +22,19 @@ const ACTIONS = {
   closeAll: () => closeAll(),
   view: (v) => setShared("bakers.view", v),
   newTicket: () => openNewTicket(),
+  confirm: (kind, ticket, extra = {}) => openConfirm(kind, { ticket, ...extra }),
+  copy: (text, cx) => cx?.write_to_clipboard(text),
   project: async (uuid, name) => {
     chooseProject({ uuid, name });
     await refresh();
   },
 };
 
-/** @param {any[]} action */
-export async function perform(action) {
+/** @param {any[]} action @param {any} [cx] the chooser's context (clipboard) */
+export async function perform(action, cx) {
   if (!Array.isArray(action)) return;
   const [name, ...args] = action;
+  if (name === "copy") return ACTIONS.copy(args[0], cx);
   return ACTIONS[name]?.(...args);
 }
 

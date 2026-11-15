@@ -9,9 +9,17 @@ import List from "./views/list.js";
 import Rail from "./views/rail.js";
 import Sidebar from "./views/sidebar.js";
 import Status from "./views/status.js";
+import Ticket from "./views/ticket.js";
 
 /** @type {Record<string, any>} */
-const VIEWS = { rail: Rail, sidebar: Sidebar, status: Status, list: List, goto: Goto };
+const VIEWS = {
+  rail: Rail,
+  sidebar: Sidebar,
+  status: Status,
+  list: List,
+  goto: Goto,
+  ticket: Ticket,
+};
 
 export default class Bakers extends View {
   init(p, cx) {
