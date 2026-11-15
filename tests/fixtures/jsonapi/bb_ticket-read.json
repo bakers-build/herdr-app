@@ -1,0 +1,102 @@
+{
+  "jsonapi": {
+    "version": "1.1"
+  },
+  "data": {
+    "type": "bb_ticket--bb_ticket",
+    "id": "23b16c12-2739-4fea-bdfe-572eafd1ce71",
+    "attributes": {
+      "drupal_internal__id": 255,
+      "created": "2026-11-14T10:21:56+00:00",
+      "changed": "2026-11-15T21:03:01+00:00",
+      "identifier": "HERDRAPP-3",
+      "number": 3,
+      "workflow": "bb_work",
+      "title": "Ticket list and ticket detail in Herdr, one to one with the wireframe (R2-4, R2-3)",
+      "description": {
+        "value": "## Goal\n\nBuild the first two screens.",
+        "format": "bb_rich",
+        "processed": "<h2>Goal</h2>"
+      },
+      "state": "working",
+      "frozen": false,
+      "frozen_at": null,
+      "closed": false,
+      "closed_date": null,
+      "branch_name": "feat/herdrapp-3-ticket-list-an",
+      "links": [
+        {
+          "uri": "https://github.com/bakers-build/herdr-app/pull/2",
+          "title": "PR #2: feat: ticket list and ticket detail mods for Herdr",
+          "options": {
+            "bakers": {
+              "kind": "doc"
+            }
+          }
+        }
+      ],
+      "claim_machine": null,
+      "assignee_name": "cw",
+      "owner_name": "pg"
+    },
+    "relationships": {
+      "project_id": {
+        "data": {
+          "type": "bb_project--bb_project",
+          "id": "862d9507-3c0d-4e31-a246-40febf547faa",
+          "meta": {
+            "drupal_internal__target_id": 7
+          }
+        }
+      },
+      "ticket_type": {
+        "data": {
+          "type": "bb_term--type",
+          "id": "7f38796d-abba-443a-806a-b48fd52a83b8"
+        }
+      },
+      "recipe": {
+        "data": {
+          "type": "bb_term--recipe",
+          "id": "1d746ad5-1943-4715-a4a2-1fa4e66b28ec"
+        }
+      },
+      "labels": {
+        "data": []
+      },
+      "reviewers": {
+        "data": []
+      },
+      "conductor_id": {
+        "data": {
+          "type": "bb_conductor--bb_conductor",
+          "id": "83aa7d00-6eb3-451e-80df-368e5863228b"
+        }
+      },
+      "parent_id": {
+        "data": null
+      },
+      "comments": {
+        "data": [
+          {
+            "type": "bb_comment--bb_comment",
+            "id": "ceceae7d-e470-4e91-8bbb-51764a18c9d9"
+          }
+        ]
+      },
+      "runs": {
+        "data": [
+          {
+            "type": "bb_run--bb_run",
+            "id": "1773b991-27b2-429e-8a09-1ad2e6c1ac5e"
+          }
+        ]
+      }
+    }
+  },
+  "links": {
+    "self": {
+      "href": "https://app.bakers.build/jsonapi/bb_ticket/bb_ticket/23b16c12-2739-4fea-bdfe-572eafd1ce71"
+    }
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "data": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "bb_activity--bb_activity"
+        },
+        "id": {
+          "type": "string"
+        },
+        "attributes": {
+          "description": "Entity attributes",
+          "type": "object",
+          "properties": {
+            "drupal_internal__id": {
+              "type": "integer",
+              "title": "ID"
+            },
+            "created": {
+              "type": "string",
+              "title": "Created",
+              "format": "date-time"
+            },
+            "changed": {
+              "type": "string",
+              "title": "Changed",
+              "format": "date-time"
+            },
+            "kind": {
+              "type": "string",
+              "title": "Kind",
+              "oneOf": [
+                {
+                  "const": "created",
+                  "title": "Created"
+                },
+                {
+                  "const": "status_changed",
+                  "title": "Status changed"
+                },
+                {
+                  "const": "claimed",
+                  "title": "Claimed"
+                },
+                {
+                  "const": "run_ended",
+                  "title": "Run ended"
+                },
+                {
+                  "const": "assigned",
+                  "title": "Assigned"
+                },
+                {
+                  "const": "review_requested",
+                  "title": "Review requested"
+                },
+                {
+                  "const": "review_completed",
+                  "title": "Review completed"
+                }
+              ]
+            },
+            "workflow": {
+              "type": "string",
+              "title": "Workflow",
+              "maxLength": 255,
+              "description": "Snapshot of the ticket workflow machine name at capture. Empty is valid for an unclassified ticket."
+            },
+            "previous_state": {
+              "type": "string",
+              "title": "Previous state",
+              "maxLength": 255,
+              "description": "Machine name of the stored state before a status change. Empty is valid. Unused for claims."
+            },
+            "new_state": {
+              "type": "string",
+              "title": "New state",
+              "maxLength": 255,
+              "description": "Machine name of the stored state after a status change, or the first state of a created ticket. Empty is valid. Unused for claims."
+            },
+            "step": {
+              "type": "string",
+              "title": "Step",
+              "maxLength": 255,
+              "description": "The claimed or ended run’s state_at_start, not the ticket state at read time."
+            }
+          },
+          "required": ["kind"],
+          "additionalProperties": false
+        },
+        "relationships": {
+          "description": "Entity relationships",
+          "properties": {
+            "ticket_id": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "required": ["type", "id"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Referenced resource",
+                      "enum": ["bb_ticket--bb_ticket"]
+                    },
+                    "id": {
+                      "type": "string",
+                      "title": "Resource ID",
+                      "format": "uuid",
+                      "maxLength": 128
+                    },
+                    "meta": {
+                      "type": "integer",
+                      "title": "bakers.build ticket ID"
+                    }
+                  }
+                }
+              },
+              "title": "Ticket"
+            },
+            "actor": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "required": ["type", "id"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Referenced resource",
+                      "enum": ["user--user"]
+                    },
+                    "id": {
+                      "type": "string",
+                      "title": "Resource ID",
+                      "format": "uuid",
+                      "maxLength": 128
+                    },
+                    "meta": {
+                      "type": "integer",
+                      "title": "User ID"
+                    }
+                  }
+                }
+              },
+              "title": "Actor",
+              "description": "The initiating authenticated account. Zero only for an actual system context."
+            },
+            "run_id": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "required": ["type", "id"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Referenced resource",
+                      "enum": ["bb_run--bb_run"]
+                    },
+                    "id": {
+                      "type": "string",
+                      "title": "Resource ID",
+                      "format": "uuid",
+                      "maxLength": 128
+                    },
+                    "meta": {
+                      "type": "integer",
+                      "title": "bakers.build run ID"
+                    }
+                  }
+                }
+              },
+              "title": "Run",
+              "description": "The claimed or ended run, or the run a status change closed. Empty for a change without an active run."
+            },
+            "conductor_id": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "required": ["type", "id"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Referenced resource",
+                      "enum": ["bb_conductor--bb_conductor"]
+                    },
+                    "id": {
+                      "type": "string",
+                      "title": "Resource ID",
+                      "format": "uuid",
+                      "maxLength": 128
+                    },
+                    "meta": {
+                      "type": "integer",
+                      "title": "bakers.build conductor ID"
+                    }
+                  }
+                }
+              },
+              "title": "Conductor"
+            },
+            "comment_id": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "required": ["type", "id"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "title": "Referenced resource",
+                      "enum": ["bb_comment--bb_comment"]
+                    },
+                    "id": {
+                      "type": "string",
+                      "title": "Resource ID",
+                      "format": "uuid",
+                      "maxLength": 128
+                    },
+                    "meta": {
+                      "type": "integer",
+                      "title": "bakers.build comment ID"
+                    }
+                  }
+                }
+              },
+              "title": "Summary comment",
+              "description": "The comment the activity points to: the summary published in the previous state of a status change, or the submitted review."
+            },
+            "accounts": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["type", "id"],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "title": "Referenced resource",
+                        "enum": ["user--user"]
+                      },
+                      "id": {
+                        "type": "string",
+                        "title": "Resource ID",
+                        "format": "uuid",
+                        "maxLength": 128
+                      },
+                      "meta": {
+                        "type": "integer",
+                        "title": "User ID"
+                      }
+                    }
+                  }
+                }
+              },
+              "title": "Accounts",
+              "description": "The accounts the activity is addressed to, such as the reviewers a review was requested from."
+            }
+          },
+          "type": "object",
+          "required": ["ticket_id"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type"]
+    }
+  },
+  "required": ["data"],
+  "x-dropsh-source": "jsonapi-schema",
+  "x-dropsh-target": {
+    "entity_type": "bb_activity",
+    "bundle": "bb_activity"
+  },
+  "x-dropsh-operation": "create",
+  "x-dropsh-schema-extensions": [],
+  "x-dropsh-schema-pipeline-version": 2,
+  "x-dropsh-operation-hook-plugins": ["bakers-name-refs"]
+}

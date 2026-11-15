@@ -1,0 +1,342 @@
+[
+  {
+    "entity_type": "action",
+    "bundle": "action",
+    "label": "Action"
+  },
+  {
+    "entity_type": "base_field_override",
+    "bundle": "base_field_override",
+    "label": "Base field override"
+  },
+  {
+    "entity_type": "bb_activity",
+    "bundle": "bb_activity",
+    "label": "Bb activity"
+  },
+  {
+    "entity_type": "bb_addon",
+    "bundle": "bb_addon",
+    "label": "Bb addon"
+  },
+  {
+    "entity_type": "bb_comment",
+    "bundle": "bb_comment",
+    "label": "Bb comment"
+  },
+  {
+    "entity_type": "bb_comment",
+    "bundle": "review",
+    "label": "Review"
+  },
+  {
+    "entity_type": "bb_comment_type",
+    "bundle": "bb_comment_type",
+    "label": "Bb comment type"
+  },
+  {
+    "entity_type": "bb_conductor",
+    "bundle": "bb_conductor",
+    "label": "Bb conductor"
+  },
+  {
+    "entity_type": "bb_environment",
+    "bundle": "bb_environment",
+    "label": "Bb environment"
+  },
+  {
+    "entity_type": "bb_figure",
+    "bundle": "bb_figure",
+    "label": "Bb figure"
+  },
+  {
+    "entity_type": "bb_figure_group",
+    "bundle": "bb_figure_group",
+    "label": "Bb figure group"
+  },
+  {
+    "entity_type": "bb_group",
+    "bundle": "bb_group",
+    "label": "Bb group"
+  },
+  {
+    "entity_type": "bb_inbox_message",
+    "bundle": "bb_inbox_message",
+    "label": "Bb inbox message"
+  },
+  {
+    "entity_type": "bb_invite",
+    "bundle": "bb_invite",
+    "label": "Bb invite"
+  },
+  {
+    "entity_type": "bb_machine",
+    "bundle": "bb_machine",
+    "label": "Bb machine"
+  },
+  {
+    "entity_type": "bb_measurement",
+    "bundle": "bb_measurement",
+    "label": "Bb measurement"
+  },
+  {
+    "entity_type": "bb_project",
+    "bundle": "bb_project",
+    "label": "Bb project"
+  },
+  {
+    "entity_type": "bb_run",
+    "bundle": "bb_run",
+    "label": "Bb run"
+  },
+  {
+    "entity_type": "bb_team",
+    "bundle": "bb_team",
+    "label": "Bb team"
+  },
+  {
+    "entity_type": "bb_term",
+    "bundle": "label",
+    "label": "Label"
+  },
+  {
+    "entity_type": "bb_term",
+    "bundle": "recipe",
+    "label": "Recipe"
+  },
+  {
+    "entity_type": "bb_term",
+    "bundle": "type",
+    "label": "Type"
+  },
+  {
+    "entity_type": "bb_ticket",
+    "bundle": "bb_ticket",
+    "label": "Bb ticket"
+  },
+  {
+    "entity_type": "bb_ticket_template",
+    "bundle": "bb_ticket_template",
+    "label": "Bb ticket template"
+  },
+  {
+    "entity_type": "bb_track_account",
+    "bundle": "bb_track_account",
+    "label": "Bb track account"
+  },
+  {
+    "entity_type": "bb_track_submission",
+    "bundle": "bb_track_submission",
+    "label": "Bb track submission"
+  },
+  {
+    "entity_type": "bb_track_worklog",
+    "bundle": "bb_track_worklog",
+    "label": "Bb track worklog"
+  },
+  {
+    "entity_type": "bb_vocabulary",
+    "bundle": "bb_vocabulary",
+    "label": "Bb vocabulary"
+  },
+  {
+    "entity_type": "bb_workspace",
+    "bundle": "bb_workspace",
+    "label": "Bb workspace"
+  },
+  {
+    "entity_type": "block",
+    "bundle": "block",
+    "label": "Block"
+  },
+  {
+    "entity_type": "consumer",
+    "bundle": "consumer",
+    "label": "Consumer"
+  },
+  {
+    "entity_type": "crop",
+    "bundle": "bb_avatar",
+    "label": "Bb avatar"
+  },
+  {
+    "entity_type": "crop_type",
+    "bundle": "crop_type",
+    "label": "Crop type"
+  },
+  {
+    "entity_type": "date_format",
+    "bundle": "date_format",
+    "label": "Date format"
+  },
+  {
+    "entity_type": "display_builder_instance",
+    "bundle": "display_builder_instance",
+    "label": "Display builder instance"
+  },
+  {
+    "entity_type": "display_builder_profile",
+    "bundle": "display_builder_profile",
+    "label": "Display builder profile"
+  },
+  {
+    "entity_type": "editor",
+    "bundle": "editor",
+    "label": "Editor"
+  },
+  {
+    "entity_type": "entity_form_display",
+    "bundle": "entity_form_display",
+    "label": "Entity form display"
+  },
+  {
+    "entity_type": "entity_form_mode",
+    "bundle": "entity_form_mode",
+    "label": "Entity form mode"
+  },
+  {
+    "entity_type": "entity_view_display",
+    "bundle": "entity_view_display",
+    "label": "Entity view display"
+  },
+  {
+    "entity_type": "entity_view_mode",
+    "bundle": "entity_view_mode",
+    "label": "Entity view mode"
+  },
+  {
+    "entity_type": "facets_facet",
+    "bundle": "facets_facet",
+    "label": "Facets facet"
+  },
+  {
+    "entity_type": "facets_facet_source",
+    "bundle": "facets_facet_source",
+    "label": "Facets facet source"
+  },
+  {
+    "entity_type": "field_config",
+    "bundle": "field_config",
+    "label": "Field config"
+  },
+  {
+    "entity_type": "field_storage_config",
+    "bundle": "field_storage_config",
+    "label": "Field storage config"
+  },
+  {
+    "entity_type": "file",
+    "bundle": "file",
+    "label": "File"
+  },
+  {
+    "entity_type": "filter_format",
+    "bundle": "filter_format",
+    "label": "Filter format"
+  },
+  {
+    "entity_type": "image_style",
+    "bundle": "image_style",
+    "label": "Image style"
+  },
+  {
+    "entity_type": "island_app",
+    "bundle": "island_app",
+    "label": "Island app"
+  },
+  {
+    "entity_type": "island_profile",
+    "bundle": "island_profile",
+    "label": "Island profile"
+  },
+  {
+    "entity_type": "mcp_prompt_config",
+    "bundle": "mcp_prompt_config",
+    "label": "Mcp prompt config"
+  },
+  {
+    "entity_type": "mcp_tool_config",
+    "bundle": "mcp_tool_config",
+    "label": "Mcp tool config"
+  },
+  {
+    "entity_type": "menu",
+    "bundle": "menu",
+    "label": "Menu"
+  },
+  {
+    "entity_type": "menu_link_content",
+    "bundle": "menu_link_content",
+    "label": "Menu link content"
+  },
+  {
+    "entity_type": "oauth2_scope",
+    "bundle": "oauth2_scope",
+    "label": "Oauth2 scope"
+  },
+  {
+    "entity_type": "oauth2_token_type",
+    "bundle": "oauth2_token_type",
+    "label": "Oauth2 token type"
+  },
+  {
+    "entity_type": "og_membership",
+    "bundle": "default",
+    "label": "Default"
+  },
+  {
+    "entity_type": "og_membership_type",
+    "bundle": "og_membership_type",
+    "label": "Og membership type"
+  },
+  {
+    "entity_type": "og_role",
+    "bundle": "og_role",
+    "label": "Og role"
+  },
+  {
+    "entity_type": "path_alias",
+    "bundle": "path_alias",
+    "label": "Path alias"
+  },
+  {
+    "entity_type": "pattern_preset",
+    "bundle": "pattern_preset",
+    "label": "Pattern preset"
+  },
+  {
+    "entity_type": "search_api_index",
+    "bundle": "search_api_index",
+    "label": "Search api index"
+  },
+  {
+    "entity_type": "search_api_server",
+    "bundle": "search_api_server",
+    "label": "Search api server"
+  },
+  {
+    "entity_type": "search_api_task",
+    "bundle": "search_api_task",
+    "label": "Search api task"
+  },
+  {
+    "entity_type": "social_auth",
+    "bundle": "social_auth",
+    "label": "Social auth"
+  },
+  {
+    "entity_type": "user",
+    "bundle": "user",
+    "label": "User"
+  },
+  {
+    "entity_type": "user_role",
+    "bundle": "user_role",
+    "label": "User role"
+  },
+  {
+    "entity_type": "view",
+    "bundle": "view",
+    "label": "View"
+  }
+]
