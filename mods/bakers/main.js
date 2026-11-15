@@ -4,9 +4,12 @@
 // new-ticket open as overlays. Shared code lives in lib/, one file per view in views/.
 import { div, View } from "gpui-kit";
 import { props } from "herdr";
+import Confirm from "./views/confirm.js";
 import Goto from "./views/goto.js";
 import List from "./views/list.js";
+import NewTicket from "./views/new-ticket.js";
 import Panel from "./views/panel.js";
+import Picker from "./views/picker.js";
 import Rail from "./views/rail.js";
 import Sidebar from "./views/sidebar.js";
 import Status from "./views/status.js";
@@ -21,6 +24,9 @@ const VIEWS = {
   goto: Goto,
   ticket: Ticket,
   panel: Panel,
+  picker: Picker,
+  confirm: Confirm,
+  "new-ticket": NewTicket,
 };
 
 export default class Bakers extends View {

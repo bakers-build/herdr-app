@@ -125,7 +125,7 @@ export function backend(extra: Record<string, unknown> = {}) {
     bakers_ticket_list: { tickets: list, next_offset: null },
     bakers_ticket_read: (a: any) => {
       const row = list.find((t) => t.id === a.ticket || t.identifier === a.ticket);
-      return { ...row, comments: [], ...(read[row?.id ?? ""] ?? {}) };
+      return { ...row, workflow: "bb_work", comments: [], ...(read[row?.id ?? ""] ?? {}) };
     },
     bakers_ticket_runs_list: (a: any) =>
       a.ticket === "u41"
