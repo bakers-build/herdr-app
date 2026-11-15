@@ -4,12 +4,13 @@
 // new-ticket open as overlays. Shared code lives in lib/, one file per view in views/.
 import { div, View } from "gpui-kit";
 import { props } from "herdr";
+import List from "./views/list.js";
 import Rail from "./views/rail.js";
 import Sidebar from "./views/sidebar.js";
 import Status from "./views/status.js";
 
 /** @type {Record<string, any>} */
-const VIEWS = { rail: Rail, sidebar: Sidebar, status: Status };
+const VIEWS = { rail: Rail, sidebar: Sidebar, status: Status, list: List };
 
 export default class Bakers extends View {
   init(p, cx) {

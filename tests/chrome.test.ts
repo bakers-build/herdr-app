@@ -1,6 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
 import {
-  cli,
   click,
   env,
   find,
@@ -14,122 +13,9 @@ import {
   tools,
 } from "./harness";
 
+import { activeSpace, backend, NOW } from "./fixtures/shop";
+
 const ctx: any = await import("../mods/bakers/lib/context.js");
-
-const NOW = Date.now();
-const ago = (min: number) => new Date(NOW - min * 60000).toISOString();
-const list = [
-  {
-    id: "u41",
-    identifier: "SHOP-41",
-    title: "Checkout fails with an empty cart",
-    state: "working",
-    labels: ["Question"],
-    frozen: true,
-    frozen_at: ago(35),
-    closed: false,
-  },
-  {
-    id: "u56",
-    identifier: "SHOP-56",
-    title: "Show delivery date on the product page",
-    state: "plan",
-    labels: [],
-    frozen: false,
-    closed: false,
-  },
-  {
-    id: "u57",
-    identifier: "SHOP-57",
-    title: "Q one",
-    state: "qualification",
-    labels: [],
-    frozen: false,
-    closed: false,
-  },
-  {
-    id: "u58",
-    identifier: "SHOP-58",
-    title: "W one",
-    state: "working",
-    labels: [],
-    frozen: false,
-    closed: false,
-  },
-  {
-    id: "u59",
-    identifier: "SHOP-59",
-    title: "W two",
-    state: "working",
-    labels: [],
-    frozen: false,
-    closed: false,
-  },
-  {
-    id: "u60",
-    identifier: "SHOP-60",
-    title: "Q two",
-    state: "qualification",
-    labels: [],
-    frozen: false,
-    closed: false,
-  },
-  {
-    id: "u49",
-    identifier: "SHOP-49",
-    title: "Old",
-    state: "done",
-    labels: [],
-    frozen: false,
-    closed: true,
-  },
-];
-const read: Record<string, any> = {
-  u56: { comments: [{ type: "plan", created: ago(12) }] },
-};
-
-export function backend(extra: Record<string, unknown> = {}) {
-  cli({
-    bakers_project_read: (a: any) =>
-      a.project === "ACMESHOP"
-        ? { uuid: "p1", key: "ACMESHOP", name: "acme-shop" }
-        : new Error(`Project ${a.project} does not exist`),
-    bakers_ticket_list: { tickets: list, next_offset: null },
-    bakers_ticket_read: (a: any) => {
-      const row = list.find((t) => t.id === a.ticket || t.identifier === a.ticket);
-      return { ...row, comments: [], ...(read[row?.id ?? ""] ?? {}) };
-    },
-    bakers_ticket_runs_list: (a: any) =>
-      a.ticket === "u41"
-        ? {
-            runs: [
-              {
-                uuid: "r1",
-                state: "running",
-                agent: "claude",
-                started_at: Math.floor(NOW / 1000) - 3600,
-                closed: false,
-              },
-            ],
-          }
-        : { runs: [] },
-    ...extra,
-  });
-}
-
-function activeSpace(folder = "/work/acme-shop") {
-  env.spaces = [
-    {
-      id: "s1",
-      name: "acme-shop",
-      folder,
-      active: true,
-      tabs: [{ id: "t0", name: "Tickets", index: 1, active: true }],
-    },
-  ];
-  env.files[`${folder}/.bakers/project.config.js`] =
-    "export default {\n  schema_version: 1,\n  project: { name: 'acme-shop' },\n};\n";
-}
 
 beforeEach(() => {
   reset();
