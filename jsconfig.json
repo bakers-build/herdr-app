@@ -11,7 +11,8 @@
     "types": ["bun"],
     "paths": {
       "herdr": ["./types/herdr.d.ts"],
-      "gpui-kit": ["./types/gpui-kit.d.ts"]
+      "gpui-kit": ["./types/gpui-kit.d.ts"],
+      "gpui-base": ["./types/gpui-base.d.ts"]
     }
   },
   "include": ["mods/**/*.js", "tests/**/*.ts", "types/**/*.d.ts"]
