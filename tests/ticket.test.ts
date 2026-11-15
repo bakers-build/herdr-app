@@ -1,20 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
 import { ticketTab } from "./fixtures/shop";
-import {
-  click,
-  closest,
-  env,
-  find,
-  findText,
-  flush,
-  key,
-  load,
-  mount,
-  reset,
-  runs,
-  texts,
-  walk,
-} from "./harness";
+import { click, closest, env, find, findText, key, reset, runs, texts, walk } from "./harness";
 
 const ctx: any = await import("../mods/bakers/lib/context.js");
 const tabs: any = await import("../mods/bakers/lib/tabs.js");
