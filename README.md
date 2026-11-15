@@ -5,22 +5,51 @@ ticket's state next to the agent terminals, so a developer does not switch to th
 
 ## Status
 
-The tooling is in place (tests, lint, format, type check, CI); the only mod is a placeholder
-(`mods/bakers/`). The proof of concept is built in the bakers-build repository under
-`experimental/herdr-app/` (ticket BAKERS-187,
-[pull request #148](https://github.com/bakers-build/bakers-build/pull/148)). This repository
-is meant to become its home.
+The layout with the Tickets tab (frame R2-4) and the ticket tab (frame R2-3) of the wireframe
+canvas are built as two mods: `bakers` (one mod routed by `props().view`: rail, sidebar,
+status, list, ticket, panel, goto, picker, confirm, new-ticket) and `bakers-tabs` (Herdr's
+tab bar with the Tickets tab, the italic preview tab and the needs-you dot). The proof of
+concept lives in the bakers-build repository under `experimental/herdr-app/`.
 
-## Plan
+## Install
 
-- A `bakers` mod with four views: the board (tickets by state for a chosen project), the
-  ticket in Herdr's right panel, a rail with a needs-you dot, and a confirm dialog for
-  Cancel run, Freeze and Unfreeze.
-- An installer that builds a `bakers` layout and a `bakers-tabs` tab bar from Herdr's `main`
-  layout or a developer's own clone of it, and keeps that layout's own buttons and panels.
-- Reads go through the bakers CLI tools. The only writes are cancelling a run and freezing
-  or unfreezing a ticket, each behind a confirm dialog.
-- The mod keeps no token and puts no ticket content in Herdr's shared state.
+Needs Herdr Desktop (started once) and a signed-in `bakers` CLI on the PATH.
+
+```sh
+bun install
+bun run install:herdr            # --dry-run shows what it would write; --from <layout>
+herdr-app do layout.switch --name bakers
+```
+
+The installer copies both mods into `~/.config/herdr-app/mods/` (`$HERDR_APP_HOME` honored),
+writes `layouts/bakers.json` from your `main` layout and adds the keys below to `keys.json`.
+It never overwrites a key you already use; it prints the ones it kept.
+
+## Keys
+
+| Key | What it does |
+|---|---|
+| cmd-B | sidebar with the bakers section |
+| cmd-shift-T | Ticket panel (the context of the focused ticket tab or the selected row) |
+| cmd-shift-O | Go to ticket |
+| cmd-shift-B | Tickets tab |
+| cmd-shift-N | New ticket |
+| Tickets tab | Up/Down select, Enter preview tab, cmd-Enter pinned tab, `/` filter, N new ticket, R refresh |
+| Ticket tab | A acts on the Needs-you card, E edits, G shows the agent, R moves the run; cmd-Enter sends or saves, Esc cancels |
+
+Every change of state, freeze, move or cancel asks first; Esc writes nothing.
+
+## Limits of the bakers API
+
+Shown with the "API" chip: assignee and reviewers (so Mine is empty), allowed transitions
+(the state menu lists every state; the server refuses what the workflow forbids), closing
+dates for Recently closed, the conductor list (Move to...), the activity list, and the
+project list when the CLI does not serve it (the project then comes from
+`.bakers/project.config.js` of the active space). All calls go through the developer's own
+`bakers` CLI; the mods keep no token and put no ticket content into Herdr's shared state.
+
+Screenshots for the pixel comparison: [docs/screenshots.md](docs/screenshots.md). The Herdr
+files this follows: [docs/herdr-reference.md](docs/herdr-reference.md).
 
 ## Development
 
