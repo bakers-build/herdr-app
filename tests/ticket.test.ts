@@ -170,3 +170,12 @@ test("the state pill opens the state menu", async () => {
     props: { view: "picker", kind: "state", ticket: "SHOP-41", current: "working" },
   });
 });
+
+test("R starts Move to... with the conductor picker", async () => {
+  const copy = await ticketTab();
+  env.calls.length = 0;
+  key(copy.render(), "r");
+  expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
+    props: { view: "picker", kind: "conductor", ticket: "SHOP-41" },
+  });
+});

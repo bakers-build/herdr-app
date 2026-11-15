@@ -2,7 +2,8 @@
 // (identifier, state pill, Frozen, agent line, Edit, "..."), the title, the Needs-you
 // card, the Markdown description, the comments (newest last; plan, spec and summary
 // folded to their first line) and the composer at the bottom.
-// Keys: A acts on the card, E edits, G shows the agent; cmd-Enter and Esc in the composer.
+// Keys: A acts on the card, E edits, G shows the agent, R moves the run; cmd-Enter and Esc
+// in the composer and the editor.
 import { div, svg } from "gpui-kit";
 import { h_flex, Input, InputState, Textarea, TextareaState, v_flex } from "gpui-base";
 import { notify, props, run, theme } from "herdr";
@@ -158,6 +159,7 @@ export default class Ticket {
     if (k === "a") this.act();
     else if (k === "e") this.edit();
     else if (k === "g") this.showAgent();
+    else if (k === "r") openPicker("conductor", { ticket: this.id });
     else return;
     cx.stop_propagation();
     cx.notify();

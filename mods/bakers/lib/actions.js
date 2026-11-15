@@ -2,7 +2,7 @@
 // (its own mod copy) can run them; every effect goes through shared state, the store or a
 // Herdr command, never through the opener's memory.
 import { setShared, shared } from "herdr";
-import { chooseProject, getStore, ready } from "./context.js";
+import { api, chooseProject, getStore, ready } from "./context.js";
 import { openConfirm, openNewTicket } from "./overlay.js";
 import { closeAll, closeFinished } from "./tabs.js";
 
@@ -24,6 +24,14 @@ const ACTIONS = {
   newTicket: () => openNewTicket(),
   confirm: (kind, ticket, extra = {}) => openConfirm(kind, { ticket, ...extra }),
   copy: (text, cx) => cx?.write_to_clipboard(text),
+  classify: async (ticket, fields) => {
+    await api.classifyTicket(ticket, fields);
+    await refresh();
+  },
+  labels: async (ticket, fields) => {
+    await api.updateTicket(ticket, fields);
+    await refresh();
+  },
   project: async (uuid, name) => {
     chooseProject({ uuid, name });
     await refresh();

@@ -6,6 +6,7 @@ import { div, View } from "gpui-kit";
 import { props } from "herdr";
 import Goto from "./views/goto.js";
 import List from "./views/list.js";
+import Panel from "./views/panel.js";
 import Rail from "./views/rail.js";
 import Sidebar from "./views/sidebar.js";
 import Status from "./views/status.js";
@@ -19,6 +20,7 @@ const VIEWS = {
   list: List,
   goto: Goto,
   ticket: Ticket,
+  panel: Panel,
 };
 
 export default class Bakers extends View {
