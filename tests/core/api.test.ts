@@ -114,6 +114,18 @@ test("search sends a boolean as 1 or 0 and an IN value as a list", async () => {
   );
 });
 
+test("parallel reads ask the CLI for one token", async () => {
+  cliWithToken();
+  env.fetch = async () => ({
+    status: 200,
+    ok: true,
+    json: async () => doc({ type: "x", id: "1" }),
+    text: async () => "",
+  });
+  await Promise.all([api.read("x", "x", "1"), api.read("x", "x", "1"), api.read("x", "x", "1")]);
+  expect(env.calls.filter((c) => c.fn === "exec").length).toBe(1);
+});
+
 test("a 401 asks the CLI for a new token and tries once more", async () => {
   cliWithToken([TOKEN, { ...TOKEN, token: "fresh" }]);
   const auth: string[] = [];

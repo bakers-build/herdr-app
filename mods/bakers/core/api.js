@@ -17,14 +17,23 @@ let session = null;
 /** @type {"fetch" | "dropsh" | null} */
 let mode = null;
 
+/** The token request in flight, shared by parallel callers. @type {Promise<{ base: string, token: string } | null> | null} */
+let pending = null;
+
 export function _resetForTests() {
   session = null;
   mode = null;
+  pending = null;
 }
 
 /** @param {boolean} [fresh] ask the CLI again (after a 401) */
 async function token(fresh = false) {
   if (session && !fresh) return session;
+  if (!pending) pending = askToken().finally(() => (pending = null));
+  return pending;
+}
+
+async function askToken() {
   try {
     const t = await run(["auth", "token"], "bakers auth token");
     session = { base: String(t.base_url).replace(/\/$/, ""), token: t.token };
