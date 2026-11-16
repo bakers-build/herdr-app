@@ -54,6 +54,7 @@ export type Env = {
     args: string[],
     opts?: unknown,
   ) => Promise<{ code: number; stdout: string; stderr: string }>;
+  fetch: (url: string, opts?: any) => Promise<any>;
   spaces: any[];
   panes: any[];
   terminals: any[];
@@ -75,6 +76,9 @@ export function reset() {
     tasks: [],
     timers: [],
     exec: async () => ({ code: 127, stdout: "", stderr: "bakers: not found" }),
+    fetch: async () => {
+      throw new Error("no network in tests");
+    },
     spaces: [],
     panes: [],
     terminals: [],
@@ -184,6 +188,19 @@ mock.module("herdr", () => ({
   nextCommand: () =>
     env.commands.length ? Promise.resolve(env.commands.shift()) : new Promise(() => {}),
 }));
+
+// Herdr's fetch is a global; the stub records each request and answers from env.fetch.
+(globalThis as any).fetch = (url: string, opts?: any) => {
+  env.calls.push({ fn: "fetch", args: [url, opts?.method ?? "GET"] });
+  return env.fetch(url, opts);
+};
+
+/** The requests sent with fetch, as decoded URLs. */
+export function fetched(): string[] {
+  return env.calls
+    .filter((c) => c.fn === "fetch")
+    .map((c) => decodeURIComponent(String(c.args[0]).replace(/\+/g, " ")));
+}
 
 /** A context stub: spawned tasks are kept so tests can await them with flush(). */
 export function cx(): any {
@@ -338,18 +355,29 @@ export function runs(): unknown[][] {
 /** The bakers tools called through exec, as [tool, args] pairs. */
 export function tools(): [string, any][] {
   return env.calls
-    .filter((c) => c.fn === "exec" && c.args[0] === "bakers")
+    .filter(
+      (c) => c.fn === "exec" && c.args[0] === "bakers" && (c.args[1] as string[])[0] === "tools",
+    )
     .map((c) => {
       const argv = c.args[1] as string[];
       return [argv[1], JSON.parse(argv[3])];
     });
 }
 
+export const TOKEN = {
+  base_url: "https://bakers.test",
+  token: "t0k3n",
+  token_type: "Bearer",
+  expires_at: "2099-01-01T00:00:00Z",
+};
+
 type Reply = unknown | Error | ((args: any) => unknown);
 
 /** Answers `bakers tools <tool> --data <json>` as the CLI does: ["message", "<json>"]. */
 export function cli(replies: Record<string, Reply>) {
   env.exec = async (_cmd, argv) => {
+    if (argv[0] === "auth" && argv[1] === "token")
+      return { code: 0, stdout: JSON.stringify(TOKEN), stderr: "" };
     const tool = argv[1];
     if (!(tool in replies))
       return {
