@@ -188,7 +188,7 @@ updates.
   module top level (Herdr's `AGENTS.md`).
 - **Shared between copies (`setShared`):** identifiers, counts and flags only
   (`bakers.project`, `bakers.view`, `bakers.selected`, `bakers.preview`, `bakers.needs`,
-  `bakers.showClosed`, `bakers.toast`). No ticket content.
+  `bakers.showClosed`). No ticket content.
 - **Per copy:** a controller's own state, such as the selection, the page, a form's values and
   the open comment folds.
 

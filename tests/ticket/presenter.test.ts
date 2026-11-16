@@ -243,7 +243,7 @@ test("notification, tab name, search result, state menu", () => {
     title: "SHOP-41 asks a question",
     body: "Redirect or page?",
     level: "warning",
-    action: { name: "bakers.open", args: { ticket: "SHOP-41" } },
+    action: { name: "bakers.open:SHOP-41" },
   });
   expect(tabName({ id: "SHOP-41", state: "working" })).toBe("SHOP-41 working");
   expect(tabName({ id: "SHOP-49", state: "done" })).toBe("SHOP-49 closed");

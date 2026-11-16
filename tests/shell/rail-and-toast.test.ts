@@ -55,16 +55,21 @@ test("watchNeeds posts one toast per newly asking ticket, never on start or twic
   expect(n.body.length).toBeLessThanOrEqual(120);
   expect(n.body.startsWith("Should SHOP-58 redirect")).toBe(true);
   expect(n.level).toBe("warning");
-  expect(n.action).toEqual({ name: "bakers.open", args: { ticket: "SHOP-58" } });
+  expect(n.action).toEqual({ name: "bakers.open:SHOP-58" });
   watchNeeds(asked, storeWith(["SHOP-41", "SHOP-58"]));
   expect(env.calls.filter((c) => c.fn === "notify").length).toBe(1);
 });
 
-test("the toast's bakers.open opens the ticket's tab and never moves focus", async () => {
+test("a toast click opens its own ticket's tab, not the newest toast's, and never moves focus", async () => {
   activeSpace();
   backend();
-  env.shared["bakers.toast"] = "SHOP-41";
-  env.commands.push("open");
+  let asked = watchNeeds(null, storeWith([]));
+  asked = watchNeeds(asked, storeWith(["SHOP-41"]));
+  watchNeeds(asked, storeWith(["SHOP-41", "SHOP-58"]));
+  const [first] = env.calls.filter((c) => c.fn === "notify").map((c: any) => c.args[0]);
+  expect(first.title).toBe("SHOP-41 asks a question");
+  // Herdr delivers an action "bakers.<command>" to the mod's nextCommand() as "<command>".
+  env.commands.push(first.action.name.slice("bakers.".length));
   const Bakers = await load("bakers/main.js");
   mount(Bakers, { view: "shell.status" });
   await flush();

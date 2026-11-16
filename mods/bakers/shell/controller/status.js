@@ -5,7 +5,7 @@
 // (bakers.goto, .tickets, .panel, .new, .open).
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { layout, nextCommand, notify, openOverlay, run, setShared, shared, theme } from "herdr";
+import { layout, nextCommand, notify, openOverlay, run, theme } from "herdr";
 import { classify } from "../../core/errors.js";
 import { findNode } from "../../core/herdr.js";
 import { ensureTicketsTab, openTicket, syncNames } from "../../core/tabs.js";
@@ -33,7 +33,6 @@ export function watchNeeds(prev, store) {
   if (prev === null) return asking;
   for (const id of asking) {
     if (prev.includes(id)) continue;
-    setShared("bakers.toast", id);
     notify(notification(id, store.cached?.(id)?.comments ?? []));
   }
   return asking;
@@ -73,13 +72,13 @@ export default class Status {
 
   /** @param {string} c */
   async command(c) {
-    const [name, arg] = String(c).split(":");
+    const [name, ...rest] = String(c).split(":");
+    const arg = rest.join(":");
     if (name === "goto") this.goto();
     else if (name === "tickets") ensureTicketsTab();
     else if (name === "panel") this.togglePanel();
     else if (name === "new") openForm("create");
-    else if (name === "open")
-      await this.open(arg ?? /** @type {string} */ (shared("bakers.toast")));
+    else if (name === "open") await this.open(arg);
   }
 
   /** Go to ticket, 480 px wide, 120 px from the top, centred (Herdr gives mods no window size). */
@@ -107,7 +106,7 @@ export default class Status {
     }
   }
 
-  /** Opens a ticket's tab, pinned (a toast click). @param {string} id */
+  /** Opens a ticket's tab, pinned (a toast click, open:<id>). @param {string} id */
   async open(id) {
     if (!id) return;
     await ready();
