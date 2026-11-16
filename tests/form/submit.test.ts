@@ -61,6 +61,44 @@ test("a later step failing names what was done and what failed; values stay", as
   expect(s.busy).toBe(false);
 });
 
+test("a retry after a partial failure runs only the steps that did not finish", async () => {
+  const ran: string[] = [];
+  let failures = 1;
+  const d = def(
+    [
+      { run: async () => ran.push("comment"), done: "Comment posted" },
+      {
+        run: async () => {
+          ran.push("unfreeze");
+          if (failures-- > 0) throw new Error("Not allowed");
+        },
+        failed: "unfreezing failed",
+      },
+    ],
+    { success: "Answered" },
+  );
+  const s = new FormState(d);
+  expect((await submit(d, s)).ok).toBe(false);
+  expect(await submit(d, s)).toMatchObject({ ok: true, success: "Answered" });
+  expect(ran).toEqual(["comment", "unfreeze", "unfreeze"]);
+});
+
+test("a retry failing again still names the steps finished before", async () => {
+  const d = def([
+    { run: async () => {}, done: "Comment posted" },
+    {
+      run: async () => {
+        throw new Error("Not allowed");
+      },
+      failed: "unfreezing failed",
+    },
+  ]);
+  const s = new FormState(d);
+  await submit(d, s);
+  await submit(d, s);
+  expect(s.message.message).toBe("Comment posted; unfreezing failed: Not allowed");
+});
+
 test("a definition may join done and failed with its own words", async () => {
   const d = def(
     [

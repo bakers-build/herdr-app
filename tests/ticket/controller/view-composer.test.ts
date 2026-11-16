@@ -107,6 +107,24 @@ test("a failed unfreeze after the comment names the step and keeps the text", as
   expect(copy.inner.composer.inputs.input("body").value()).toContain("Show the empty-cart page");
 });
 
+test("a retried answer after a failed unfreeze posts the comment once", async () => {
+  let failures = 1;
+  const copy = await answering({
+    bakers_ticket_update: () => (failures-- > 0 ? new Error("Not allowed") : {}),
+  });
+  click(find(copy.render(), "send-answer"));
+  await flush();
+  click(find(copy.render(), "send-answer"));
+  await flush();
+  expect(writes().map((w) => w[0])).toEqual([
+    "bakers_comment_publish",
+    "bakers_ticket_update",
+    "bakers_ticket_update",
+  ]);
+  const toast: any = env.calls.find((c) => c.fn === "notify")?.args[0];
+  expect(toast.title).toBe("Answered SHOP-41, the run continues");
+});
+
 test("the first keystroke in the composer pins the preview tab", async () => {
   env.shared["bakers.preview"] = { id: "SHOP-41", index: null };
   const copy = await ticketTab("SHOP-41");

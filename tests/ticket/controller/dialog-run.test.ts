@@ -102,6 +102,26 @@ test("Move to: when setting the conductor fails, it says the run was cancelled",
   expect(closed()).toBe(false);
 });
 
+test("Move to: a retry after setting the conductor failed sets it without cancelling again", async () => {
+  let failures = 1;
+  const copy = await open(
+    { view: "dialog", form: "move", ticket: "SHOP-41", conductor: "k2", name: "ci-box" },
+    {
+      bakers_ticket_update: () => (failures-- > 0 ? new Error("Conductor offline") : {}),
+    },
+  );
+  click(find(copy.render(), "primary"));
+  await flush();
+  click(find(copy.render(), "primary"));
+  await flush();
+  expect(writes().map((w) => w[0])).toEqual([
+    "bakers_run_cancel",
+    "bakers_ticket_update",
+    "bakers_ticket_update",
+  ]);
+  expect(closed()).toBe(true);
+});
+
 test("Cancel run: the dialog, then run_cancel with the reason", async () => {
   const copy = await open({ view: "dialog", form: "cancel", ticket: "SHOP-41" });
   const root = copy.render();

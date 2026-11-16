@@ -2,7 +2,8 @@
 // warns once (the second submit writes); then the steps in order. A step may be skipped
 // (when). When a step fails, the message names what was done and what failed, in the
 // definition's words ("Comment posted; unfreezing failed: <why>"), the values stay and the
-// form stays open. A second submit while one runs does nothing.
+// form stays open; a retry skips the steps that already finished. A second submit while one
+// runs does nothing.
 import { classify } from "../core/errors.js";
 
 /**
@@ -36,10 +37,11 @@ export async function submit(def, state) {
     }
     const done = [];
     const results = [];
-    for (const step of def.steps) {
-      if (step.when && !step.when(state.values)) continue;
+    for (const [i, step] of def.steps.entries()) {
+      if (!state.finished.has(i) && step.when && !step.when(state.values)) continue;
       try {
-        results.push(await step.run(state.values));
+        if (!state.finished.has(i)) state.finished.set(i, await step.run(state.values));
+        results.push(state.finished.get(i));
         if (step.done) done.push(step.done);
       } catch (e) {
         const f = classify(e);
@@ -52,6 +54,7 @@ export async function submit(def, state) {
         return { ok: false };
       }
     }
+    state.finished.clear();
     const success =
       typeof def.success === "function"
         ? def.success(state.values, results)
