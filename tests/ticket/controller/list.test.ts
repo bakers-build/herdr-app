@@ -13,6 +13,8 @@ import {
   runs,
   texts,
   fetched,
+  fireTimers,
+  walk,
 } from "../../harness";
 
 const actions: any = await import("../../../mods/bakers/core/actions.js");
@@ -217,7 +219,28 @@ test("Show closed tickets lists done tickets in Open by state", async () => {
   const copy = await list("open");
   expect(find(copy.render(), "row-SHOP-49")).toBeUndefined();
   env.shared["bakers.showClosed"] = true;
+  fireTimers();
+  await flush();
   expect(find(copy.render(), "row-SHOP-49")).toBeDefined();
+});
+
+test("a closed ticket open as a tab shows once with Show closed tickets", async () => {
+  activeSpace();
+  env.spaces[0].tabs.push({ id: "t6", name: "SHOP-49 closed", index: 2 });
+  backend();
+  env.shared["bakers.view"] = "open";
+  const Bakers = await load("bakers/main.js");
+  const copy = mount(Bakers, { view: "ticket.list" });
+  await flush();
+  expect(find(copy.render(), "row-SHOP-49")).toBeUndefined();
+  env.shared["bakers.showClosed"] = true;
+  fireTimers();
+  await flush();
+  let rows = 0;
+  walk(copy.render(), (n: any) => {
+    if (n?.calls?.id?.[0] === "row-SHOP-49") rows++;
+  });
+  expect(rows).toBe(1);
 });
 
 test("the view menu offers the sidebar's views and switches", async () => {

@@ -121,8 +121,8 @@ function fakeApi(over: any = {}) {
   const calls: string[] = [];
   const api = {
     calls,
-    listOpen: async (p: string) => {
-      calls.push(`list ${p}`);
+    listOpen: async (p: string, tabs: string[] = []) => {
+      calls.push(["list", p, ...tabs].join(" "));
       return rows.map((r) => ({ ...r, runs: details[r.id]?.runs ?? [] }));
     },
     planComments: async (p: string) => {
@@ -204,6 +204,13 @@ test("a refresh is one list read and one plan read, no read per ticket", async (
   const store = createStore(api, { now: () => NOW });
   await store.load("p1");
   expect(api.calls).toEqual(["list p1", "plans p1"]);
+});
+
+test("a refresh asks for the open tickets together with the tickets of the open tabs", async () => {
+  const api = fakeApi();
+  const store = createStore(api, { now: () => NOW, tabs: () => ["SHOP-49", "SHOP-41"] });
+  await store.load("p1");
+  expect(api.calls).toEqual(["list p1 SHOP-49 SHOP-41", "plans p1"]);
 });
 
 test("byId finds by identifier or uuid; onChange fires after refresh", async () => {

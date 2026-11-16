@@ -2,6 +2,7 @@
 // Drupal's JSON:API (the real bb_ticket read in jsonapi/bb_ticket-read.json). It understands
 // condition filters (=, <>, CONTAINS, STARTS_WITH, IN, IS NULL, IS NOT NULL) on attributes
 // and on relationship paths (ticket_id.project_id.id), sort, include (also dotted) and paging.
+// Strict like Drupal: a boolean matches only 1 or 0, and IN takes a list (value[]=a&value[]=b).
 
 export type Resource = {
   type: string;
@@ -31,22 +32,20 @@ export function jsonapiServer(resources: Resource[], base = "https://bakers.test
     return rest.length ? [] : [v && typeof v === "object" && "value" in v ? v.value : v];
   };
 
-  const test = (r: Resource, path: string, op: string, value: string | null) => {
+  const test = (r: Resource, path: string, op: string, value: string | null, list: string[]) => {
     const vs = values(r, path.split("."));
     const has = vs.filter((v) => v !== null && v !== undefined && v !== "");
     switch (op) {
       case "=":
-        return vs.some(
-          (v) => String(v) === value || (typeof v === "boolean" && String(Number(v)) === value),
-        );
+        return vs.some((v) => (typeof v === "boolean" ? String(Number(v)) : String(v)) === value);
       case "<>":
-        return !vs.some((v) => String(v) === value);
+        return !vs.some((v) => (typeof v === "boolean" ? String(Number(v)) : String(v)) === value);
       case "CONTAINS":
         return has.some((v) => String(v).toLowerCase().includes(String(value).toLowerCase()));
       case "STARTS_WITH":
         return has.some((v) => String(v).toLowerCase().startsWith(String(value).toLowerCase()));
       case "IN":
-        return has.some((v) => String(value).split(",").includes(String(v)));
+        return has.some((v) => list.includes(String(v)));
       case "IS NULL":
         return has.length === 0;
       case "IS NOT NULL":
@@ -118,6 +117,7 @@ export function jsonapiServer(resources: Resource[], base = "https://bakers.test
           p.get(`filter[f${i}][condition][path]`) as string,
           p.get(`filter[f${i}][condition][operator]`) ?? "=",
           p.get(`filter[f${i}][condition][value]`),
+          p.getAll(`filter[f${i}][condition][value][]`),
         ),
       );
     const sort = p.get("sort");

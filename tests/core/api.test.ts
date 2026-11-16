@@ -89,6 +89,31 @@ test("search sends filters as JSON:API conditions, sort, include and paging; it 
   expect(fetched()[1]).toContain("page[offset]=50");
 });
 
+test("search sends a boolean as 1 or 0 and an IN value as a list", async () => {
+  cliWithToken();
+  env.fetch = async () => ({
+    status: 200,
+    ok: true,
+    json: async () => doc([]),
+    text: async () => "",
+  });
+  await api.search("bb_ticket", "bb_ticket", {
+    filter: [
+      ["closed", "=", false],
+      ["frozen", "=", true],
+      ["identifier", "IN", ["SHOP-41", "SHOP-49"]],
+    ],
+  });
+  const url = fetched()[0];
+  expect(url).toContain(
+    "filter[f0][condition][path]=closed&filter[f0][condition][operator]==&filter[f0][condition][value]=0",
+  );
+  expect(url).toContain("filter[f1][condition][value]=1");
+  expect(url).toContain(
+    "filter[f2][condition][operator]=IN&filter[f2][condition][value][]=SHOP-41&filter[f2][condition][value][]=SHOP-49",
+  );
+});
+
 test("a 401 asks the CLI for a new token and tries once more", async () => {
   cliWithToken([TOKEN, { ...TOKEN, token: "fresh" }]);
   const auth: string[] = [];

@@ -109,9 +109,15 @@ export default class TicketList {
   result() {
     const { list, server } = this.wanted();
     const isServer = list === server;
+    const records = isServer ? [] : getStore().records();
+    const known = new Set(records.map((/** @type {any} */ r) => r.id));
+    // A closed ticket open as a tab is in the store and in the closed list: show it once.
     const base = isServer
       ? this.server.rows
-      : [...getStore().records(), ...(server ? this.server.rows : [])];
+      : [
+          ...records,
+          ...(server ? this.server.rows : []).filter((/** @type {any} */ r) => !known.has(r.id)),
+        ];
     return {
       list,
       ...runList(list.def, base, {

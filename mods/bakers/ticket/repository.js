@@ -19,25 +19,40 @@ const DETAIL_INCLUDE = [
   "parent_id",
 ];
 
-/** The open tickets of a project, with runs and labels: the base of the open lists. @param {string} project */
-export async function listOpen(project) {
-  return (
-    await search(...TICKET, {
-      filter: [["project_id.id", "=", project]],
+/**
+ * The open tickets of a project, with runs and labels: the base of the open lists. The
+ * tickets of open tabs come along, closed or not, so their tabs can follow the state.
+ * @param {string} project @param {string[]} [tabs] identifiers of the open ticket tabs
+ */
+export async function listOpen(project, tabs = []) {
+  const inProject = /** @type {[string, string, string]} */ (["project_id.id", "=", project]);
+  const [open, tabbed] = await Promise.all([
+    search(...TICKET, {
+      filter: [inProject, ["closed", "=", false]],
       include: LIST_INCLUDE,
       sort: "-changed",
       limit: 50,
       all: true,
-    })
-  ).map(toTicket);
+    }),
+    tabs.length
+      ? search(...TICKET, {
+          filter: [inProject, ["identifier", "IN", tabs]],
+          include: LIST_INCLUDE,
+          limit: 50,
+        })
+      : [],
+  ]);
+  const seen = new Set(open.map((t) => t.id));
+  return [...open, ...tabbed.filter((t) => !seen.has(t.id))].map(toTicket);
 }
 
-/** Which tickets of the project have a plan comment, and when the newest was written. @param {string} project */
+/** Which open tickets of the project have a plan comment, and when the newest was written. @param {string} project */
 export async function planComments(project) {
   const plans = await search("bb_comment", "bb_comment", {
     filter: [
       ["bb_comment_type", "=", "plan"],
       ["ticket_id.project_id.id", "=", project],
+      ["ticket_id.closed", "=", false],
     ],
     limit: 50,
     all: true,

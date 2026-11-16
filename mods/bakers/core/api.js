@@ -6,7 +6,10 @@
 import { BakersError, run } from "./cli.js";
 import { normalize } from "./jsonapi.js";
 
-/** @typedef {[string, string, (string | number | boolean)?]} Condition [path, operator, value] */
+/** @typedef {[string, string, (string | number | boolean | string[])?]} Condition [path, operator, value; IN takes a list] */
+
+/** A condition value as Drupal reads it: booleans as 1 or 0. @param {string | number | boolean} v */
+const value = (v) => (typeof v === "boolean" ? (v ? "1" : "0") : String(v));
 /** @typedef {{ filter?: Condition[], include?: string[], sort?: string, limit?: number, offset?: number, all?: boolean }} Query */
 
 /** @type {{ base: string, token: string } | null} */
@@ -72,10 +75,11 @@ async function get(path, params) {
 /** @param {Query} q @param {number} offset */
 function params(q, offset) {
   const p = new URLSearchParams();
-  (q.filter ?? []).forEach(([path, op, value], i) => {
+  (q.filter ?? []).forEach(([path, op, v], i) => {
     p.set(`filter[f${i}][condition][path]`, path);
     p.set(`filter[f${i}][condition][operator]`, op);
-    if (value !== undefined) p.set(`filter[f${i}][condition][value]`, String(value));
+    if (Array.isArray(v)) for (const x of v) p.append(`filter[f${i}][condition][value][]`, x);
+    else if (v !== undefined) p.set(`filter[f${i}][condition][value]`, value(v));
   });
   if (q.sort) p.set("sort", q.sort);
   if (q.include?.length) p.set("include", q.include.join(","));
@@ -89,15 +93,13 @@ function params(q, offset) {
 /** The same query for `bakers dropsh search`. @param {string} type @param {string} bundle @param {Query} q @param {number} offset */
 function dropshArgs(type, bundle, q, offset) {
   const a = ["dropsh", "search", type, "--bundle", bundle];
-  for (const [path, op, value] of q.filter ?? [])
+  for (const [path, op, v] of q.filter ?? []) {
+    const val = Array.isArray(v) ? v.join(",") : v === undefined ? undefined : value(v);
     a.push(
       "--filter",
-      op === "="
-        ? `${path}:${value}`
-        : value === undefined
-          ? `${path}:${op}`
-          : `${path}:${op}:${value}`,
+      op === "=" ? `${path}:${val}` : val === undefined ? `${path}:${op}` : `${path}:${op}:${val}`,
     );
+  }
   if (q.sort) a.push("--sort", q.sort);
   if (q.include?.length) a.push("--include", ...q.include);
   if (q.limit != null) a.push("--limit", String(q.limit), "--offset", String(offset));

@@ -1,17 +1,20 @@
 // ticket/store: the tickets of the window's project, in memory, shared by every copy of the
 // mod (created on first use, never at module top level, AGENTS.md). A refresh reads the open
-// tickets and the plan comments (two requests) and derives who needs you from them.
+// tickets with those of the open tabs, and the open tickets' plan comments, and derives who
+// needs you from them.
 import { setShared } from "herdr";
+import { openTickets } from "../core/tabs.js";
 import { ensureProject, projectError } from "../project/state.js";
 import * as repository from "./repository.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
 /**
  * @param {any} api the loaders (listOpen, planComments, readTicket)
- * @param {{ now?: () => number }} [options]
+ * @param {{ now?: () => number, tabs?: () => string[] }} [options] tabs: identifiers of the open ticket tabs
  */
 export function createStore(api, options = {}) {
   const now = options.now ?? (() => Date.now());
+  const tabs = options.tabs ?? (() => []);
   const listeners = new Set();
   /** @type {Map<string, any>} uuid -> detail (a ticket read) */
   const details = new Map();
@@ -41,7 +44,7 @@ export function createStore(api, options = {}) {
       store.loading = true;
       try {
         const [list, plans] = await Promise.all([
-          api.listOpen(store.project),
+          api.listOpen(store.project, tabs()),
           api.planComments(store.project),
         ]);
         facts.clear();
@@ -150,7 +153,7 @@ export function _resetForTests() {
 }
 
 export function getStore() {
-  if (!store) store = createStore(repository);
+  if (!store) store = createStore(repository, { tabs: () => openTickets().map((o) => o.id) });
   return store;
 }
 
