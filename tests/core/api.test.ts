@@ -222,3 +222,15 @@ test("an older CLI without auth token reads through bakers dropsh instead", asyn
   ]);
   expect(fetched()).toEqual([]);
 });
+
+test("after falling back to dropsh, later reads ask the CLI for a token no more", async () => {
+  env.exec = async (_c, argv) => {
+    if (argv[0] === "auth")
+      return { code: 1, stdout: "", stderr: "error: unknown command 'token'" };
+    return { code: 0, stdout: JSON.stringify(doc({ type: "x", id: "1" })), stderr: "" };
+  };
+  await api.read("x", "x", "1");
+  await api.read("x", "x", "1");
+  const auth = env.calls.filter((c) => c.fn === "exec" && c.args[1][0] === "auth");
+  expect(auth.length).toBe(1);
+});

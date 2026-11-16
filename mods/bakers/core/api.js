@@ -29,6 +29,7 @@ export function _resetForTests() {
 /** @param {boolean} [fresh] ask the CLI again (after a 401) */
 async function token(fresh = false) {
   if (session && !fresh) return session;
+  if (mode === "dropsh") return null;
   if (!pending) pending = askToken().finally(() => (pending = null));
   return pending;
 }

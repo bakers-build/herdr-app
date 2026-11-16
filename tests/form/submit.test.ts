@@ -83,6 +83,47 @@ test("a retry after a partial failure runs only the steps that did not finish", 
   expect(ran).toEqual(["comment", "unfreeze", "unfreeze"]);
 });
 
+test("a retry after the text was edited posts the edited text again", async () => {
+  const posted: string[] = [];
+  let failures = 1;
+  const d = def(
+    [
+      { run: async (v: any) => posted.push(v.body), done: "Comment posted" },
+      {
+        run: async () => {
+          if (failures-- > 0) throw new Error("Not allowed");
+        },
+        failed: "unfreezing failed",
+      },
+    ],
+    { success: "Answered" },
+  );
+  const s = new FormState(d);
+  expect((await submit(d, s)).ok).toBe(false);
+  s.set("body", "edited");
+  expect(await submit(d, s)).toMatchObject({ ok: true, success: "Answered" });
+  expect(posted).toEqual(["Hi", "edited"]);
+});
+
+test("a change event that keeps the text does not post it twice", async () => {
+  const posted: string[] = [];
+  let failures = 1;
+  const d = def([
+    { run: async (v: any) => posted.push(v.body), done: "Comment posted" },
+    {
+      run: async () => {
+        if (failures-- > 0) throw new Error("Not allowed");
+      },
+      failed: "unfreezing failed",
+    },
+  ]);
+  const s = new FormState(d);
+  await submit(d, s);
+  s.set("body", "Hi");
+  expect((await submit(d, s)).ok).toBe(true);
+  expect(posted).toEqual(["Hi"]);
+});
+
 test("a retry failing again still names the steps finished before", async () => {
   const d = def([
     { run: async () => {}, done: "Comment posted" },

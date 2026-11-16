@@ -284,9 +284,11 @@ export async function ticketTab(id = "SHOP-41", extra: Record<string, unknown> =
 const projectData: any = await import("../../mods/bakers/project/state.js");
 const ticketData: any = await import("../../mods/bakers/ticket/store.js");
 const tabsModel: any = await import("../../mods/bakers/core/tabs.js");
+const api: any = await import("../../mods/bakers/core/api.js");
 
-/** Forgets the window's project, store and pending tabs between tests. */
+/** Forgets the window's project, store, pending tabs and API session between tests. */
 export function resetMod() {
+  api._resetForTests();
   projectData._resetForTests();
   ticketData._resetForTests();
   tabsModel._resetForTests();
