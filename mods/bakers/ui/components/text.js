@@ -1,7 +1,7 @@
 // components/text: an identifier in the monospace font; an upper-case section heading.
 import { div } from "gpui-kit";
 import { theme } from "herdr";
-import { MONO_FONT } from "../core/theme.js";
+import { MONO_FONT } from "../theme.js";
 
 /** @param {string} text @param {number} [size] */
 export function mono(text, size = 12) {

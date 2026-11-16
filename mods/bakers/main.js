@@ -10,8 +10,8 @@
 // docs/architecture.md describes the layers; tests/architecture.test.ts keeps them apart.
 import { div, View } from "gpui-kit";
 import { props } from "herdr";
-import Dialog from "./components/form/dialog.js";
-import Menu from "./components/menu.js";
+import Dialog from "./ui/form/dialog.js";
+import Menu from "./ui/components/menu.js";
 import project from "./project/routes.js";
 import shell from "./shell/routes.js";
 import ticket from "./ticket/routes.js";

@@ -9,8 +9,8 @@ import { layout, nextCommand, notify, openOverlay, run, setShared, shared, theme
 import { classify } from "../../core/errors.js";
 import { findNode } from "../../core/herdr.js";
 import { ensureTicketsTab, openTicket, syncNames } from "../../core/tabs.js";
-import { UI_FONT } from "../../core/theme.js";
-import { openForm } from "../../components/form/dialog.js";
+import { UI_FONT } from "../../ui/theme.js";
+import { openForm } from "../../ui/form/dialog.js";
 import { currentProject } from "../../project/state.js";
 import { getStore, loadError, publishNeeds, ready } from "../../ticket/store.js";
 import { statusParts } from "../../ticket/presenter/counts.js";

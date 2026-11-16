@@ -3,7 +3,7 @@
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { theme } from "herdr";
-import { MONO_FONT } from "../core/theme.js";
+import { MONO_FONT } from "../theme.js";
 import { statusLine } from "./status-line.js";
 
 /** @param {any} el @param {number | null} w */

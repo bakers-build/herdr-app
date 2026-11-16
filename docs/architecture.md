@@ -3,7 +3,7 @@
 `mods/bakers` is one Herdr mod. Herdr places it in several blocks, tabs and overlays, and
 gives each copy a **route name** in `props().view`. The router (`main.js`) runs that route's
 **controller**. Controllers belong to **modules** (ticket, project, shell). The modules build
-on a small **framework** (core, form, list, components). The structure follows Drupal: a
+on a small **framework**: logic (core, form, list) and drawing (ui). The structure follows Drupal: a
 module brings its entity's model, its lists (Views), its view modes, its forms, its
 operations, its controllers and its routes.
 
@@ -11,7 +11,7 @@ operations, its controllers and its routes.
 mods/bakers/
   main.js                       router: props().view → route → controller
 
-  core/      framework          technique, knows no module
+  core/      framework logic    technique, knows no module
     cli.js                        the bakers CLI: tools (writes), auth token, dropsh
     api.js                        reading JSON:API with the CLI's short-lived token (fetch);
                                   bakers dropsh for an older CLI; a new token after a 401
@@ -19,15 +19,18 @@ mods/bakers/
     errors.js                     every failure in one kind: offline, api, invalid, denied,
                                   conflict, failed
     tabs.js                       ticket tabs by name, preview and pin
-    herdr.js, actions.js, format.js, theme.js
-  form/      framework          form handling, once for every form: state, submit (validate,
+    herdr.js, actions.js, format.js
+  form/      framework logic    form handling, once for every form: state, submit (validate,
                                   conflict warning, steps with partial failures), keys, registry
-  list/      framework          list engine (like Views): run (filters, derived filters, exposed
+  list/      framework logic    list engine (like Views): run (filters, derived filters, exposed
                                   filter, sort, group, pager), query (a server list's query),
                                   registry (lists by key, also "state:working")
-  components/ framework         generic drawing, no entity: button, chip, dot, pill, text,
-                                  status-line, table, pager, callout, entry, nav, markdown,
-                                  menu, state; form/ (inputs, inline form, dialog frame)
+  ui/        framework drawing  generic drawing, knows no entity
+    components/                   button, chip, dot, pill, text, status-line, table, pager,
+                                  callout, entry, nav, markdown, menu, state
+    form/                         drawing forms: inputs, the inline form, the dialog frame
+    theme.js                      the wireframe's grays mapped onto Herdr's theme tokens, fonts
+    icons/                        the mod's SVGs
 
   ticket/    module
     routes.js                     ticket.list, ticket.view, ticket.context, ticket.search,
@@ -66,7 +69,7 @@ mods/bakers/
 | `ticket.conductor-picker`, `ticket.label-picker` | `ticket/controller/…` | popups |
 | `project.picker` | `project/controller/picker.js` | a popup from the sidebar |
 | `shell.rail`, `shell.sidebar`, `shell.tabs`, `shell.status` | `shell/controller/…` | layout blocks (`scripts/layout.js`) |
-| `menu`, `dialog` | `components/menu.js`, `components/form/dialog.js` | popup menus, form dialogs |
+| `menu`, `dialog` | `ui/components/menu.js`, `ui/form/dialog.js` | popup menus, form dialogs |
 
 ## How a screen comes about
 
@@ -84,9 +87,9 @@ The Tickets list, from Herdr to the pixels:
 5. **`list/run.js`** applies the definition's filters, derived filters, the exposed filter
    (the filter field), sort, group and pager.
 6. **`ticket/presenter/teaser.js`** turns each record into row props.
-7. **`components/table.js`** and `components/pager.js` draw them.
+7. **`ui/components/table.js`** and `ui/components/pager.js` draw them.
 8. **The controller** wires Up and Down, Enter, cmd-Enter, N, R and the menus. These go to
-   `core/tabs` (preview, pin), to forms (`components/form/dialog.js` with
+   `core/tabs` (preview, pin), to forms (`ui/form/dialog.js` with
    `ticket/form/create.js`) and to registered actions.
 
 A ticket tab goes the same way:
@@ -133,7 +136,7 @@ A form has three parts, each existing once:
 |---|---|---|
 | Definition | `ticket/form/*.js` | fields, texts, buttons; steps, each one command with its `done`/`failed` words |
 | Handling | `form/` | values, validation, a conflict warning given once, steps in order, partial failures ("Comment posted; unfreezing failed: …"), keys |
-| Drawing | `components/form/` | fields, the inline form, the dialog frame |
+| Drawing | `ui/form/` | fields, the inline form, the dialog frame |
 
 ## Reading and writing
 
@@ -152,10 +155,10 @@ updates.
 `tests/architecture.test.ts` checks:
 
 1. **The mod's top level** is `main.js`, the framework and the modules.
-2. **The framework never imports a module.** Inside it, layers point down: core ← form, list ←
-   components.
+2. **The framework never imports a module.** Inside it, layers point down: core ← form,
+   list ← ui. The logic (core, form, list) never imports ui.
 3. **Module logic draws nothing.** Model, rules, repository, commands, store, state,
-   presenter, list, form and operations import no gpui, no components and no controllers.
+   presenter, list, form and operations import no gpui, nothing from `ui/` and no controllers.
    Only `controller/` and `routes.js` draw.
 4. **Modules meet only through public parts.** A module uses another one only through its
    `model.js`, `state.js`, `store.js`, `presenter/` and `list/`, never its repository,
@@ -198,7 +201,7 @@ The tests mirror the structure:
 | `tests/core/` | the CLI call, the JSON:API transport (token, 401, dropsh fallback), the normalizer against a real `bb_ticket` read, error kinds, the tab model |
 | `tests/form/` | the form handling |
 | `tests/list/` | the list engine: filters, derived filters, exposed filter, sort, group, pager, server query, registry |
-| `tests/components/` | generic drawing |
+| `tests/ui/` | generic drawing |
 | `tests/ticket/` | store, presenters (pure), list definitions, form definitions; `controller/` drives each route over stubbed Herdr and a JSON:API test server (`tests/fixtures/jsonapi-server.ts`), pins the frames' copy and px, and ties clicks and keys to Herdr commands and bakers calls |
 | `tests/project/`, `tests/shell/` | the same for those modules |
 | `tests/architecture.test.ts`, `main.test.ts`, `install.test.ts` | the rules, the router, the layout transform and installer |

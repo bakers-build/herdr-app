@@ -3,7 +3,7 @@
 import { svg } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { theme } from "herdr";
-import { icons } from "../core/theme.js";
+import { icons } from "../theme.js";
 
 /** @param {string} text @param {{ strong?: boolean, id?: string, chevron?: boolean, px?: number, size?: number, onClick?: (e: any, cx: any) => void }} [o] */
 export function pill(text, o = {}) {

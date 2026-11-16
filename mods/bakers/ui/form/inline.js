@@ -4,7 +4,7 @@
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { theme } from "herdr";
-import { button } from "../button.js";
+import { button } from "../components/button.js";
 import { field, message } from "./inputs.js";
 
 /**

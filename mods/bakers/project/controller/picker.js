@@ -1,6 +1,6 @@
 // project/controller/picker (route project.picker): switch the window's project.
 import { perform } from "../../core/actions.js";
-import { PopupList } from "../../components/menu.js";
+import { PopupList } from "../../ui/components/menu.js";
 import { pickerItems } from "../presenter/picker.js";
 import { currentProject, projectChoices } from "../state.js";
 

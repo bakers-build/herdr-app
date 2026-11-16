@@ -5,7 +5,7 @@ import { v_flex } from "gpui-base";
 import { layout, run, shared, theme } from "herdr";
 import { findNode } from "../../core/herdr.js";
 import { ensureTicketsTab } from "../../core/tabs.js";
-import { UI_FONT } from "../../core/theme.js";
+import { UI_FONT } from "../../ui/theme.js";
 import { setView } from "../../ticket/state.js";
 import { railLabel } from "../../ticket/presenter/counts.js";
 

@@ -4,7 +4,7 @@ import { div } from "gpui-kit";
 import { Input, InputState } from "gpui-base";
 import { props } from "herdr";
 import { perform } from "../../core/actions.js";
-import { PopupList } from "../../components/menu.js";
+import { PopupList } from "../../ui/components/menu.js";
 import { getStore } from "../store.js";
 
 export default class LabelPicker extends PopupList {

@@ -4,8 +4,8 @@
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { closeOverlay, openOverlay, props, theme } from "herdr";
-import { perform } from "../core/actions.js";
-import { UI_FONT } from "../core/theme.js";
+import { perform } from "../../core/actions.js";
+import { UI_FONT } from "../theme.js";
 import { chip } from "./chip.js";
 
 /**

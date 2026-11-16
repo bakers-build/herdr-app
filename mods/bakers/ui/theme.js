@@ -12,9 +12,9 @@ export const UI_FONT = "Inter";
 export const MONO_FONT = "JetBrains Mono";
 
 export const icons = {
-  down: "mods/bakers/icons/chevron-down.svg",
-  right: "mods/bakers/icons/chevron-right.svg",
-  arrow: "mods/bakers/icons/arrow-right.svg",
+  down: "mods/bakers/ui/icons/chevron-down.svg",
+  right: "mods/bakers/ui/icons/chevron-right.svg",
+  arrow: "mods/bakers/ui/icons/arrow-right.svg",
 };
 
 export function tokens() {

@@ -3,7 +3,7 @@
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, Textarea, TextareaState, v_flex } from "gpui-base";
 import { theme } from "herdr";
-import { heading } from "../text.js";
+import { heading } from "../components/text.js";
 
 /**
  * A field: { name, type: "input" | "textarea" | "checkbox" | "choice", label?, heading?,

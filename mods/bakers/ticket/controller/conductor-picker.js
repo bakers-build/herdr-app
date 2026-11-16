@@ -3,9 +3,9 @@
 import { h_flex } from "gpui-base";
 import { props } from "herdr";
 import { classify } from "../../core/errors.js";
-import { chip } from "../../components/chip.js";
-import { openForm } from "../../components/form/dialog.js";
-import { PopupList } from "../../components/menu.js";
+import { chip } from "../../ui/components/chip.js";
+import { openForm } from "../../ui/form/dialog.js";
+import { PopupList } from "../../ui/components/menu.js";
 import { listConductors } from "../repository.js";
 import { getStore, ready } from "../store.js";
 

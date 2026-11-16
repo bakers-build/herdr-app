@@ -1,6 +1,6 @@
 // The bakers mod's architecture (docs/architecture.md):
-//   framework  core/ form/ list/ components/ — technique, form handling, list engine, drawing;
-//              knows no module
+//   framework  core/ form/ list/ — logic: technique, form handling, list engine;
+//              ui/ — drawing: components, form drawing, theme, icons; knows no module
 //   modules    ticket/ project/ shell/ — each with model, repository (reads), commands
 //              (writes), store, state, presenter/, list/, form/, operations/, controller/,
 //              routes.js
@@ -12,7 +12,7 @@ import { join, relative, resolve } from "node:path";
 import "./harness";
 
 const ROOT = resolve(import.meta.dir, "../mods/bakers");
-const FRAMEWORK = ["core", "form", "list", "components"];
+const FRAMEWORK = ["core", "form", "list", "ui"];
 const MODULES = ["ticket", "project", "shell"];
 const PUBLIC = ["model.js", "state.js", "store.js", "presenter", "list"];
 
@@ -46,16 +46,15 @@ const show = (bad: { from: string; to: string }[]) =>
 test("the mod is main.js, the framework and the modules", async () => {
   const tops = (await readdir(ROOT)).filter((n) => !n.startsWith(".")).sort();
   expect(tops).toEqual([
-    "components",
     "core",
     "form",
-    "icons",
     "list",
     "main.js",
     "mod.json",
     "project",
     "shell",
     "ticket",
+    "ui",
   ]);
 });
 
@@ -64,7 +63,7 @@ test("the framework never imports a module, and its layers point down", async ()
     core: ["core"],
     form: ["core", "form"],
     list: ["core", "list"],
-    components: ["core", "form", "components"],
+    ui: ["core", "form", "ui"],
   };
   const bad = (await edges()).filter(
     (e) =>
@@ -73,7 +72,7 @@ test("the framework never imports a module, and its layers point down", async ()
   expect(show(bad)).toEqual([]);
 });
 
-test("module logic draws nothing: no gpui, no components, no controllers", async () => {
+test("module logic draws nothing: no gpui, no ui, no controllers", async () => {
   const bad: string[] = [];
   for (const f of await files(ROOT)) {
     if (!MODULES.includes(parts(f)[0]) || isController(f)) continue;
@@ -83,7 +82,7 @@ test("module logic draws nothing: no gpui, no components, no controllers", async
     (e) =>
       MODULES.includes(parts(e.from)[0]) &&
       !isController(e.from) &&
-      (parts(e.to)[0] === "components" || isController(e.to)),
+      (parts(e.to)[0] === "ui" || isController(e.to)),
   );
   expect([...bad, ...show(imports)]).toEqual([]);
 });

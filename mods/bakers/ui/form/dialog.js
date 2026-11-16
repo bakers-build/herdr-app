@@ -8,13 +8,13 @@ import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { closeOverlay, notify, openOverlay, props, theme } from "herdr";
 import { register } from "../../core/actions.js";
-import { icons, UI_FONT } from "../../core/theme.js";
+import { icons, UI_FONT } from "../theme.js";
 import { formKey } from "../../form/keys.js";
 import { formBuilder } from "../../form/registry.js";
 import { FormState } from "../../form/state.js";
 import { submit } from "../../form/submit.js";
-import { button } from "../button.js";
-import { pill } from "../pill.js";
+import { button } from "../components/button.js";
+import { pill } from "../components/pill.js";
 import { field, FormInputs, message } from "./inputs.js";
 
 /** @param {string} form a registered form kind @param {Record<string, unknown>} p */
