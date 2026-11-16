@@ -48,6 +48,21 @@ test("agent line: asking, working, no run", () => {
   );
 });
 
+test("teaser: the agent cell names the claiming machine, as drawn", () => {
+  const r = {
+    id: "SHOP-41",
+    title: "T",
+    state: "working",
+    why: "Asked a question",
+    since: min(35),
+    run: running,
+    machine: "studio-mac",
+  };
+  expect(teaser(r, { view: "needs-me", selected: false, now: NOW }).cells[3]).toEqual({
+    status: { tone: "blocked", ring: false, text: "Claude Code needs you, studio-mac" },
+  });
+});
+
 test("teaser: the five cells of a Needs me row", () => {
   const r = {
     id: "SHOP-41",
@@ -101,6 +116,8 @@ const detail = {
     recipe: "matt",
     labels: ["Question"],
     branch_name: "b",
+    assignee: "cw",
+    reviewers: [],
     links: [{ uri: "u", title: "MR !91" }],
     conductor: "c1",
   },
@@ -167,17 +184,44 @@ test("context: the panel's sections", () => {
     recipe: "matt",
     labels: ["Question"],
     frozen: { text: "Yes, 35m", form: "unfreeze", label: "Unfreeze..." },
+    assignee: "cw",
+    reviewers: "-",
     branch: "b",
     parent: null,
     link: { title: "MR !91", uri: "u" },
   });
   expect(vm.activity).toEqual({ api: true, items: [] });
+  const withActivity = context(detail, {
+    terminal: null,
+    now: NOW,
+    activityServed: true,
+    activity: [
+      {
+        kind: "status_changed",
+        previous: "qualification",
+        next: "working",
+        created: new Date(min(60)).toISOString(),
+      },
+      { kind: "claimed", step: "working", created: new Date(min(60)).toISOString() },
+      { kind: "created", actor: "pg", created: new Date(min(180)).toISOString() },
+      { kind: "review_requested", created: new Date(min(5)).toISOString() },
+    ],
+  });
+  expect(withActivity.activity).toEqual({
+    api: false,
+    items: [
+      { text: "qualification to working", age: "1h" },
+      { text: "Run started, working", age: "1h" },
+      { text: "Created by pg", age: "3h" },
+      { text: "Review requested", age: "5m" },
+    ],
+  });
   expect(vm.runs).toEqual([{ state: "running", agent: "Claude Code", age: "1h" }]);
 });
 
 test("counts: sidebar rows, rail and status", () => {
   const rows = sidebarRows(
-    { needsMe: 2, open: 6, byState: { qualification: 2, plan: 1, working: 3 } },
+    { needsMe: 2, open: 6, byState: { qualification: 2, plan: 1, working: 3 }, recentlyClosed: 4 },
     "needs-me",
   );
   expect(rows.map((r: any) => [r.label, r.count, r.selected])).toEqual([
@@ -188,8 +232,10 @@ test("counts: sidebar rows, rail and status", () => {
     ["Plan", 1, false],
     ["Working", 3, false],
     ["Review", 0, false],
-    ["Recently closed", null, false],
+    ["Recently closed", 4, false],
   ]);
+  expect(rows[7]).toMatchObject({ dim: true });
+  expect(rows[7].api).toBeUndefined();
   expect(railLabel(2)).toEqual({
     text: "b 2",
     aria: "bakers, 2 tickets need you",

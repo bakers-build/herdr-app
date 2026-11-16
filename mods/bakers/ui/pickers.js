@@ -47,7 +47,7 @@ export class ConductorPicker extends PopupList {
     return (this.conductors ?? []).map((/** @type {any} */ c) => ({
       key: c.uuid ?? c.id,
       label: c.name ?? c.uuid,
-      hint: c.machine ?? "",
+      hint: [c.machine, c.online === false ? "offline" : null].filter(Boolean).join(", "),
       choose: () => {
         this.close();
         openForm("move", {
@@ -60,6 +60,8 @@ export class ConductorPicker extends PopupList {
   }
 
   bottom(t) {
+    if (this.served && this.conductors && !this.conductors.length)
+      return h_flex().px(8).py(6).text_color(t.muted).child("No conductor in this project.");
     if (this.served) return null;
     return h_flex()
       .gap(4)

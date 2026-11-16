@@ -1,5 +1,6 @@
 // The acme-shop project of the wireframe frames, served by a fake bakers CLI.
 import { cli, env, flush, load, mount } from "../harness";
+import { jsonapiServer, ref, type Resource } from "./jsonapi-server";
 
 export const NOW = Date.now();
 const ago = (min: number) => new Date(NOW - min * 60000).toISOString();
@@ -116,33 +117,143 @@ export const read: Record<string, any> = {
   },
 };
 
-export function backend(extra: Record<string, unknown> = {}) {
-  cli({
-    bakers_project_read: (a: any) =>
-      a.project === "ACMESHOP"
-        ? { uuid: "p1", key: "ACMESHOP", name: "acme-shop" }
-        : new Error(`Project ${a.project} does not exist`),
-    bakers_ticket_list: { tickets: list, next_offset: null },
-    bakers_ticket_read: (a: any) => {
-      const row = list.find((t) => t.id === a.ticket || t.identifier === a.ticket);
-      return { ...row, workflow: "bb_work", comments: [], ...(read[row?.id ?? ""] ?? {}) };
-    },
-    bakers_ticket_runs_list: (a: any) =>
-      a.ticket === "u41"
-        ? {
-            runs: [
-              {
-                uuid: "r1",
-                state: "running",
-                agent: "claude",
-                started_at: Math.floor(NOW / 1000) - 3600,
-                closed: false,
-              },
-            ],
-          }
-        : { runs: [] },
-    ...extra,
-  });
+const iso = (ms: number) => new Date(ms).toISOString();
+
+/**
+ * The project as JSON:API resources, as the bakers server serves them.
+ * @param o tickets, activity, conductors or projects to use instead of the defaults
+ */
+export function resources(
+  o: { tickets?: any[]; activity?: any[]; conductors?: any[]; projects?: any[] } = {},
+): Resource[] {
+  const tickets = o.tickets ?? list;
+  const out: Resource[] = [];
+  for (const p of o.projects ?? [{ id: "p1", name: "acme-shop", key: "ACMESHOP" }])
+    out.push({
+      type: "bb_project--bb_project",
+      id: p.id,
+      attributes: { name: p.name, key: p.key },
+    });
+  const terms = new Map<string, Resource>();
+  const term = (bundle: string, name: string) => {
+    const id = `${bundle}-${name}`;
+    if (!terms.has(id)) terms.set(id, { type: `bb_term--${bundle}`, id, attributes: { name } });
+    return ref(`bb_term--${bundle}`, id);
+  };
+  for (const t of tickets) {
+    const extra = read[t.id] ?? {};
+    const comments = extra.comments ?? [];
+    const runs =
+      t.id === "u41"
+        ? [
+            {
+              id: "r1",
+              state: "running",
+              agent: "claude",
+              started_at: iso(NOW - 3600000),
+              closed: false,
+            },
+          ]
+        : (t.runs ?? []);
+    for (const c of comments)
+      out.push({
+        type: "bb_comment--bb_comment",
+        id: c.id,
+        attributes: {
+          bb_comment_type: c.type,
+          body: { value: c.body, format: "bb_rich" },
+          created: c.created,
+          author_name: c.author,
+        },
+        relationships: { ticket_id: { data: ref("bb_ticket--bb_ticket", t.id) } },
+      });
+    for (const r of runs)
+      out.push({
+        type: "bb_run--bb_run",
+        id: r.id,
+        attributes: { state: r.state, agent: r.agent, started_at: r.started_at, closed: r.closed },
+        relationships: { ticket_id: { data: ref("bb_ticket--bb_ticket", t.id) } },
+      });
+    out.push({
+      type: "bb_ticket--bb_ticket",
+      id: t.id,
+      attributes: {
+        identifier: t.identifier,
+        title: t.title,
+        state: t.state,
+        workflow: "bb_work",
+        frozen: Boolean(t.frozen),
+        frozen_at: t.frozen_at ?? null,
+        closed: Boolean(t.closed),
+        closed_date: t.closed ? iso(NOW - 2 * 86400000) : null,
+        changed: iso(NOW - 60000),
+        description: { value: extra.description ?? "", format: "bb_rich" },
+        branch_name: extra.branch_name ?? null,
+        links: extra.links ?? [],
+        assignee_name: t.assignee_name ?? null,
+        claim_machine: t.claim_machine ?? null,
+      },
+      relationships: {
+        project_id: { data: ref("bb_project--bb_project", t.project ?? "p1") },
+        labels: { data: (t.labels ?? []).map((l: string) => term("label", l)) },
+        ticket_type: { data: extra.type ? term("type", extra.type) : null },
+        recipe: { data: extra.recipe ? term("recipe", extra.recipe) : null },
+        conductor_id: {
+          data: extra.conductor ? ref("bb_conductor--bb_conductor", extra.conductor) : null,
+        },
+        parent_id: { data: null },
+        reviewers: { data: [] },
+        comments: { data: comments.map((c: any) => ref("bb_comment--bb_comment", c.id)) },
+        runs: { data: runs.map((r: any) => ref("bb_run--bb_run", r.id)) },
+      },
+    });
+  }
+  out.push(...terms.values());
+  for (const c of o.conductors ?? [{ id: "c1", label: "studio-mac conductor", status: "online" }])
+    out.push({
+      type: "bb_conductor--bb_conductor",
+      id: c.id,
+      attributes: { label: c.label, status: c.status ?? "online", node_load_label: c.load ?? null },
+      relationships: {
+        project_id: { data: ref("bb_project--bb_project", "p1") },
+        machine: { data: c.machine ? ref("bb_machine--bb_machine", `m-${c.id}`) : null },
+      },
+    });
+  for (const c of o.conductors ?? [])
+    if (c.machine)
+      out.push({
+        type: "bb_machine--bb_machine",
+        id: `m-${c.id}`,
+        attributes: { label: c.machine },
+      });
+  for (const a of o.activity ?? [])
+    out.push({
+      type: "bb_activity--bb_activity",
+      id: a.id,
+      attributes: {
+        kind: a.kind,
+        previous_state: a.previous_state ?? null,
+        new_state: a.new_state ?? null,
+        step: a.step ?? null,
+        created: a.created,
+      },
+      relationships: {
+        ticket_id: { data: ref("bb_ticket--bb_ticket", a.ticket ?? "u41") },
+        actor: { data: null },
+      },
+    });
+  return out;
+}
+
+/**
+ * Serves the project over the fake JSON:API server and answers the CLI's writes.
+ * @param extra tool replies for writes (bakers_*), and `jsonapi` overrides for reads
+ */
+export function backend(extra: Record<string, any> = {}) {
+  const { jsonapi, ...tools } = extra;
+  cli(tools);
+  // Built per request, so a test may change the data between requests.
+  env.fetch = (url: string, opts?: any) => jsonapiServer(resources(jsonapi ?? {}))(url, opts);
 }
 
 export function activeSpace(folder = "/work/acme-shop") {

@@ -42,14 +42,18 @@ It never overwrites a key you already use; it prints the ones it kept.
 
 Every change of state, freeze, move or cancel asks first; Esc writes nothing.
 
-## Limits of the bakers API
+## Data
 
-Shown with the "API" chip: assignee and reviewers (so Mine is empty), allowed transitions
-(the state menu lists every state; the server refuses what the workflow forbids), closing
-dates for Recently closed, the conductor list (Move to...), the activity list, and the
-project list when the CLI does not serve it (the project then comes from
-`.bakers/project.config.js` of the active space). All calls go through the developer's own
-`bakers` CLI; the mods keep no token and put no ticket content into Herdr's shared state.
+Reads go to the bakers JSON:API with your own sign-in: the mod asks `bakers auth token` (CLI
+0.10.1-next.11 or later) for a short-lived token, keeps it in memory only and asks again
+after a 401. With an older CLI it reads through `bakers dropsh` instead. Writes (comment,
+answer, edit, state, freeze, move, cancel, classify, labels) go through `bakers tools`.
+The mod puts no ticket content into Herdr's shared state.
+
+Still shown with the "API" chip: Mine (the mod does not know the signed-in user yet) and the
+allowed transitions (the state menu lists every state; the server refuses what the workflow
+forbids). Assignee, reviewers, the closing date, the conductor list, the machine and activity
+come from JSON:API.
 
 Screenshots for the pixel comparison: [docs/screenshots.md](docs/screenshots.md). The Herdr
 files this follows: [docs/herdr-reference.md](docs/herdr-reference.md).

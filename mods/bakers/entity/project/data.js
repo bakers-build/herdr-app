@@ -1,8 +1,9 @@
-// entity/project/data: the window's project, shared by every copy of the mod. Created lazily on first use, never at module top level (AGENTS.md: module code
-// runs once and is shared by copies). Shared state carries only the project uuid.
+// entity/project/data: the window's project, shared by every copy of the mod: the shared
+// uuid, else the project named in .bakers/project.config.js of the active space, read
+// through JSON:API (bb_project). Shared state carries only the project uuid.
 import { openOverlay, readTextFile, setShared, shared, spaces } from "herdr";
 import { register } from "../../core/actions.js";
-import { call } from "../../core/cli.js";
+import { read, search } from "../../core/api.js";
 
 /** @type {{ uuid: string, name: string } | null} */
 let project = null;
@@ -27,15 +28,13 @@ export const projectChoices = () => choices;
 export const pickerAvailable = () => pickerServed;
 export const projectError = () => lastError;
 
-const listProjects = async () => (await call("bakers_project_list", {}))?.projects ?? [];
-/** @param {string} project key or UUID */
-const readProject = (project) => call("bakers_project_read", { project });
-
-/** "herdr-app" -> "HERDRAPP": a project key from its name. @param {string} name */
-export const keyFromName = (name) => name.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const listProjects = () =>
+  search("bb_project", "bb_project", { sort: "name", limit: 50, all: true });
+/** @param {string} uuid */
+const readProject = (uuid) => read("bb_project", "bb_project", uuid);
 
 /** @param {any} p */
-const asProject = (p) => ({ uuid: p.uuid ?? p.id, name: p.name ?? p.key ?? p.uuid ?? p.id });
+const asProject = (p) => ({ uuid: p.id, name: p.name ?? p.label ?? p.key ?? p.id });
 
 /** project.name from .bakers/project.config.js in the active space's folder. */
 async function configuredName() {
@@ -66,32 +65,17 @@ async function resolve() {
     }
   }
   const name = await configuredName();
-  try {
-    choices = (await listProjects()).map(asProject);
-    pickerServed = true;
-  } catch (/** @type {any} */ e) {
-    if (!e?.unknownTool) throw e;
-    pickerServed = false;
-    choices = [];
-    if (name) {
-      try {
-        choices = [asProject(await readProject(keyFromName(name)))];
-      } catch (/** @type {any} */ e2) {
-        if (e2?.offline) throw e2;
-      }
-    }
-  }
+  choices = (await listProjects()).map(asProject);
   const match = choices.find((p) => p.name === name);
   if (match) return chooseProject(match);
   if (choices.length) {
     chooseProject(choices[0]);
-    if (pickerServed)
-      openOverlay({
-        mod: "bakers",
-        props: { view: "project-picker" },
-        kind: "popup",
-        width: 220,
-      });
+    openOverlay({
+      mod: "bakers",
+      props: { view: "project-picker" },
+      kind: "popup",
+      width: 220,
+    });
     return project;
   }
   return null;

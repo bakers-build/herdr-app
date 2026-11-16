@@ -3,62 +3,215 @@
 // ticket facts plus the derived reason and its start; presenters turn them into text.
 import { setShared, shared } from "herdr";
 import { register } from "../../core/actions.js";
-import { call } from "../../core/cli.js";
+import { read, search } from "../../core/api.js";
 import { ensureProject, projectError } from "../project/data.js";
 import { activeRun, deriveWhy, isClosed, since, STATES } from "./rules.js";
 
-const LIMIT = 4;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** @type {[string, string]} */
+const TICKET = ["bb_ticket", "bb_ticket"];
+const LIST_INCLUDE = ["runs", "labels"];
+const DETAIL_INCLUDE = [
+  "comments",
+  "runs",
+  "labels",
+  "ticket_type",
+  "recipe",
+  "conductor_id",
+  "conductor_id.machine",
+  "reviewers",
+  "parent_id",
+];
 
-/** Every ticket of a project, all pages. @param {string} project */
-export async function listTickets(project) {
-  const out = [];
-  let offset = 0;
-  for (let page = 0; page < 50; page++) {
-    const r = await call("bakers_ticket_list", { project, limit: 100, offset });
-    out.push(...(r?.tickets ?? []));
-    if (r?.next_offset == null || r.next_offset <= offset) break;
-    offset = r.next_offset;
-  }
-  return out;
+/** A term's or a user's name. @param {any} e */
+const nameOf = (e) => e?.name ?? e?.display_name ?? e?.label ?? null;
+
+/** @param {any} r a bb_run */
+const toRun = (r) => ({
+  uuid: r.id,
+  state: r.state,
+  agent: r.agent ?? r.harness ?? null,
+  started_at: r.started_at ?? null,
+  closed: Boolean(r.closed),
+});
+
+/** @param {any} c a bb_comment */
+const toComment = (c) => ({
+  id: c.id,
+  type: c.bb_comment_type ?? "comment",
+  author: c.author_name ?? "",
+  created: c.created,
+  body: c.body ?? "",
+});
+
+/** A bb_ticket as the list needs it. @param {any} t */
+function toTicket(t) {
+  return {
+    id: t.id,
+    identifier: t.identifier,
+    title: t.title,
+    state: t.state,
+    labels: (t.labels ?? []).map(nameOf).filter(Boolean),
+    frozen: Boolean(t.frozen),
+    frozen_at: t.frozen_at ?? null,
+    closed: Boolean(t.closed),
+    closed_date: t.closed_date ?? null,
+    changed: t.changed ?? null,
+    assignee: t.assignee_name ?? null,
+    claim_machine: t.claim_machine ?? null,
+    conductor: t.conductor_id?.id ?? null,
+    runs: (t.runs ?? []).filter((/** @type {any} */ r) => r.state).map(toRun),
+  };
 }
 
-/** @param {string} ticket */
-export const readTicket = (ticket) => call("bakers_ticket_read", { ticket, newest: 50 });
-/** @param {string} ticket */
-export const listRuns = async (ticket) =>
-  (await call("bakers_ticket_runs_list", { ticket, limit: 20 }))?.runs ?? [];
-/** @param {string} ticket */
-export const listActivity = async (ticket) =>
-  (await call("bakers_ticket_activity_list", { ticket }))?.activity ?? [];
-/** @param {string} query @param {string} project */
-export const searchTickets = async (query, project) =>
-  (await call("bakers_ticket_search", { query, project }))?.tickets ?? [];
-/** @param {string} project */
-export const listConductors = async (project) =>
-  (await call("bakers_conductor_list", { project }))?.conductors ?? [];
-
-/** Runs fn over items with at most `limit` in flight. @param {any[]} items @param {number} limit @param {(item: any) => Promise<void>} fn */
-async function pool(items, limit, fn) {
-  let next = 0;
-  const worker = async () => {
-    while (next < items.length) {
-      const item = items[next++];
-      await fn(item);
-    }
+/** A bb_ticket with its includes, as a ticket tab and the panel need it. @param {any} t */
+function toDetail(t) {
+  const c = t.conductor_id;
+  return {
+    ...toTicket(t),
+    workflow: t.workflow ?? null,
+    description: t.description ?? "",
+    branch_name: t.branch_name ?? null,
+    links: t.links ?? [],
+    type: nameOf(t.ticket_type),
+    recipe: nameOf(t.recipe),
+    parent: t.parent_id?.identifier ?? null,
+    reviewers: (t.reviewers ?? []).map(nameOf).filter(Boolean),
+    conductorInfo: c?.type
+      ? {
+          label: c.label ?? null,
+          online: c.status === "online",
+          load: c.node_load_label ?? null,
+          machine: nameOf(c.machine),
+        }
+      : null,
+    comments: (t.comments ?? [])
+      .filter((/** @type {any} */ x) => x.created)
+      .map(toComment)
+      .sort((/** @type {any} */ a, /** @type {any} */ b) =>
+        String(a.created).localeCompare(String(b.created)),
+      ),
   };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+/** Every ticket of a project, with runs and labels. @param {string} project */
+export async function listTickets(project) {
+  return (
+    await search(...TICKET, {
+      filter: [["project_id.id", "=", project]],
+      include: LIST_INCLUDE,
+      sort: "-changed",
+      limit: 50,
+      all: true,
+    })
+  ).map(toTicket);
+}
+
+/** Which tickets of the project have a plan comment, and when the newest was written. @param {string} project */
+export async function planComments(project) {
+  const plans = await search("bb_comment", "bb_comment", {
+    filter: [
+      ["bb_comment_type", "=", "plan"],
+      ["ticket_id.project_id.id", "=", project],
+    ],
+    limit: 50,
+    all: true,
+  });
+  /** @type {Map<string, any[]>} */
+  const byTicket = new Map();
+  for (const c of plans) {
+    const id = c.ticket_id?.id;
+    if (id) byTicket.set(id, [...(byTicket.get(id) ?? []), { type: "plan", created: c.created }]);
+  }
+  return byTicket;
 }
 
 /**
- * @param {any} api the loaders (listTickets, readTicket, listRuns)
+ * One ticket with comments, runs, terms, conductor and reviewers.
+ * @param {string} idOrUuid identifier or UUID
+ * @param {boolean} [byUuid] it is a UUID (default: it looks like one)
+ */
+export async function readTicket(idOrUuid, byUuid = UUID.test(idOrUuid)) {
+  const t = byUuid
+    ? await read(...TICKET, idOrUuid, DETAIL_INCLUDE)
+    : (
+        await search(...TICKET, {
+          filter: [["identifier", "=", idOrUuid]],
+          include: DETAIL_INCLUDE,
+          limit: 1,
+        })
+      )[0];
+  if (!t) throw new Error(`Ticket ${idOrUuid} does not exist or is not readable.`);
+  return toDetail(t);
+}
+
+/** The ticket's activity, newest first. @param {string} ticketUuid */
+export async function listActivity(ticketUuid) {
+  const rows = await search("bb_activity", "bb_activity", {
+    filter: [["ticket_id.id", "=", ticketUuid]],
+    include: ["actor"],
+    sort: "-created",
+    limit: 20,
+  });
+  return rows.map((a) => ({
+    kind: a.kind,
+    previous: a.previous_state ?? null,
+    next: a.new_state ?? null,
+    step: a.step ?? null,
+    created: a.created,
+    actor: nameOf(a.actor),
+  }));
+}
+
+/** Identifier or title words, within the project. @param {string} query @param {string} project */
+export async function searchTickets(query, project) {
+  const q = query.trim();
+  const inProject = /** @type {[string, string, string]} */ (["project_id.id", "=", project]);
+  const [byId, byTitle] = await Promise.all([
+    search(...TICKET, {
+      filter: [inProject, ["identifier", "STARTS_WITH", q.toUpperCase()]],
+      limit: 10,
+    }),
+    search(...TICKET, {
+      filter: [inProject, ["title", "CONTAINS", q]],
+      sort: "-changed",
+      limit: 10,
+    }),
+  ]);
+  const seen = new Set();
+  return [...byId, ...byTitle]
+    .filter((t) => !seen.has(t.id) && seen.add(t.id))
+    .slice(0, 10)
+    .map((t) => ({ identifier: t.identifier, title: t.title, state: t.state, closed: t.closed }));
+}
+
+/** The project's conductors with their machine and load. @param {string} project */
+export async function listConductors(project) {
+  const rows = await search("bb_conductor", "bb_conductor", {
+    filter: [["project_id.id", "=", project]],
+    include: ["machine"],
+    limit: 50,
+  });
+  return rows.map((c) => ({
+    uuid: c.id,
+    name: c.label ?? c.conductor_name ?? c.id,
+    machine: nameOf(c.machine),
+    online: c.status === "online",
+    load: c.node_load_label ?? null,
+  }));
+}
+
+/**
+ * @param {any} api the loaders (listTickets, planComments, readTicket)
  * @param {{ now?: () => number }} [options]
  */
 export function createStore(api, options = {}) {
   const now = options.now ?? (() => Date.now());
   const listeners = new Set();
-  /** @type {Map<string, any>} uuid -> detail */
+  /** @type {Map<string, any>} uuid -> detail (a ticket read) */
   const details = new Map();
-  const cacheKeys = new Map();
+  /** @type {Map<string, any>} uuid -> derived facts from the list */
+  const facts = new Map();
   /** @type {any} */
   const store = {
     project: null,
@@ -72,7 +225,7 @@ export function createStore(api, options = {}) {
       if (project !== store.project) {
         store.tickets = [];
         details.clear();
-        cacheKeys.clear();
+        facts.clear();
       }
       store.project = project;
       await store.refresh();
@@ -82,18 +235,16 @@ export function createStore(api, options = {}) {
       if (!store.project) return;
       store.loading = true;
       try {
-        const list = await api.listTickets(store.project);
-        const open = list.filter((/** @type {any} */ t) => !isClosed(t));
-        await pool(open, LIMIT, async (/** @type {any} */ t) => {
-          const key = t.revision ?? t.changed ?? null;
-          if (key != null && cacheKeys.get(t.id) === key && details.has(t.id)) return;
-          try {
-            await store.enrich(t.id);
-            if (key != null) cacheKeys.set(t.id, key);
-          } catch {
-            // the row still shows from the list
-          }
-        });
+        const [list, plans] = await Promise.all([
+          api.listTickets(store.project),
+          api.planComments(store.project),
+        ]);
+        facts.clear();
+        for (const t of list) {
+          const comments = plans.get(t.id) ?? [];
+          const why = deriveWhy(t, comments, t.runs);
+          facts.set(t.id, { why, since: since(t, comments, t.runs, why), run: activeRun(t.runs) });
+        }
         store.tickets = list;
         store.error = null;
         store.updated = now();
@@ -105,10 +256,11 @@ export function createStore(api, options = {}) {
       for (const fn of listeners) fn(store);
     },
 
-    /** Reads one ticket with its runs and keeps the derived facts. @param {string} id */
-    async enrich(id) {
-      const [ticket, runs] = await Promise.all([api.readTicket(id), api.listRuns(id)]);
+    /** Reads one ticket with everything a tab or the panel shows. @param {string} id @param {boolean} [byUuid] */
+    async enrich(id, byUuid) {
+      const ticket = await api.readTicket(id, byUuid);
       const comments = ticket?.comments ?? [];
+      const runs = ticket?.runs ?? [];
       const why = deriveWhy(ticket, comments, runs);
       const detail = { ticket, comments, runs, why, since: since(ticket, comments, runs, why) };
       details.set(ticket?.id ?? id, detail);
@@ -118,7 +270,7 @@ export function createStore(api, options = {}) {
     /** A fresh detail for a ticket tab or the panel. @param {string} idOrUuid */
     async ticket(idOrUuid) {
       const row = store.byId(idOrUuid);
-      return store.enrich(row?.uuid ?? idOrUuid);
+      return row ? store.enrich(row.uuid, true) : store.enrich(idOrUuid);
     },
 
     /** @param {string} idOrUuid */
@@ -137,21 +289,24 @@ export function createStore(api, options = {}) {
 
     /** A list record: the raw facts and the derived reason. @param {any} t */
     row(t) {
+      const f = facts.get(t.id);
       const d = details.get(t.id);
       const closed = isClosed(t);
-      const why = closed ? null : (d?.why ?? deriveWhy(t, [], []));
       return {
         id: t.identifier,
         uuid: t.id,
         title: t.title,
         state: t.state,
         labels: t.labels ?? [],
-        why,
-        since: d?.since ?? (why === "Asked a question" ? since(t, [], [], why) : null),
-        run: activeRun(d?.runs),
-        conductor: d?.ticket?.conductor ?? null,
+        why: closed ? null : (f?.why ?? null),
+        since: f?.since ?? null,
+        run: f?.run ?? null,
+        machine: t.claim_machine ?? null,
+        conductor: t.conductor ?? null,
+        assignee: t.assignee ?? null,
         comments: d?.comments ?? [],
         closed,
+        closedDate: t.closed_date ?? null,
         frozen: Boolean(t.frozen),
       };
     },
@@ -168,7 +323,12 @@ export function createStore(api, options = {}) {
         rows = rows
           .filter((/** @type {any} */ r) => r.why)
           .sort((a, b) => (a.since ?? 0) - (b.since ?? 0));
-      else if (name === "closed") rows = rows.filter((/** @type {any} */ r) => r.closed);
+      else if (name === "closed")
+        rows = rows
+          .filter((/** @type {any} */ r) => r.closed)
+          .sort((/** @type {any} */ a, /** @type {any} */ b) =>
+            String(b.closedDate ?? "").localeCompare(String(a.closedDate ?? "")),
+          );
       else if (name.startsWith("state:"))
         rows = rows.filter((/** @type {any} */ r) => r.state === name.slice(6));
       else {
@@ -232,7 +392,7 @@ export function _resetForTests() {
 }
 
 export function getStore() {
-  if (!store) store = createStore({ listTickets, readTicket, listRuns });
+  if (!store) store = createStore({ listTickets, planComments, readTicket });
   return store;
 }
 

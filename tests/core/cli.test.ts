@@ -1,8 +1,7 @@
 import { beforeEach, expect, test } from "bun:test";
-import { cli, env, reset, tools } from "../harness";
+import { cli, env, reset } from "../harness";
 
 const api: any = await import("../../mods/bakers/core/cli.js");
-const data: any = await import("../../mods/bakers/entity/ticket/data.js");
 
 beforeEach(reset);
 
@@ -58,19 +57,4 @@ test("call passes a 30 s timeout to exec", async () => {
   };
   await api.call("bakers_ticket_read", { ticket: "X-1" });
   expect(seen).toEqual({ timeout: 30000 });
-});
-
-test("listTickets pages until next_offset is gone", async () => {
-  cli({
-    bakers_ticket_list: (a: any) =>
-      a.offset === 0
-        ? { tickets: [{ identifier: "A-1" }, { identifier: "A-2" }], next_offset: 2 }
-        : { tickets: [{ identifier: "A-3" }], next_offset: null },
-  });
-  const list = await data.listTickets("p-1");
-  expect(list.map((t: any) => t.identifier)).toEqual(["A-1", "A-2", "A-3"]);
-  expect(tools()).toEqual([
-    ["bakers_ticket_list", { project: "p-1", limit: 100, offset: 0 }],
-    ["bakers_ticket_list", { project: "p-1", limit: 100, offset: 2 }],
-  ]);
 });

@@ -17,7 +17,12 @@ core/        technique
 mods/bakers/
   main.js                 router: view name -> class; importing the forms registers them
   core/
-    cli.js                bakers tools <tool> --data <json> through exec; BakersError
+    cli.js                the bakers CLI through exec: tools (the writes), auth token, dropsh;
+                          BakersError
+    api.js                reading entities through JSON:API: a short-lived token from
+                          `bakers auth token`, kept in memory, fetch to <base_url>/jsonapi/...,
+                          a new token after a 401; `bakers dropsh` for an older CLI
+    jsonapi.js            a JSON:API document as plain entities (includes resolved)
     errors.js             every failure sorted into one kind: offline, api, invalid, denied,
                           conflict, failed
     tabs.js               ticket tabs by name, preview and pin (the names come from presenters)
@@ -38,7 +43,9 @@ mods/bakers/
     form/dialog.js        the dialog frame of frames 4 and R3-2, for any registered form
   entity/
     ticket/
-      data.js             loading: list, ticket, runs, activity, search, conductors; the store
+      data.js             reading through JSON:API: bb_ticket (with runs, labels; for a tab
+                          also comments, terms, conductor, reviewers), bb_comment (plans),
+                          bb_activity, bb_conductor; the store
       rules.js            what a ticket means: who needs you, since when, closed
       actions.js          every write (comment, resume, edit, transition, freeze, classify,
                           labels, cancel run, conductor, create), the only place that sends one
@@ -80,8 +87,9 @@ Checked by `tests/architecture.test.ts`:
    view name, and the registries.
 4. **The form handling, presenters, form definitions and entity logic draw nothing**: no
    gpui import.
-5. **Only `entity/*/data.js` and `actions.js` talk to bakers.** "What sends
-   `bakers_ticket_transition`?" has one answer.
+5. **Only `entity/*/data.js` and `actions.js` talk to bakers.** `data.js` reads through
+   JSON:API (`core/api.js`) and never writes; `actions.js` writes through the CLI's tools
+   (`core/cli.js`) and never reads. "What sends `bakers_ticket_transition`?" has one answer.
 6. **One mod.**
 
 ## The flow
@@ -104,6 +112,18 @@ For example, Send answer is the comment form with two steps: post the comment (`
 the second step fails, the handling says "Comment posted; unfreezing failed: <why>" and keeps
 the text. The definition contains no error handling of its own.
 
+## Reading and writing
+
+- **Reads** go to the server's JSON:API with the developer's own sign-in: `bakers auth token`
+  (CLI 0.10.1-next.11 and later, BAKERS-264) hands out a short-lived access token, the mod keeps
+  it in memory only and asks again after a 401. One request with `include` brings a ticket with
+  its comments, runs, labels, type, recipe, conductor and reviewers; the list is one request for
+  the tickets (with runs and labels) and one for the plan comments, not a request per ticket.
+  With an older CLI the same queries run through `bakers dropsh`, one process per request.
+- **Writes** stay with the CLI's tools (`bakers tools bakers_ticket_transition ...`): changing
+  state, freezing, cancelling or moving a run and classifying are operations with workflow rules,
+  not plain field updates.
+
 ## Errors
 
 `core/errors.js` sorts every failure into one kind, and every layer reacts the same way:
@@ -111,7 +131,7 @@ the text. The definition contains no error handling of its own.
 | kind | what the user sees |
 |---|---|
 | `offline` | "bakers offline" in the status item, the message inline with Retry |
-| `api` | the API chip in place of a section the CLI cannot serve |
+| `api` | the API chip in place of a section the CLI cannot serve (a tool it does not know) |
 | `invalid` | the error at the field; the form stays open |
 | `denied` | the server's words in the form |
 | `conflict` | a warning once; sending again goes ahead |
@@ -145,7 +165,7 @@ The tests mirror the layers:
 
 | folder | what it proves |
 |---|---|
-| `tests/core/` | the CLI call, error kinds, the tab model |
+| `tests/core/` | the CLI call, the JSON:API transport (token, 401, dropsh fallback), the normalizer (against a real bb_ticket read), error kinds, the tab model |
 | `tests/form/` | the form handling: steps, partial failures, conflict, busy, keys |
 | `tests/entity/` | data and store, presenters (pure functions: data in, props out), form definitions (texts and which actions in which order) |
 | `tests/components/` | generic drawing |
@@ -153,7 +173,9 @@ The tests mirror the layers:
 | `tests/architecture.test.ts` | the rules above |
 
 `tests/harness.ts` evaluates the real mod source over stubbed `gpui-kit`, `gpui-base` and
-`herdr` modules.
+`herdr` modules and a stubbed `fetch`; `tests/fixtures/jsonapi-server.ts` answers it like
+Drupal's JSON:API (conditions, relationship paths, include, sort, paging) from the acme-shop
+fixture.
 
 ## Outside the mod
 

@@ -74,7 +74,7 @@ test("Agent and conductor: the line, three actions and the key hint", async () =
   expect(runs()).toEqual([["agent.focus", { terminal: "t7" }]]);
 });
 
-test("Properties as drawn, with API chips for assignee and reviewers", async () => {
+test("Properties as drawn; assignee and reviewers come from JSON:API", async () => {
   const root = (await panel()).render();
   expect(texts(find(root, "properties"))).toEqual([
     "PROPERTIES",
@@ -92,10 +92,8 @@ test("Properties as drawn, with API chips for assignee and reviewers", async () 
     "Yes, 35m",
     "Unfreeze...",
     "Assignee",
-    "API",
     "-",
     "Reviewers",
-    "API",
     "-",
     "Branch",
     "shop-41-checkout-empty-cart",
@@ -152,28 +150,34 @@ test("Unfreeze..., Move to... and Cancel run... ask first and send nothing", asy
   expect(writes()).toEqual([]);
 });
 
-test("an unknown activity tool shows the API chip instead of an error", async () => {
+test("a ticket without activity shows only the heading", async () => {
   const root = (await panel()).render();
-  expect(texts(find(root, "activity"))).toEqual(["ACTIVITY", "API"]);
+  expect(texts(find(root, "activity"))).toEqual(["ACTIVITY"]);
 });
 
-test("Activity lists events with their ages when the tool is served", async () => {
+test("Activity lists bb_activity entries, newest first, with their ages", async () => {
   const now = Date.now();
   const root = (
     await panel(true, {
-      bakers_ticket_activity_list: {
+      jsonapi: {
         activity: [
-          { text: "Asked a question, frozen", at: new Date(now - 35 * 60000).toISOString() },
-          { text: "Created by you", at: new Date(now - 180 * 60000).toISOString() },
+          { id: "a1", kind: "created", created: new Date(now - 180 * 60000).toISOString() },
+          {
+            id: "a2",
+            kind: "status_changed",
+            previous_state: "qualification",
+            new_state: "working",
+            created: new Date(now - 60 * 60000).toISOString(),
+          },
         ],
       },
     })
   ).render();
   expect(texts(find(root, "activity"))).toEqual([
     "ACTIVITY",
-    "Asked a question, frozen",
-    "35m",
-    "Created by you",
+    "qualification to working",
+    "1h",
+    "Created",
     "3h",
   ]);
 });

@@ -17,7 +17,7 @@ export function sidebarRows(counts, view) {
     row("mine", "Mine", null, { api: true, disabled: true }),
     row("open", "Open by state", counts.open),
     ...STATES.map((s) => row(`state:${s}`, cap(s), counts.byState[s] ?? 0, { sub: true })),
-    row("closed", "Recently closed", null, { api: true, dim: true }),
+    row("closed", "Recently closed", counts.recentlyClosed ?? null, { dim: true }),
   ];
 }
 

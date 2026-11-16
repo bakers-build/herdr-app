@@ -59,8 +59,7 @@ the reader and are not built. Colors follow the Herdr theme, not the wireframe's
 
 - Herdr draws a pane header on every pane of the main area, so the Tickets tab has one too
   (R2-4 draws the list without it).
-- What the bakers API cannot deliver shows the "API" chip: assignee, reviewers, Mine,
-  Recently closed dates, allowed states, the conductor list (Move to...), Activity, and the
-  project list when the CLI does not serve it.
-- The agent line names the machine only when the run's terminal is visible to Herdr
-  (labelled `bakers.ticket`); load ("1 of 2 busy") needs the conductor list.
+- Only Mine and the allowed states keep the "API" chip. Assignee, Reviewers and Recently
+  closed show data from JSON:API, where the frames draw "-" and the chip.
+- The agent line in the list names the claiming machine ("needs you, studio-mac"); in the
+  ticket header and the panel the machine comes from the run's terminal when Herdr shows it.

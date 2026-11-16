@@ -77,7 +77,7 @@ export default class Panel {
       this.detail = detail;
       this.failure = null;
       try {
-        this.activity = await listActivity(id);
+        this.activity = await listActivity(detail.ticket.id);
         this.activityServed = true;
       } catch (e) {
         this.activity = null;
@@ -150,8 +150,6 @@ export default class Panel {
     const p = vm.properties;
     const label = (/** @type {string} */ text) =>
       div().text_size(11).text_color(t.muted).child(text);
-    const apiLabel = (/** @type {string} */ text) =>
-      h_flex().gap(4).items_center().text_size(11).text_color(t.muted).child(text).child(chip());
     const cell = (/** @type {any} */ name, /** @type {any} */ value, span = false) =>
       v_flex()
         .when(span, (el) => el.w_full())
@@ -272,8 +270,22 @@ export default class Panel {
             ),
         ),
       )
-      .child(cell(apiLabel("Assignee"), div().text_color(t.muted).child("-")))
-      .child(cell(apiLabel("Reviewers"), div().text_color(t.muted).child("-")))
+      .child(
+        cell(
+          label("Assignee"),
+          div()
+            .when(p.assignee === "-", (el) => el.text_color(t.muted))
+            .child(p.assignee),
+        ),
+      )
+      .child(
+        cell(
+          label("Reviewers"),
+          div()
+            .when(p.reviewers === "-", (el) => el.text_color(t.muted))
+            .child(p.reviewers),
+        ),
+      )
       .child(cell(label("Branch"), mono(p.branch, 11), true))
       .child(
         cell(

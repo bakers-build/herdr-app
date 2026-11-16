@@ -119,26 +119,25 @@ const details: Record<string, any> = {
 
 function fakeApi(over: any = {}) {
   const calls: string[] = [];
-  let inFlight = 0;
-  let maxInFlight = 0;
   const api = {
     calls,
-    get maxInFlight() {
-      return maxInFlight;
-    },
     listTickets: async (p: string) => {
       calls.push(`list ${p}`);
-      return rows;
+      return rows.map((r) => ({ ...r, runs: details[r.id]?.runs ?? [] }));
+    },
+    planComments: async (p: string) => {
+      calls.push(`plans ${p}`);
+      const plans = new Map<string, any[]>();
+      for (const [id, d] of Object.entries(details)) {
+        const list = (d.ticket.comments ?? []).filter((c: any) => c.type === "plan");
+        if (list.length) plans.set(id, list);
+      }
+      return plans;
     },
     readTicket: async (id: string) => {
-      inFlight++;
-      maxInFlight = Math.max(maxInFlight, inFlight);
-      await new Promise((r) => setTimeout(r, 1));
-      inFlight--;
       calls.push(`read ${id}`);
-      return details[id].ticket;
+      return { ...details[id].ticket, runs: details[id].runs };
     },
-    listRuns: async (id: string) => details[id].runs,
     ...over,
   };
   return api;
@@ -225,12 +224,11 @@ test("counts and needs share identifiers only", async () => {
   expect(store.needs()).toEqual({ count: 3, ids: ["SHOP-60", "SHOP-41", "SHOP-56"] });
 });
 
-test("enrichment keeps at most 4 calls in flight and skips closed tickets", async () => {
+test("a refresh is one list read and one plan read, no read per ticket", async () => {
   const api = fakeApi();
   const store = createStore(api, { now: () => NOW });
   await store.load("p1");
-  expect(api.maxInFlight).toBeLessThanOrEqual(4);
-  expect(api.calls).not.toContain("read u49");
+  expect(api.calls).toEqual(["list p1", "plans p1"]);
 });
 
 test("byId finds by identifier or uuid; onChange fires after refresh", async () => {
@@ -248,7 +246,7 @@ test("a failing refresh keeps the error and the old rows", async () => {
   const api = fakeApi({
     listTickets: async () => {
       if (fail) throw Object.assign(new Error("bakers offline: not found"), { offline: true });
-      return rows;
+      return rows.map((r) => ({ ...r, runs: details[r.id]?.runs ?? [] }));
     },
   });
   const store = createStore(api, { now: () => NOW });

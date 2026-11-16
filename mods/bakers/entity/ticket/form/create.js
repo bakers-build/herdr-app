@@ -15,7 +15,7 @@ async function workflow() {
     if (w) return w;
   }
   const first = store.tickets[0];
-  return (first && (await readTicket(first.id))?.workflow) ?? "bb_work";
+  return (first && (await readTicket(first.id, true))?.workflow) ?? "bb_work";
 }
 
 export const createForm = () => ({

@@ -40,12 +40,12 @@ async function open(props: any, extra: Record<string, unknown> = {}) {
 
 const closed = () => env.calls.some((c) => c.fn === "closeOverlay" && c.args[0] === "overlay-7");
 
-test("Move to: the conductor picker from conductor_list, then the dialog", async () => {
+test("Move to: the conductor picker lists the project's bb_conductor entities, then the dialog", async () => {
   const copy = await open(
     { view: "conductor-picker", ticket: "SHOP-41" },
     {
-      bakers_conductor_list: {
-        conductors: [{ uuid: "k2", name: "ci-box", machine: "build-vps", online: true }],
+      jsonapi: {
+        conductors: [{ id: "k2", label: "ci-box", machine: "build-vps", status: "online" }],
       },
     },
   );
@@ -57,11 +57,12 @@ test("Move to: the conductor picker from conductor_list, then the dialog", async
   });
 });
 
-test("Move to without conductor_list says it needs the API", async () => {
-  const copy = await open({ view: "conductor-picker", ticket: "SHOP-41" });
-  const t = texts(copy.render());
-  expect(t).toContain("API");
-  expect(t).toContain("The conductor list needs the bakers API.");
+test("Move to in a project without conductors says so", async () => {
+  const copy = await open(
+    { view: "conductor-picker", ticket: "SHOP-41" },
+    { jsonapi: { conductors: [] } },
+  );
+  expect(texts(copy.render())).toEqual(["No conductor in this project."]);
 });
 
 test("Move to dialog: cancel the run, then set the conductor", async () => {

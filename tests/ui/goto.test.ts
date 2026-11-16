@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, resetMod } from "../fixtures/shop";
+import { activeSpace, backend, list, resetMod } from "../fixtures/shop";
 import {
   env,
   find,
@@ -12,24 +12,22 @@ import {
   reset,
   runs,
   texts,
-  tools,
+  fetched,
 } from "../harness";
 
-const search = {
-  bakers_ticket_search: (a: any) => ({
-    tickets:
-      a.query === "deliv"
-        ? [
-            {
-              identifier: "SHOP-56",
-              title: "Show delivery date on the product page",
-              state: "plan",
-            },
-            { identifier: "SHOP-38", title: "Delivery slots for the cart", state: "done" },
-          ]
-        : [],
-  }),
-};
+// SHOP-38 is closed and found by its title, like SHOP-56.
+const tickets = [
+  ...list,
+  {
+    id: "u38",
+    identifier: "SHOP-38",
+    title: "Delivery slots for the cart",
+    state: "done",
+    labels: [],
+    frozen: false,
+    closed: true,
+  },
+];
 
 beforeEach(() => {
   reset();
@@ -38,9 +36,8 @@ beforeEach(() => {
 
 async function goto() {
   activeSpace();
-  backend(search);
   env.shared["bakers.project"] = "p1";
-  backend({ ...search, bakers_project_read: { uuid: "p1", name: "acme-shop" } });
+  backend({ jsonapi: { tickets } });
   const Bakers = await load("bakers/main.js");
   const copy = mount(Bakers, { view: "goto", overlay: "overlay-9" });
   await flush();
@@ -54,10 +51,24 @@ test("typing searches once after 200 ms of quiet", async () => {
   env.calls.length = 0;
   copy.inner.input.type("de");
   copy.inner.input.type("deliv");
-  expect(tools()).toEqual([]);
+  expect(fetched()).toEqual([]);
   fireTimers(200);
   await flush();
-  expect(tools()).toEqual([["bakers_ticket_search", { query: "deliv", project: "p1" }]]);
+  const searches = fetched();
+  expect(searches.length).toBe(2);
+  expect(searches[0]).toContain(
+    "[path]=identifier&filter[f1][condition][operator]=STARTS_WITH&filter[f1][condition][value]=DELIV",
+  );
+  expect(searches[1]).toContain(
+    "[path]=title&filter[f1][condition][operator]=CONTAINS&filter[f1][condition][value]=deliv",
+  );
+  expect(
+    searches.every((u) =>
+      u.includes(
+        "filter[f0][condition][path]=project_id.id&filter[f0][condition][operator]==&filter[f0][condition][value]=p1",
+      ),
+    ),
+  ).toBe(true);
   expect(env.timers.find((t) => !t.every)?.ms ?? 200).toBe(200);
 });
 

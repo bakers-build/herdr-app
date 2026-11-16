@@ -32,7 +32,7 @@ beforeEach(() => {
 test("read asks the CLI for a token once and fetches JSON:API with it", async () => {
   cliWithToken();
   const seen: any[] = [];
-  env.fetch = async (url, opts) => {
+  env.fetch = async (_url, opts) => {
     seen.push(opts.headers);
     return {
       status: 200,

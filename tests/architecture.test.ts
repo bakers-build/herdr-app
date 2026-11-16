@@ -1,8 +1,8 @@
 // The bakers mod's layers (docs/architecture.md):
-//   core/        technique: CLI call, error kinds, Herdr tabs and layout, action registry, theme
+//   core/        technique: CLI call, JSON:API reads, error kinds, Herdr tabs and layout, actions, theme
 //   form/        form handling: state, submit in steps, partial failures, keys, registry
 //   components/  generic drawing, no entity
-//   entity/<e>/  data, rules, actions (the only bakers calls), presenter/ (views: props),
+//   entity/<e>/  data (reads, JSON:API), rules, actions (writes, CLI tools), presenter/ (views: props),
 //                form/ (form definitions)
 //   ui/          the Herdr placements: fetch, map, draw, wire
 // Imports point down: core <- form <- components <- entity <- ui.
@@ -95,10 +95,21 @@ test("only entity data.js and actions.js talk to bakers", async () => {
   const bad: string[] = [];
   for (const f of await files(ROOT)) {
     const r = rel(f);
+    if (r.startsWith("core/")) continue;
+    const talks = /core\/(cli|api)\.js|"bakers_/.test(await readFile(f, "utf8"));
+    if (talks && !/^entity\/[^/]+\/(data|actions)\.js$/.test(r)) bad.push(r);
+  }
+  expect(bad).toEqual([]);
+});
+
+test("data.js reads through JSON:API (core/api.js); actions.js writes through the CLI (core/cli.js)", async () => {
+  const bad: string[] = [];
+  for (const f of await files(join(ROOT, "entity"))) {
+    const r = rel(f);
     const src = await readFile(f, "utf8");
-    const talks = /core\/cli\.js|"bakers_/.test(src);
-    const may = /^entity\/[^/]+\/(data|actions)\.js$/.test(r) || r === "core/cli.js";
-    if (talks && !may) bad.push(r);
+    if (r.endsWith("/data.js") && /core\/cli\.js|"bakers_/.test(src))
+      bad.push(`${r} writes or calls tools`);
+    if (r.endsWith("/actions.js") && /core\/api\.js/.test(src)) bad.push(`${r} reads JSON:API`);
   }
   expect(bad).toEqual([]);
 });

@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { click, env, find, findText, flush, load, mount, reset, runs, texts } from "../harness";
+import { click, env, find, flush, load, mount, reset, runs, texts } from "../harness";
 
 import { activeSpace, backend, resetMod } from "../fixtures/shop";
 
@@ -8,7 +8,7 @@ beforeEach(() => {
   resetMod();
 });
 
-test("sidebar: Tickets with the project picker and the views with counts and API chips", async () => {
+test("sidebar: Tickets with the project picker and the views with their counts; Mine carries the API chip", async () => {
   const Bakers = await load("bakers/main.js");
   activeSpace();
   backend();
@@ -21,7 +21,6 @@ test("sidebar: Tickets with the project picker and the views with counts and API
   expect(t).toEqual([
     "TICKETS",
     "acme-shop",
-    "API",
     "Needs me",
     "2",
     "Mine",
@@ -37,7 +36,7 @@ test("sidebar: Tickets with the project picker and the views with counts and API
     "Review",
     "0",
     "Recently closed",
-    "API",
+    "1",
   ]);
   const needs = find(root, "view-needs-me");
   expect(needs.calls.bg).toEqual(["selected"]);
@@ -49,13 +48,28 @@ test("sidebar: Tickets with the project picker and the views with counts and API
   expect(runs()).toEqual([["tab.select", { id: "t0" }]]);
 });
 
-test("sidebar: an unknown project_list keeps the picker disabled with the API chip", async () => {
+test("sidebar: with one project the picker shows it; with two it opens the project picker", async () => {
   const Bakers = await load("bakers/main.js");
   activeSpace();
   backend();
-  const view = mount(Bakers, { view: "sidebar" });
+  let view = mount(Bakers, { view: "sidebar" });
   await flush();
-  const picker = find(view.render(), "project-picker");
-  expect(picker.calls.on_click).toBeUndefined();
-  expect(findText(picker, "API")).toBeDefined();
+  expect(find(view.render(), "project-picker").calls.on_click).toBeUndefined();
+  reset();
+  resetMod();
+  activeSpace();
+  backend({
+    jsonapi: {
+      projects: [
+        { id: "p0", name: "infra" },
+        { id: "p1", name: "acme-shop" },
+      ],
+    },
+  });
+  view = mount(Bakers, { view: "sidebar" });
+  await flush();
+  click(find(view.render(), "project-picker"));
+  expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
+    props: { view: "project-picker" },
+  });
 });

@@ -12,7 +12,7 @@ import {
   reset,
   runs,
   texts,
-  tools,
+  fetched,
 } from "../harness";
 
 const actions: any = await import("../../mods/bakers/core/actions.js");
@@ -164,7 +164,7 @@ test("N opens New ticket and R refreshes", async () => {
   env.calls.length = 0;
   key(copy.render(), "r");
   await flush();
-  expect(tools().map((t) => t[0])).toContain("bakers_ticket_list");
+  expect(fetched().some((u) => u.includes("/jsonapi/bb_ticket/bb_ticket?"))).toBe(true);
 });
 
 test("letters typed into the filter do not act as keys", async () => {
@@ -199,7 +199,7 @@ test("the ... menu lists the four items in order and each one acts", async () =>
   env.calls.length = 0;
   const [refresh, closed, finished, all] = spec.props.items;
   await actions.perform(refresh.action);
-  expect(tools().map((t) => t[0])).toContain("bakers_ticket_list");
+  expect(fetched().some((u) => u.includes("/jsonapi/bb_ticket/bb_ticket?"))).toBe(true);
   await actions.perform(closed.action);
   expect(env.shared["bakers.showClosed"]).toBe(true);
   env.calls.length = 0;
@@ -264,7 +264,7 @@ test("empty hint and key hint as drawn", async () => {
 
 test("an empty project shows the hint, no rows and nothing selected", async () => {
   activeSpace();
-  backend({ bakers_ticket_list: { tickets: [], next_offset: null } });
+  backend({ jsonapi: { tickets: [] } });
   const Bakers = await load("bakers/main.js");
   const copy = mount(Bakers, { view: "list" });
   await flush();

@@ -29,7 +29,13 @@ export function teaser(record, o) {
       o.view === "needs-me"
         ? { text: record.why ?? "", tone: "blocked", strong: true }
         : { text: record.state, tone: "muted" },
-      { status: { tone: agent.tone, ring: agent.ring, text: agent.text } },
+      {
+        status: {
+          tone: agent.tone,
+          ring: agent.ring,
+          text: record.machine && record.run ? `${agent.text}, ${record.machine}` : agent.text,
+        },
+      },
       { text: record.since == null ? "" : age(o.now - record.since), tone: "muted", size: 12 },
     ],
   };
