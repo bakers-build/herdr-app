@@ -1,16 +1,20 @@
-// The bakers mod's layers (docs/architecture.md):
-//   core/        technique: CLI call, JSON:API reads, error kinds, Herdr tabs and layout, actions, theme
-//   form/        form handling: state, submit in steps, partial failures, keys, registry
-//   components/  generic drawing, no entity
-//   entity/<e>/  data (reads, JSON:API), rules, actions (writes, CLI tools), presenter/ (views: props),
-//                form/ (form definitions)
-//   ui/          the Herdr placements: fetch, map, draw, wire
-// Imports point down: core <- form <- components <- entity <- ui.
+// The bakers mod's architecture (docs/architecture.md):
+//   framework  core/ form/ list/ components/ — technique, form handling, list engine, drawing;
+//              knows no module
+//   modules    ticket/ project/ shell/ — each with model, repository (reads), commands
+//              (writes), store, state, presenter/, list/, form/, operations/, controller/,
+//              routes.js
+// Module logic draws nothing; controllers compose and draw; modules meet through each other's
+// public parts (model, state, store, presenter, list) and through route names.
 import { expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
+import "./harness";
 
 const ROOT = resolve(import.meta.dir, "../mods/bakers");
+const FRAMEWORK = ["core", "form", "list", "components"];
+const MODULES = ["ticket", "project", "shell"];
+const PUBLIC = ["model.js", "state.js", "store.js", "presenter", "list"];
 
 async function files(dir: string): Promise<string[]> {
   const out: string[] = [];
@@ -23,13 +27,14 @@ async function files(dir: string): Promise<string[]> {
 }
 
 const rel = (p: string) => relative(ROOT, p);
-const top = (p: string) => rel(p).split("/")[0];
+const parts = (p: string) => rel(p).split("/");
+const isController = (p: string) => parts(p)[1] === "controller" || parts(p)[1] === "routes.js";
 
 async function edges() {
   const list: { from: string; to: string }[] = [];
   for (const f of await files(ROOT)) {
     const src = await readFile(f, "utf8");
-    for (const m of src.matchAll(/^import[^;]*?from\s+"(\.[^"]+)"/gms))
+    for (const m of src.matchAll(/^import[^;]*?"(\.[^"]+)"/gms))
       list.push({ from: f, to: resolve(f, "..", m[1]) });
   }
   return list;
@@ -38,80 +43,83 @@ async function edges() {
 const show = (bad: { from: string; to: string }[]) =>
   bad.map((e) => `${rel(e.from)} -> ${rel(e.to)}`);
 
-const ALLOWED: Record<string, string[]> = {
-  core: ["core"],
-  form: ["core", "form"],
-  components: ["core", "form", "components"],
-  entity: ["core", "form", "entity"],
-  ui: ["core", "form", "components", "entity", "ui"],
-};
-
-test("the mod has main.js, core, form, components, entity and ui", async () => {
+test("the mod is main.js, the framework and the modules", async () => {
   const tops = (await readdir(ROOT)).filter((n) => !n.startsWith(".")).sort();
   expect(tops).toEqual([
     "components",
     "core",
-    "entity",
     "form",
     "icons",
+    "list",
     "main.js",
     "mod.json",
-    "ui",
+    "project",
+    "shell",
+    "ticket",
   ]);
 });
 
-test("imports point down: core <- form <- components <- entity <- ui", async () => {
+test("the framework never imports a module, and its layers point down", async () => {
+  const allowed: Record<string, string[]> = {
+    core: ["core"],
+    form: ["core", "form"],
+    list: ["core", "list"],
+    components: ["core", "form", "components"],
+  };
   const bad = (await edges()).filter(
-    (e) => top(e.from) in ALLOWED && !ALLOWED[top(e.from)].includes(top(e.to)),
+    (e) =>
+      FRAMEWORK.includes(parts(e.from)[0]) && !allowed[parts(e.from)[0]].includes(parts(e.to)[0]),
   );
   expect(show(bad)).toEqual([]);
 });
 
-test("an entity imports another entity only through its data.js", async () => {
+test("module logic draws nothing: no gpui, no components, no controllers", async () => {
+  const bad: string[] = [];
+  for (const f of await files(ROOT)) {
+    if (!MODULES.includes(parts(f)[0]) || isController(f)) continue;
+    if (/from "gpui-(kit|base)"/.test(await readFile(f, "utf8"))) bad.push(`${rel(f)} draws`);
+  }
+  const imports = (await edges()).filter(
+    (e) =>
+      MODULES.includes(parts(e.from)[0]) &&
+      !isController(e.from) &&
+      (parts(e.to)[0] === "components" || isController(e.to)),
+  );
+  expect([...bad, ...show(imports)]).toEqual([]);
+});
+
+test("a module uses another module only through its public parts, never its controllers", async () => {
   const bad = (await edges()).filter((e) => {
-    const [a, ea] = rel(e.from).split("/");
-    const [b, eb, file] = rel(e.to).split("/");
-    return a === "entity" && b === "entity" && ea !== eb && file !== "data.js";
+    const [a] = parts(e.from);
+    const [b, second] = parts(e.to);
+    return MODULES.includes(a) && MODULES.includes(b) && a !== b && !PUBLIC.includes(second);
   });
   expect(show(bad)).toEqual([]);
 });
 
-test("ui files do not import each other", async () => {
-  const bad = (await edges()).filter((e) => top(e.from) === "ui" && top(e.to) === "ui");
-  expect(show(bad)).toEqual([]);
-});
-
-test("presenters, form definitions, form handling and entity logic draw nothing", async () => {
-  const bad: string[] = [];
-  for (const f of await files(ROOT)) {
-    const r = rel(f);
-    const pure = r.startsWith("form/") || (r.startsWith("entity/") && !r.endsWith("/data.js"));
-    if (pure && /from "gpui-(kit|base)"/.test(await readFile(f, "utf8"))) bad.push(r);
-  }
-  expect(bad).toEqual([]);
-});
-
-test("only entity data.js and actions.js talk to bakers", async () => {
+test("reads only in repository.js (JSON:API), writes only in commands.js (bakers tools)", async () => {
   const bad: string[] = [];
   for (const f of await files(ROOT)) {
     const r = rel(f);
     if (r.startsWith("core/")) continue;
-    const talks = /core\/(cli|api)\.js|"bakers_/.test(await readFile(f, "utf8"));
-    if (talks && !/^entity\/[^/]+\/(data|actions)\.js$/.test(r)) bad.push(r);
+    const src = await readFile(f, "utf8");
+    if (/from "[^"]*core\/api\.js"/.test(src) && !/\/repository\.js$/.test(r))
+      bad.push(`${r} reads`);
+    if (/from "[^"]*core\/cli\.js"|"bakers_/.test(src) && !/\/commands\.js$/.test(r))
+      bad.push(`${r} writes`);
   }
   expect(bad).toEqual([]);
 });
 
-test("data.js reads through JSON:API (core/api.js); actions.js writes through the CLI (core/cli.js)", async () => {
-  const bad: string[] = [];
-  for (const f of await files(join(ROOT, "entity"))) {
-    const r = rel(f);
-    const src = await readFile(f, "utf8");
-    if (r.endsWith("/data.js") && /core\/cli\.js|"bakers_/.test(src))
-      bad.push(`${r} writes or calls tools`);
-    if (r.endsWith("/actions.js") && /core\/api\.js/.test(src)) bad.push(`${r} reads JSON:API`);
+test("every route is named after its module and reaches the router", async () => {
+  const { ROUTES } = await import("../mods/bakers/main.js");
+  for (const m of MODULES) {
+    const routes = (await import(`../mods/bakers/${m}/routes.js`)).default;
+    for (const name of Object.keys(routes)) {
+      expect(name.startsWith(`${m}.`)).toBe(true);
+      expect(ROUTES[name]).toBe(routes[name]);
+    }
   }
-  expect(bad).toEqual([]);
 });
 
 test("there is one mod", async () => {

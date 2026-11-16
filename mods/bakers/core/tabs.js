@@ -47,7 +47,7 @@ export function preview() {
 export function ensureTicketsTab() {
   const t = ticketsTab();
   if (t) run("tab.select", { id: t.id });
-  else run("tab.new", { mod: "bakers", props: { view: "list" }, name: TICKETS });
+  else run("tab.new", { mod: "bakers", props: { view: "ticket.list" }, name: TICKETS });
 }
 
 /** Keeps Tickets at index 1 and moves a new preview to where the old one stood. */
@@ -95,7 +95,7 @@ export function openTicket(id, name, opts = {}) {
     }
   }
   pending.set(t.id, Date.now());
-  run("tab.new", { mod: "bakers", props: { view: "ticket", ticket: t.id }, name });
+  run("tab.new", { mod: "bakers", props: { view: "ticket.view", ticket: t.id }, name });
   if (!opts.pin) setShared("bakers.preview", { id: t.id, index });
 }
 

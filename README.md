@@ -5,14 +5,13 @@ ticket's state next to the agent terminals, so a developer does not switch to th
 
 ## Status
 
-The layout with the Tickets tab (frame R2-4) and the ticket tab (frame R2-3) of the wireframe
-canvas are built as one mod, `bakers`, placed in several blocks and overlays and routed by
-`props().view` (rail, sidebar, status, tab bar, Tickets tab, ticket tab, panel, Go to ticket,
-menus, dialogs). Inside it has five layers: `core` (technique), `form` (form handling),
-`components` (generic drawing), `entity` (ticket and project: data, rules, actions,
-presenters with view modes, form definitions) and `ui` (the placements); see
-[docs/architecture.md](docs/architecture.md). The proof of concept lives in the
-bakers-build repository under `experimental/herdr-app/`.
+The layout with the Tickets list (frame R2-4) and a ticket in its own tab (frame R2-3) are
+built as one mod, `bakers`. Herdr places it in several blocks, tabs and overlays; each copy
+gets a route (`ticket.list`, `ticket.view`, `ticket.context`, `ticket.search`,
+`shell.sidebar`, ...), and the router runs that route's controller. The code is split into a
+small framework (`core`, `form`, `list`, `components`) and modules (`ticket`, `project`,
+`shell`), each with its model, repository, commands, store, lists, view modes, forms,
+operations, controllers and routes. See [docs/architecture.md](docs/architecture.md).
 
 ## Install
 

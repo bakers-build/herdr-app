@@ -29,7 +29,7 @@ test("ensureTicketsTab creates the Tickets tab when missing", () => {
   space(tab("t1", "1", 1));
   tabs.ensureTicketsTab();
   expect(runs()).toEqual([
-    ["tab.new", { mod: "bakers", props: { view: "list" }, name: "Tickets" }],
+    ["tab.new", { mod: "bakers", props: { view: "ticket.list" }, name: "Tickets" }],
   ]);
 });
 
@@ -55,7 +55,7 @@ test("openTicket as preview opens a ticket tab and remembers the preview", () =>
   expect(runs()).toEqual([
     [
       "tab.new",
-      { mod: "bakers", props: { view: "ticket", ticket: "SHOP-41" }, name: "SHOP-41 working" },
+      { mod: "bakers", props: { view: "ticket.view", ticket: "SHOP-41" }, name: "SHOP-41 working" },
     ],
   ]);
   expect(env.shared["bakers.preview"]).toEqual({ id: "SHOP-41", index: null });
@@ -69,7 +69,7 @@ test("the next preview replaces the old one at its index", () => {
     ["tab.close", { id: "t5" }],
     [
       "tab.new",
-      { mod: "bakers", props: { view: "ticket", ticket: "SHOP-56" }, name: "SHOP-56 plan" },
+      { mod: "bakers", props: { view: "ticket.view", ticket: "SHOP-56" }, name: "SHOP-56 plan" },
     ],
   ]);
   expect(env.shared["bakers.preview"]).toEqual({ id: "SHOP-56", index: 2 });

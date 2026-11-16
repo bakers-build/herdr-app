@@ -4,24 +4,25 @@ import { load, mount, reset, texts } from "./harness";
 
 beforeEach(reset);
 
-test("bakers routes each placement to its view by props().view", async () => {
+test("bakers routes each placement to its controller by props().view", async () => {
   const Bakers = await load("bakers/main.js");
-  for (const view of [
-    "rail",
-    "sidebar",
-    "status",
-    "tabs",
-    "panel",
-    "list",
-    "ticket",
-    "goto",
-    "menu",
+  const { ROUTES } = await import("../mods/bakers/main.js");
+  expect(Object.keys(ROUTES).sort()).toEqual([
     "dialog",
-    "new-ticket",
-    "project-picker",
-    "conductor-picker",
-    "label-picker",
-  ]) {
+    "menu",
+    "project.picker",
+    "shell.rail",
+    "shell.sidebar",
+    "shell.status",
+    "shell.tabs",
+    "ticket.conductor-picker",
+    "ticket.context",
+    "ticket.label-picker",
+    "ticket.list",
+    "ticket.search",
+    "ticket.view",
+  ]);
+  for (const view of Object.keys(ROUTES)) {
     const copy = mount(Bakers, { view, ticket: "SHOP-41", items: [] });
     expect(copy.inner).toBeDefined();
     expect(copy.render()).toBeDefined();

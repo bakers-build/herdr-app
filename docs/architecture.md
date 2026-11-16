@@ -1,128 +1,169 @@
 # Architecture of the bakers mod
 
-One Herdr mod, `mods/bakers`, placed in several blocks and overlays and routed by
-`props().view`, as Herdr's own `win98` mod routes its roles (herdr-app v0.1.15,
-`defaults/mods/win98/main.js`). Inside it has five layers. Each one may only use the
-layers below it.
-
-```
-ui/          the Herdr placements: fetch, map, draw, wire
-entity/      the ticket and the project: data, rules, actions, presenters, form definitions
-components/  generic drawing, no entity
-form/        form handling, once for every form
-core/        technique
-```
+`mods/bakers` is one Herdr mod. Herdr places it in several blocks, tabs and overlays, and
+gives each copy a **route name** in `props().view`. The router (`main.js`) runs that route's
+**controller**. Controllers belong to **modules** (ticket, project, shell). The modules build
+on a small **framework** (core, form, list, components). The structure follows Drupal: a
+module brings its entity's model, its lists (Views), its view modes, its forms, its
+operations, its controllers and its routes.
 
 ```
 mods/bakers/
-  main.js                 router: view name -> class; importing the forms registers them
-  core/
-    cli.js                the bakers CLI through exec: tools (the writes), auth token, dropsh;
-                          BakersError
-    api.js                reading entities through JSON:API: a short-lived token from
-                          `bakers auth token`, kept in memory, fetch to <base_url>/jsonapi/...,
-                          a new token after a 401; `bakers dropsh` for an older CLI
-    jsonapi.js            a JSON:API document as plain entities (includes resolved)
-    errors.js             every failure sorted into one kind: offline, api, invalid, denied,
-                          conflict, failed
-    tabs.js               ticket tabs by name, preview and pin (the names come from presenters)
-    herdr.js              the run's terminal (label bakers.ticket), the layout tree
-    actions.js            menu actions as data, registered by the layers above
-    theme.js, format.js   theme tokens, fonts, icons; ages and first lines
-  form/
-    state.js              values, field errors, message, busy
-    submit.js             validate, conflict check (warn once), steps in order; a failing step
-                          names what was done and what failed
-    keys.js               cmd-Enter sends and Esc cancels inline; a dialog never writes from a key
-    registry.js           dialogs find their form definition by kind
-  components/
-    button, chip, dot, pill, text, icon, status-line, table, callout, entry, nav, markdown,
-    menu, state (loading, failure with Retry)
-    form/inputs.js        the retained inputs of a form and the drawing of each field
-    form/inline.js        a form in place (the composer, the editor)
-    form/dialog.js        the dialog frame of frames 4 and R3-2, for any registered form
-  entity/
-    ticket/
-      data.js             reading through JSON:API: bb_ticket (with runs, labels; for a tab
-                          also comments, terms, conductor, reviewers), bb_comment (plans),
-                          bb_activity, bb_conductor; the store
-      rules.js            what a ticket means: who needs you, since when, closed
-      actions.js          every write (comment, resume, edit, transition, freeze, classify,
-                          labels, cancel run, conductor, create), the only place that sends one
-      presenter/          view modes: raw data -> props for components, pure
-        full.js           the whole ticket (its tab)
-        teaser.js         a row of the Tickets tab, the columns and the hints
-        context.js        the right panel
-        search.js         a Go to ticket result
-        notification.js   the question toast
-        tab.js            the tab name "<ID> <state>" / "<ID> closed"
-        counts.js         sidebar rows, rail label, status item
-        states.js         the state menu
-        views.js          the names of the views
-        agent.js          the agent line the others share
-      form/               form definitions: fields, texts, steps; no drawing, no handling
-        comment.js        the composer (comment or answer)
-        edit.js           title and description
-        confirm.js        change state, freeze, unfreeze, move, cancel run
-        create.js         New ticket
-    project/
-      data.js             the window's project (shared uuid, else .bakers/project.config.js)
-      presenter/picker.js the project picker's items
-  ui/
-    layout/               rail, sidebar, tabs-bar (a copy of Herdr's tabs mod), status
-    tickets-tab.js        data -> presenter/teaser -> table; keys -> actions
-    ticket-tab.js         data -> presenter/full -> components; form/comment, form/edit inline
-    panel.js              data -> presenter/context -> components
-    goto.js, pickers.js   Go to ticket; project, conductor and label pickers
+  main.js                       router: props().view → route → controller
+
+  core/      framework          technique, knows no module
+    cli.js                        the bakers CLI: tools (writes), auth token, dropsh
+    api.js                        reading JSON:API with the CLI's short-lived token (fetch);
+                                  bakers dropsh for an older CLI; a new token after a 401
+    jsonapi.js                    a JSON:API document as plain entities (includes resolved)
+    errors.js                     every failure in one kind: offline, api, invalid, denied,
+                                  conflict, failed
+    tabs.js                       ticket tabs by name, preview and pin
+    herdr.js, actions.js, format.js, theme.js
+  form/      framework          form handling, once for every form: state, submit (validate,
+                                  conflict warning, steps with partial failures), keys, registry
+  list/      framework          list engine (like Views): run (filters, derived filters, exposed
+                                  filter, sort, group, pager), query (a server list's query),
+                                  registry (lists by key, also "state:working")
+  components/ framework         generic drawing, no entity: button, chip, dot, pill, text,
+                                  status-line, table, pager, callout, entry, nav, markdown,
+                                  menu, state; form/ (inputs, inline form, dialog frame)
+
+  ticket/    module
+    routes.js                     ticket.list, ticket.view, ticket.context, ticket.search,
+                                  ticket.conductor-picker, ticket.label-picker
+    model.js                      the Ticket, Run, Comment shapes (JSDoc) and the mapping from
+                                  JSON:API entities
+    rules.js                      what a ticket means: who needs you, since when, closed
+    repository.js                 reads (JSON:API): open tickets, plans, one ticket, activity,
+                                  search, conductors, a list's server query
+    commands.js                   writes (bakers tools): comment, resume, edit, transition,
+                                  freeze, cancel run, conductor, create, classify, labels
+    store.js                      the window's open tickets in memory, refresh, derived facts
+    state.js                      shared UI state: the chosen list, Show closed
+    presenter/                    view modes, one ticket → props: full, teaser, context,
+                                  search, notification, tab, counts; field/agent-line
+    list/                         list definitions: needs-me, mine, open, state, closed;
+                                  index (navigation order, counts, view menu, empty text)
+    form/                         form definitions: comment, edit, confirm (state, freeze,
+                                  unfreeze, move, cancel), create
+    operations/                   what one can do with a ticket: the state menu, the "..." menu
+    controller/                   list, view, context, search, conductor-picker, label-picker
+  project/   module             routes (project.picker), model, repository, state (the window's
+                                  project), presenter/picker, controller/picker
+  shell/     module             the bakers part of Herdr's frame: routes (shell.rail,
+                                  shell.sidebar, shell.tabs, shell.status), controller/
 ```
 
-## The rules
+## The routes
 
-Checked by `tests/architecture.test.ts`:
+| Route (`props.view`) | Controller | Herdr shows it as |
+|---|---|---|
+| `ticket.list` | `ticket/controller/list.js` | the tab "Tickets" |
+| `ticket.view` | `ticket/controller/view.js` | a tab "SHOP-41 working", `props.ticket` |
+| `ticket.context` | `ticket/controller/context.js` | the right panel's child `ticket` |
+| `ticket.search` | `ticket/controller/search.js` | a popup (cmd-shift-O) |
+| `ticket.conductor-picker`, `ticket.label-picker` | `ticket/controller/…` | popups |
+| `project.picker` | `project/controller/picker.js` | a popup from the sidebar |
+| `shell.rail`, `shell.sidebar`, `shell.tabs`, `shell.status` | `shell/controller/…` | layout blocks (`scripts/layout.js`) |
+| `menu`, `dialog` | `components/menu.js`, `components/form/dialog.js` | popup menus, form dialogs |
 
-1. **Imports point down**: `core <- form <- components <- entity <- ui`.
-2. **An entity uses another entity only through its `data.js`.** For example, the ticket
-   needs the project's uuid.
-3. **`ui/` files do not import each other.** They meet through shared state, overlays by
-   view name, and the registries.
-4. **The form handling, presenters, form definitions and entity logic draw nothing**: no
-   gpui import.
-5. **Only `entity/*/data.js` and `actions.js` talk to bakers.** `data.js` reads through
-   JSON:API (`core/api.js`) and never writes; `actions.js` writes through the CLI's tools
-   (`core/cli.js`) and never reads. "What sends `bakers_ticket_transition`?" has one answer.
-6. **One mod.**
+## How a screen comes about
 
-## The flow
+The Tickets list, from Herdr to the pixels:
 
+1. **Herdr** shows the tab with `props.view = "ticket.list"`.
+2. **`main.js`** runs `ticket/controller/list.js`.
+3. **The controller** looks up the chosen list (`ticket/state.js` → `"state:working"`) in the
+   list registry: the definition `ticket/list/state.js` with the argument `working`.
+4. **The data:**
+   - A local list takes the store's open tickets (`ticket/store.js`, loaded by
+     `ticket/repository.js` through `core/api.js`).
+   - A server list (Recently closed) loads its pages through `repository.query`, built from
+     its definition by `list/query.js`.
+5. **`list/run.js`** applies the definition's filters, derived filters, the exposed filter
+   (the filter field), sort, group and pager.
+6. **`ticket/presenter/teaser.js`** turns each record into row props.
+7. **`components/table.js`** and `components/pager.js` draw them.
+8. **The controller** wires Up and Down, Enter, cmd-Enter, N, R and the menus. These go to
+   `core/tabs` (preview, pin), to forms (`components/form/dialog.js` with
+   `ticket/form/create.js`) and to registered actions.
+
+A ticket tab goes the same way:
+- `ticket/controller/view.js` loads one ticket (`store.ticket` → `repository.readTicket`, one
+  request with `include`).
+- It maps the ticket with the view mode `presenter/full.js` and draws it.
+- It holds two inline forms, `form/comment.js` (the composer) and `form/edit.js`.
+- Its menus come from `operations/`.
+
+## A list definition
+
+```js
+// ticket/list/closed.js
+defineList({
+  id: "closed",
+  label: "Recently closed",
+  query: { filters: [{ field: "project_id.id", op: "=", value: (ctx) => ctx.project },
+                     { field: "closed", op: "=", value: true }],
+           sort: "-closed_date" },        // a server list: the server filters, sorts, pages
+  load: query,                            // ticket/repository.js
+  exposed: { fields: ["id", "title"] },   // the filter field of the screen
+  pager: { type: "more", limit: 50 },     // "Show 50 more"
+  row: { mode: "teaser" },
+  empty: "No other closed tickets.",
+  count: false,
+});
 ```
-entity/ticket/data  ->  presenter/<view mode>  ->  components  ->  ui wires clicks and keys
-   (raw data)            (mapping, pure)            (drawing)        to entity/ticket/actions
-```
 
-A form goes through three parts, each existing once:
+The other parts a definition may have:
+- `filters`: local conditions;
+- `derived`: conditions on derived facts, such as who needs you;
+- `sort` and `group`;
+- `args`: through the key, `state:working`;
+- `sub`, `api`, `disabled`, `dim`: for the navigation.
 
-```
-entity/ticket/form/<form>   the definition: fields, texts, steps (each step one action)
-form/                       the handling: values, validation, steps, partial failures, keys
-components/form/            the drawing: fields, footer, dialog frame
-```
+The open lists filter the store's open tickets locally, because the sidebar, the rail and the
+status need their counts anyway. Only closed tickets are loaded page by page from the server.
 
-For example, Send answer is the comment form with two steps: post the comment (`done:
-"Comment posted"`), then, when checked, resume the run (`failed: "unfreezing failed"`). When
-the second step fails, the handling says "Comment posted; unfreezing failed: <why>" and keeps
-the text. The definition contains no error handling of its own.
+## A form
+
+A form has three parts, each existing once:
+
+| Part | Where | What |
+|---|---|---|
+| Definition | `ticket/form/*.js` | fields, texts, buttons; steps, each one command with its `done`/`failed` words |
+| Handling | `form/` | values, validation, a conflict warning given once, steps in order, partial failures ("Comment posted; unfreezing failed: …"), keys |
+| Drawing | `components/form/` | fields, the inline form, the dialog frame |
 
 ## Reading and writing
 
-- **Reads** go to the server's JSON:API with the developer's own sign-in: `bakers auth token`
-  (CLI 0.10.1-next.11 and later, BAKERS-264) hands out a short-lived access token, the mod keeps
-  it in memory only and asks again after a 401. One request with `include` brings a ticket with
-  its comments, runs, labels, type, recipe, conductor and reviewers; the list is one request for
-  the tickets (with runs and labels) and one for the plan comments, not a request per ticket.
-  With an older CLI the same queries run through `bakers dropsh`, one process per request.
-- **Writes** stay with the CLI's tools (`bakers tools bakers_ticket_transition ...`): changing
-  state, freezing, cancelling or moving a run and classifying are operations with workflow rules,
-  not plain field updates.
+**Reads** happen only in `repository.js`. They go to the server's JSON:API with the
+developer's own sign-in:
+- `bakers auth token` (CLI ≥ 0.10.1-next.11, BAKERS-264) hands out a short-lived token;
+- the mod keeps it in memory only;
+- with an older CLI the same queries run through `bakers dropsh`.
+
+**Writes** happen only in `commands.js`, through `bakers tools`. Changing state, freezing,
+moving or cancelling a run and classifying are operations with workflow rules, not field
+updates.
+
+## The rules
+
+`tests/architecture.test.ts` checks:
+
+1. **The mod's top level** is `main.js`, the framework and the modules.
+2. **The framework never imports a module.** Inside it, layers point down: core ← form, list ←
+   components.
+3. **Module logic draws nothing.** Model, rules, repository, commands, store, state,
+   presenter, list, form and operations import no gpui, no components and no controllers.
+   Only `controller/` and `routes.js` draw.
+4. **Modules meet only through public parts.** A module uses another one only through its
+   `model.js`, `state.js`, `store.js`, `presenter/` and `list/`, never its repository,
+   commands, forms or controllers. Controllers reach other controllers only through route
+   names.
+5. **Reads only in `repository.js`, writes only in `commands.js`.**
+6. **Every route** is named after its module and reaches the router.
+7. **There is one mod.**
 
 ## Errors
 
@@ -131,53 +172,39 @@ the text. The definition contains no error handling of its own.
 | kind | what the user sees |
 |---|---|
 | `offline` | "bakers offline" in the status item, the message inline with Retry |
-| `api` | the API chip in place of a section the CLI cannot serve (a tool it does not know) |
+| `api` | the API chip in place of a section the CLI cannot serve |
 | `invalid` | the error at the field; the form stays open |
 | `denied` | the server's words in the form |
 | `conflict` | a warning once; sending again goes ahead |
-| `failed` | the CLI's words, with Retry where it makes sense |
-
-## How an overlay reaches the rest
-
-A menu, a picker or a dialog is its own mod copy (Herdr's `openOverlay`), so it cannot call
-back into the copy that opened it. Two registries bridge that, both filled when `main.js`
-imports the entities:
-
-- **Actions** (`core/actions.js`): a menu item carries `[name, ...args]`, for example
-  `["ticket.classify", "SHOP-41", { type: "bug" }]`.
-- **Forms** (`form/registry.js`): `openForm("state", { ticket, from, to })` opens the
-  dialog frame. The frame builds the definition registered as `state`, and `form/submit`
-  sends it.
+| `failed` | the CLI's or the server's words, with Retry where it makes sense |
 
 ## Where state lives
 
-- **Per window, in memory**: the ticket store and the project. Both are created lazily on
-  first use, never at module top level (Herdr's `AGENTS.md`).
-- **Shared between copies** (`setShared`): only identifiers, counts and flags:
-  `bakers.project`, `bakers.view`, `bakers.selected`, `bakers.preview`, `bakers.needs`,
-  `bakers.showClosed`, `bakers.toast`. No ticket content.
-- **Per copy**: a placement's own state, such as the open comment folds, a form's values
-  and the filter text.
+- **Per window, in memory:** the project (`project/state.js`), the open tickets
+  (`ticket/store.js`) and the token (`core/api.js`). All are created on first use, never at
+  module top level (Herdr's `AGENTS.md`).
+- **Shared between copies (`setShared`):** identifiers, counts and flags only
+  (`bakers.project`, `bakers.view`, `bakers.selected`, `bakers.preview`, `bakers.needs`,
+  `bakers.showClosed`, `bakers.toast`). No ticket content.
+- **Per copy:** a controller's own state, such as the selection, the page, a form's values and
+  the open comment folds.
 
 ## Tests
 
-The tests mirror the layers:
+The tests mirror the structure:
 
 | folder | what it proves |
 |---|---|
-| `tests/core/` | the CLI call, the JSON:API transport (token, 401, dropsh fallback), the normalizer (against a real bb_ticket read), error kinds, the tab model |
-| `tests/form/` | the form handling: steps, partial failures, conflict, busy, keys |
-| `tests/entity/` | data and store, presenters (pure functions: data in, props out), form definitions (texts and which actions in which order) |
+| `tests/core/` | the CLI call, the JSON:API transport (token, 401, dropsh fallback), the normalizer against a real `bb_ticket` read, error kinds, the tab model |
+| `tests/form/` | the form handling |
+| `tests/list/` | the list engine: filters, derived filters, exposed filter, sort, group, pager, server query, registry |
 | `tests/components/` | generic drawing |
-| `tests/ui/` | each placement over stubbed Herdr: the drawn copy and px of the frames, and which click or key sends which Herdr command or bakers call |
-| `tests/architecture.test.ts` | the rules above |
-
-`tests/harness.ts` evaluates the real mod source over stubbed `gpui-kit`, `gpui-base` and
-`herdr` modules and a stubbed `fetch`; `tests/fixtures/jsonapi-server.ts` answers it like
-Drupal's JSON:API (conditions, relationship paths, include, sort, paging) from the acme-shop
-fixture.
+| `tests/ticket/` | store, presenters (pure), list definitions, form definitions; `controller/` drives each route over stubbed Herdr and a JSON:API test server (`tests/fixtures/jsonapi-server.ts`), pins the frames' copy and px, and ties clicks and keys to Herdr commands and bakers calls |
+| `tests/project/`, `tests/shell/` | the same for those modules |
+| `tests/architecture.test.ts`, `main.test.ts`, `install.test.ts` | the rules, the router, the layout transform and installer |
 
 ## Outside the mod
 
 `scripts/install.ts` copies the mod into the Herdr home, writes `layouts/bakers.json` with
-the pure transform `scripts/layout.js`, and merges the keys.
+the pure transform `scripts/layout.js` (the blocks carry the shell routes), and merges the
+keys.

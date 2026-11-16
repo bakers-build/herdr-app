@@ -46,7 +46,7 @@ test("a 56 px rail block is the first child of root", () => {
     type: "block",
     size: { px: 56 },
     resizable: false,
-    content: { mod: "bakers", props: { view: "rail" } },
+    content: { mod: "bakers", props: { view: "shell.rail" } },
   });
 });
 
@@ -59,21 +59,21 @@ test("the sidebar is 220 px and hidden, with the bakers section after agents", (
   const i = list.children.findIndex((c: any) => c.id === "agents");
   expect(list.children[i + 1]).toMatchObject({
     id: "bakers-sidebar",
-    content: { mod: "bakers", props: { view: "sidebar" } },
+    content: { mod: "bakers", props: { view: "shell.sidebar" } },
   });
 });
 
 test("the tab bar is the bakers view tabs at 40 px", () => {
   const tabs = find(bakersLayout(main), "tabs");
   expect(tabs.size).toEqual({ px: 40 });
-  expect(tabs.content).toEqual({ mod: "bakers", props: { view: "tabs" } });
+  expect(tabs.content).toEqual({ mod: "bakers", props: { view: "shell.tabs" } });
 });
 
 test("the panel stack gains the ticket child; the panel stays 368 px and hidden", () => {
   const l = bakersLayout(main);
   const body = find(l, "panel-body");
   expect(body.children.map((c: any) => c.id)).toEqual(["files", "changes", "ticket"]);
-  expect(find(l, "ticket").content).toEqual({ mod: "bakers", props: { view: "panel" } });
+  expect(find(l, "ticket").content).toEqual({ mod: "bakers", props: { view: "ticket.context" } });
   expect(find(l, "panel").size).toEqual({ px: 368 });
   expect(find(l, "panel").hidden).toBe(true);
 });
@@ -85,7 +85,10 @@ test("the status row holds Herdr's status and the bakers status item", () => {
   expect(row.size).toEqual({ px: 28 });
   expect(row.children.map((c: any) => c.id)).toEqual(["status", "bakers-status"]);
   expect(find(l, "status").content).toEqual({ mod: "workspace-status" });
-  expect(find(l, "bakers-status").content).toEqual({ mod: "bakers", props: { view: "status" } });
+  expect(find(l, "bakers-status").content).toEqual({
+    mod: "bakers",
+    props: { view: "shell.status" },
+  });
 });
 
 test("panes are framed with 8 px corners as drawn", () => {
@@ -139,10 +142,10 @@ test("install copies the mods, writes the bakers layout and merges keys; --dry-r
   expect(keys.global["cmd-shift-t"]).toBe("bakers.panel");
   expect(keys.global["cmd-shift-o"]).toBe("pane.split:right");
   expect(await readFile(join(home, "mods", "bakers", "main.js"), "utf8")).toContain(
-    "routed by props().view",
+    "export const ROUTES",
   );
   expect(
-    await readFile(join(home, "mods", "bakers", "ui", "layout", "tabs-bar.js"), "utf8"),
+    await readFile(join(home, "mods", "bakers", "shell", "controller", "tabs.js"), "utf8"),
   ).toContain("bakers tab bar");
   const again = await install({ home, dryRun: false, log: () => {} });
   expect(again.written.filter((p: string) => !p.includes("/mods/"))).toEqual([]);

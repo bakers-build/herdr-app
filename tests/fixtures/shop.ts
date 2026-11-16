@@ -276,13 +276,13 @@ export async function ticketTab(id = "SHOP-41", extra: Record<string, unknown> =
   backend(extra);
   env.spaces[0].tabs.push({ id: "t5", name: `${id} working`, index: 2, active: true });
   const Bakers = await load("bakers/main.js");
-  const copy = mount(Bakers, { view: "ticket", ticket: id });
+  const copy = mount(Bakers, { view: "ticket.view", ticket: id });
   await flush();
   return copy;
 }
 
-const projectData: any = await import("../../mods/bakers/entity/project/data.js");
-const ticketData: any = await import("../../mods/bakers/entity/ticket/data.js");
+const projectData: any = await import("../../mods/bakers/project/state.js");
+const ticketData: any = await import("../../mods/bakers/ticket/store.js");
 const tabsModel: any = await import("../../mods/bakers/core/tabs.js");
 
 /** Forgets the window's project, store and pending tabs between tests. */

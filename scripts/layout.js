@@ -43,7 +43,7 @@ export function bakersLayout(main) {
       type: "block",
       size: { px: 56 },
       resizable: false,
-      content: { mod: "bakers", props: { view: "rail" } },
+      content: { mod: "bakers", props: { view: "shell.rail" } },
     });
 
   const sidebar = find(l, "sidebar");
@@ -59,14 +59,14 @@ export function bakersLayout(main) {
       type: "block",
       size: { weight: 1 },
       min: 200,
-      content: { mod: "bakers", props: { view: "sidebar" } },
+      content: { mod: "bakers", props: { view: "shell.sidebar" } },
     });
   }
 
   const tabs = find(l, "tabs");
   if (tabs) {
     tabs.size = { px: 40 };
-    tabs.content = { mod: "bakers", props: { view: "tabs" } };
+    tabs.content = { mod: "bakers", props: { view: "shell.tabs" } };
   }
 
   const body = find(l, "panel-body");
@@ -74,7 +74,7 @@ export function bakersLayout(main) {
     body.children.push({
       id: "ticket",
       type: "block",
-      content: { mod: "bakers", props: { view: "panel" } },
+      content: { mod: "bakers", props: { view: "ticket.context" } },
     });
   const panel = find(l, "panel");
   if (panel) {
@@ -99,7 +99,7 @@ export function bakersLayout(main) {
             id: "bakers-status",
             type: "block",
             size: { px: 320 },
-            content: { mod: "bakers", props: { view: "status" } },
+            content: { mod: "bakers", props: { view: "shell.status" } },
           },
         ],
       };
