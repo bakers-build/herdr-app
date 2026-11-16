@@ -6,3 +6,6 @@ node_modules/
 # Written by Herdr into an installed mod folder
 mods/*/jsconfig.json
 mods/*/*.d.ts
+
+# bakers dropsh schema cache
+.dropsh/

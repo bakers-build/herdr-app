@@ -1,0 +1,60 @@
+import { beforeEach, expect, test } from "bun:test";
+import { cli, env, reset } from "../harness";
+
+const api: any = await import("../../mods/bakers/core/cli.js");
+
+beforeEach(reset);
+
+test("call sends bakers tools <tool> --data <json>", async () => {
+  cli({ bakers_ticket_read: { identifier: "SHOP-41" } });
+  const r = await api.call("bakers_ticket_read", { ticket: "SHOP-41" });
+  expect(env.calls[0]).toEqual({
+    fn: "exec",
+    args: ["bakers", ["tools", "bakers_ticket_read", "--data", '{"ticket":"SHOP-41"}']],
+  });
+  expect(r).toEqual({ identifier: "SHOP-41" });
+});
+
+test("call parses plain JSON output too", async () => {
+  env.exec = async () => ({ code: 0, stdout: '{"ok":true}', stderr: "" });
+  expect(await api.call("bakers_ticket_read", { ticket: "X-1" })).toEqual({ ok: true });
+});
+
+test("nonzero exit throws BakersError with the CLI's message", async () => {
+  cli({ bakers_ticket_read: new Error("Ticket X-9 does not exist") });
+  const err: any = await api.call("bakers_ticket_read", { ticket: "X-9" }).catch((e: any) => e);
+  expect(err).toBeInstanceOf(api.BakersError);
+  expect(err.tool).toBe("bakers_ticket_read");
+  expect(err.code).toBe(1);
+  expect(err.message).toBe("Ticket X-9 does not exist");
+  expect(err.offline).toBe(false);
+  expect(err.unknownTool).toBe(false);
+});
+
+test("an unknown tool is flagged for the API chip", async () => {
+  cli({});
+  const err: any = await api.call("bakers_conductor_list", {}).catch((e: any) => e);
+  expect(err.unknownTool).toBe(true);
+  expect(err.code).toBe(4);
+});
+
+test("exec rejection or exit 127 is offline", async () => {
+  env.exec = async () => {
+    throw new Error("spawn bakers ENOENT");
+  };
+  const a: any = await api.call("bakers_ticket_read", { ticket: "X-1" }).catch((e: any) => e);
+  expect(a.offline).toBe(true);
+  env.exec = async () => ({ code: 127, stdout: "", stderr: "command not found" });
+  const b: any = await api.call("bakers_ticket_read", { ticket: "X-1" }).catch((e: any) => e);
+  expect(b.offline).toBe(true);
+});
+
+test("call passes a 30 s timeout to exec", async () => {
+  let seen: any;
+  env.exec = async (_c, _a, opts) => {
+    seen = opts;
+    return { code: 0, stdout: "{}", stderr: "" };
+  };
+  await api.call("bakers_ticket_read", { ticket: "X-1" });
+  expect(seen).toEqual({ timeout: 30000 });
+});

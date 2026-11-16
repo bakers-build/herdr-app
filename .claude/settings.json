@@ -29,7 +29,6 @@
   },
   "permissions": {
     "deny": [
-      "Artifact",
       "ArtifactComments",
       "ArtifactData",
       "Workflow",
