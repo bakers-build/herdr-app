@@ -1,4 +1,4 @@
-// Small formatting helpers shared by the bakers views.
+// core/format: small formatting helpers shared by the bakers views.
 
 /** "35m", "2h", "3d" for a duration in ms; "" when unknown. @param {number | null} ms */
 export function age(ms) {

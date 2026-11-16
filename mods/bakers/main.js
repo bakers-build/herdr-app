@@ -1,4 +1,4 @@
-// The bakers mod: one mod in several places. Herdr gives each copy props().view, the name of
+// main: the bakers mod, one mod in several places. Herdr gives each copy props().view, the name of
 // a route; the router finds the route's controller in the modules' routes.js and runs it,
 // as Herdr's win98 mod routes its roles (herdr-app v0.1.15 defaults/mods/win98/main.js).
 //
