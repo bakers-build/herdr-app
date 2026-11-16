@@ -60,6 +60,61 @@ test("comment form: Just comment and an unchecked box only comment; empty text i
   expect(s.errors).toEqual({ body: "Write something first." });
 });
 
+async function failingOnce(tool: string, rest: Record<string, any> = {}) {
+  let failures = 1;
+  backend({
+    bakers_comment_publish: {},
+    bakers_run_cancel: {},
+    ...rest,
+    [tool]: () => (failures-- > 0 ? new Error("Not allowed") : {}),
+  });
+}
+
+test("answer retry: unchecking the box, or typing and deleting, does not post the answer twice", async () => {
+  for (const edit of [
+    (s: any) => s.set("resume", false),
+    (s: any) => {
+      s.set("body", "Hix");
+      s.set("body", "Hi");
+    },
+  ]) {
+    reset();
+    await failingOnce("bakers_ticket_update");
+    const def = commentForm("SHOP-41", "answer");
+    const s = new FormState(def);
+    Object.assign(s.values, { body: "Hi", variant: "answer" });
+    expect((await submit(def, s)).ok).toBe(false);
+    edit(s);
+    expect((await submit(def, s)).ok).toBe(true);
+    expect(writes().filter((w) => w[0] === "bakers_comment_publish").length).toBe(1);
+  }
+});
+
+test("answer retry: an edited answer is posted again", async () => {
+  await failingOnce("bakers_ticket_update");
+  const def = commentForm("SHOP-41", "answer");
+  const s = new FormState(def);
+  Object.assign(s.values, { body: "Hi", variant: "answer" });
+  await submit(def, s);
+  s.set("body", "Hi, the page is /shop");
+  expect((await submit(def, s)).ok).toBe(true);
+  expect(
+    writes()
+      .filter((w) => w[0] === "bakers_comment_publish")
+      .map((w) => w[1].body),
+  ).toEqual(["Hi", "Hi, the page is /shop"]);
+});
+
+test("Move to... retry: an edited reason does not cancel the run again", async () => {
+  await failingOnce("bakers_ticket_update");
+  const def = await moveForm({ ticket: "SHOP-41", conductor: "c2", name: "ci-box" });
+  const s = new FormState(def);
+  await submit(def, s);
+  s.set("reason", "wrong box");
+  await submit(def, s);
+  expect(writes().filter((w) => w[0] === "bakers_run_cancel").length).toBe(1);
+});
+
 test("edit form: fields from the ticket; warns when it changed meanwhile", async () => {
   const def = editForm({ identifier: "SHOP-41", title: "Old", description: "Was" });
   expect(def.fields.map((f: any) => [f.name, f.value])).toEqual([

@@ -2,12 +2,14 @@
 // warns once (the second submit writes); then the steps in order. A step may be skipped
 // (when). When a step fails, the message names what was done and what failed, in the
 // definition's words ("Comment posted; unfreezing failed: <why>"), the values stay and the
-// form stays open; a retry skips the steps that already finished. A second submit while one
-// runs does nothing.
+// form stays open; a retry skips the steps that already finished, unless a field the step
+// posts (uses) was edited since: then it runs again with the edited text. A second submit
+// while one runs does nothing.
 import { classify } from "../core/errors.js";
 
 /**
- * @typedef {{ when?: (v: any) => boolean, run: (v: any) => Promise<any>, done?: string, failed?: string }} Step
+ * @typedef {{ when?: (v: any) => boolean, run: (v: any) => Promise<any>, done?: string, failed?: string,
+ *   uses?: string[] }} Step uses: the fields the step posts; editing one after the step finished runs it again
  * @typedef {{ validate?: (v: any) => Record<string, string> | null, check?: (v: any) => Promise<string | null>,
  *   steps: Step[], success?: string | ((v: any, results: any[]) => string), join?: string }} Submittable
  */
@@ -38,10 +40,13 @@ export async function submit(def, state) {
     const done = [];
     const results = [];
     for (const [i, step] of def.steps.entries()) {
-      if (!state.finished.has(i) && step.when && !step.when(state.values)) continue;
+      const seen = (step.uses ?? []).map((f) => state.values[f]);
+      const prior = state.finished.get(i);
+      const reuse = prior && seen.every((v, k) => v === prior.seen[k]);
+      if (!reuse && step.when && !step.when(state.values)) continue;
       try {
-        if (!state.finished.has(i)) state.finished.set(i, await step.run(state.values));
-        results.push(state.finished.get(i));
+        if (!reuse) state.finished.set(i, { result: await step.run(state.values), seen });
+        results.push(state.finished.get(i)?.result);
         if (step.done) done.push(step.done);
       } catch (e) {
         const f = classify(e);

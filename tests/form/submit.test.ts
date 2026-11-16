@@ -83,12 +83,12 @@ test("a retry after a partial failure runs only the steps that did not finish", 
   expect(ran).toEqual(["comment", "unfreeze", "unfreeze"]);
 });
 
-test("a retry after the text was edited posts the edited text again", async () => {
+test("a retry after a field the step posts was edited runs the step again", async () => {
   const posted: string[] = [];
   let failures = 1;
   const d = def(
     [
-      { run: async (v: any) => posted.push(v.body), done: "Comment posted" },
+      { uses: ["body"], run: async (v: any) => posted.push(v.body), done: "Comment posted" },
       {
         run: async () => {
           if (failures-- > 0) throw new Error("Not allowed");
@@ -109,7 +109,7 @@ test("a change event that keeps the text does not post it twice", async () => {
   const posted: string[] = [];
   let failures = 1;
   const d = def([
-    { run: async (v: any) => posted.push(v.body), done: "Comment posted" },
+    { uses: ["body"], run: async (v: any) => posted.push(v.body), done: "Comment posted" },
     {
       run: async () => {
         if (failures-- > 0) throw new Error("Not allowed");

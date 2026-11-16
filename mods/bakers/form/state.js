@@ -16,14 +16,14 @@ export class FormState {
     this.busy = false;
     this.dirty = false;
     this.warned = false;
-    /** Results of the steps a failed submit finished, by step index; a retry skips them
-     * until a value changes, which runs them again with the new values. @type {Map<number, any>} */
+    /** The steps a failed submit finished, by step index: their result and the values of the
+     * fields they post (Step.uses) when they ran. A retry skips them unless one of those
+     * values changed since. @type {Map<number, { result: any, seen: any[] }>} */
     this.finished = new Map();
   }
 
   /** @param {string} name @param {any} value */
   set(name, value) {
-    if (this.values[name] !== value) this.finished.clear();
     this.values[name] = value;
     this.dirty = true;
     delete this.errors[name];

@@ -55,6 +55,7 @@ export async function stateForm(p) {
     submitFirst: CLOSING.includes(p.to),
     steps: [
       {
+        uses: ["comment"],
         when: (/** @type {any} */ v) => String(v.comment).trim(),
         run: (/** @type {any} */ v) => actions.comment(p.ticket, String(v.comment).trim()),
         done: "Comment posted",

@@ -34,6 +34,7 @@ export function commentForm(id, mode, text = "") {
       String(v.body ?? "").trim() ? null : { body: "Write something first." },
     steps: [
       {
+        uses: ["body"],
         run: (/** @type {any} */ v) => actions.comment(id, String(v.body).trim()),
         done: "Comment posted",
         failed: "Not sent",
