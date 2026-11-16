@@ -1,4 +1,4 @@
-// ui/layout/tabs-bar: the bakers tab bar (view "tabs" in the layout's tabs block). Copied from Herdr's `tabs` mod, herdrdev/herdr-app v0.1.15
+// shell/controller/tabs: the bakers tab bar (view "tabs" in the layout's tabs block). Copied from Herdr's `tabs` mod, herdrdev/herdr-app v0.1.15
 // defaults/mods/tabs/main.js (Apache-2.0); the panel memory per space, drag to move,
 // rename on double-click, the tab menu and the window buttons are Herdr's.
 // What differs, as drawn in the wireframe frames R2-4 and R2-3:

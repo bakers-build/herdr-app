@@ -1,4 +1,4 @@
-// components/form/inline: a form drawn in place (the composer, the title and description
+// ui/form/inline: a form drawn in place (the composer, the title and description
 // editor): an optional accent label, the text fields, the message, then one row with the
 // checkboxes, the hint and the buttons. Each button sends with its own variant.
 import { div } from "gpui-kit";

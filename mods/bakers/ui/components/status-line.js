@@ -1,4 +1,4 @@
-// components/status-line: a dot and a line of text in a tone, with an optional muted rest.
+// ui/components/status-line: a dot and a line of text in a tone, with an optional muted rest.
 // Used for the agent line in the list, the ticket header and the panel.
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";

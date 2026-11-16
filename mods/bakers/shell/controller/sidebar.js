@@ -1,4 +1,4 @@
-// ui/layout/sidebar: the bakers section of the left sidebar (R2-3), below Herdr's Spaces and
+// shell/controller/sidebar: the bakers section of the left sidebar (R2-3), below Herdr's Spaces and
 // Agents: the Tickets card with the project picker and the views with their counts.
 import { svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";

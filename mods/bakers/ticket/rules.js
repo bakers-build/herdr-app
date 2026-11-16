@@ -1,4 +1,4 @@
-// entity/ticket/rules: what a ticket means, independent of how it is shown.
+// ticket/rules: what a ticket means, independent of how it is shown.
 // Needs-you is derived (the bakers API has no such field):
 //   frozen + label Question                 -> "Asked a question"
 //   state plan + a plan comment + no run    -> "Plan ready for approval"

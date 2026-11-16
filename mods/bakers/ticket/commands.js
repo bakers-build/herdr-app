@@ -1,5 +1,5 @@
-// entity/ticket/actions: every write to a ticket, and the only place that sends one.
-// Forms (entity/ticket/form) chain these as steps; menus reach the at-once ones through
+// ticket/commands: every write to a ticket, and the only place that sends one.
+// Forms (ticket/form) chain these as steps; menus reach the at-once ones through
 // the action registry (classify, labels).
 import { register } from "../core/actions.js";
 import { call } from "../core/cli.js";

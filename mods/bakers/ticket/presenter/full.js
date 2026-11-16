@@ -1,4 +1,4 @@
-// presenter/full: a whole ticket for its tab (R2-3): the header (identifier, state, Frozen,
+// ticket/presenter/full: a whole ticket for its tab (R2-3): the header (identifier, state, Frozen,
 // agent line), the title, the Needs-you card, the description and the comments.
 import { age, firstLine, toMs } from "../../core/format.js";
 import { question } from "../rules.js";

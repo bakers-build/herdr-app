@@ -1,4 +1,4 @@
-// ui/layout/status: the bakers status block, once per window: project, need-you count and
+// shell/controller/status: the bakers status block, once per window: project, need-you count and
 // last update (or "bakers offline"); a click opens the Tickets tab. It also owns what
 // belongs to the window: the refresh every 60 s, the shared needs-you count, tab names that
 // follow the state, the question toast, and the global keys from keys.json

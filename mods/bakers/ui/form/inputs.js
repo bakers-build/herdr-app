@@ -1,4 +1,4 @@
-// components/form/inputs: the retained text inputs of one form (created once, never in
+// ui/form/inputs: the retained text inputs of one form (created once, never in
 // render) and the drawing of each field. Every change goes into the form's state.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, Textarea, TextareaState, v_flex } from "gpui-base";

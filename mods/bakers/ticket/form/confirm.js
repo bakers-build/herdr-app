@@ -1,4 +1,4 @@
-// form/confirm: the confirmations of frames 4 and R3-2, registered as dialog forms. Each
+// ticket/form/confirm: the confirmations of frames 4 and R3-2, registered as dialog forms. Each
 // says from and to, the consequence in the order it happens, and names the action and what
 // stays; the write happens only after the primary button.
 import { defineForm } from "../../form/registry.js";

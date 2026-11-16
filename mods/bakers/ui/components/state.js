@@ -1,4 +1,4 @@
-// components/state: what a view shows when it has no data to draw: loading, a failure from
+// ui/components/state: what a view shows when it has no data to draw: loading, a failure from
 // core/errors (offline or failed with Retry), or an empty hint. A view never goes blank.
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";

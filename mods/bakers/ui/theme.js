@@ -1,4 +1,4 @@
-// core/theme: the theme mapping, fonts and icons.
+// ui/theme: the theme mapping, fonts and icons.
 // The wireframe is grayscale with one accent; it maps onto Herdr's theme tokens:
 //   #f4f4f5 page -> canvas            #ffffff cards, inputs -> surface (inputs: input)
 //   #b9b9bf / #ececee / #d9d9dc -> border

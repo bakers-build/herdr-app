@@ -1,4 +1,4 @@
-// components/text: an identifier in the monospace font; an upper-case section heading.
+// ui/components/text: an identifier in the monospace font; an upper-case section heading.
 import { div } from "gpui-kit";
 import { theme } from "herdr";
 import { MONO_FONT } from "../theme.js";

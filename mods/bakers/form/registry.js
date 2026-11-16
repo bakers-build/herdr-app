@@ -1,5 +1,5 @@
 // form/registry: dialogs open as their own mod copy, so a dialog finds its definition by
-// kind. Each entity registers its forms when main.js imports it.
+// kind. Each module registers its forms when main.js imports it.
 
 /** @type {Map<string, (props: any) => any | Promise<any>>} */
 const FORMS = new Map();

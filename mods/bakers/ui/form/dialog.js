@@ -1,4 +1,4 @@
-// components/form/dialog: the dialog frame (frames 4, R3-2) for any form definition
+// ui/form/dialog: the dialog frame (frames 4, R3-2) for any form definition
 // registered under props().form: the title, from and to in pills, the consequence, the
 // fields, the message, then the buttons. The primary names the action and its target,
 // the other names what stays and is the default. Keys follow form/keys (a key never

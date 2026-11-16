@@ -1,4 +1,4 @@
-// components/pill: a 24 px pill (state, Frozen, from and to in dialogs), optionally a button
+// ui/components/pill: a 24 px pill (state, Frozen, from and to in dialogs), optionally a button
 // with a chevron.
 import { svg } from "gpui-kit";
 import { h_flex } from "gpui-base";

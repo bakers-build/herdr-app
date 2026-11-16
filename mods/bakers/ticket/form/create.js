@@ -1,4 +1,4 @@
-// form/create: New ticket (N, cmd-shift-N, the header button), a minimal dialog: title,
+// ticket/form/create: New ticket (N, cmd-shift-N, the header button), a minimal dialog: title,
 // type and description. bakers_ticket_create takes the project and the workflow of an
 // existing ticket; the new ticket then opens as a pinned tab. Frame 5 is not a pixel target.
 import { openTicket } from "../../core/tabs.js";

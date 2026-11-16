@@ -1,4 +1,4 @@
-// ui/layout/rail: the rail (R2-4, R2-3), 56 px: Herdr's Spaces button and the bakers button
+// shell/controller/rail: the rail (R2-4, R2-3), 56 px: Herdr's Spaces button and the bakers button
 // with the needs-you count; bakers opens the Tickets tab on Needs me.
 import { div } from "gpui-kit";
 import { v_flex } from "gpui-base";

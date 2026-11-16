@@ -1,4 +1,4 @@
-// components/callout: a card with an accent border: a small upper-case label, a title, a
+// ui/components/callout: a card with an accent border: a small upper-case label, a title, a
 // text, then buttons and a hint (the Needs-you card).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";

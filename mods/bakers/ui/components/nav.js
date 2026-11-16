@@ -1,4 +1,4 @@
-// components/nav: a list of navigation rows with counts, optional chips, sub rows indented
+// ui/components/nav: a list of navigation rows with counts, optional chips, sub rows indented
 // 18 px, the selected row on the selected color in the accent (the sidebar's views).
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";

@@ -1,6 +1,6 @@
 // form/state: one form's values, field errors, message, busy flag and the steps a failed
 // submit already finished. The drawing
-// (components/form) keeps the text inputs and writes their values here.
+// (ui/form) keeps the text inputs and writes their values here.
 
 export class FormState {
   /** @param {{ fields?: { name: string, type: string, value?: any }[] }} def */

@@ -1,4 +1,4 @@
-// components/pager: the row below a list that loads the next page.
+// ui/components/pager: the row below a list that loads the next page.
 import { h_flex } from "gpui-base";
 import { theme } from "herdr";
 

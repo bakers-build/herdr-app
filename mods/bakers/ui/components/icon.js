@@ -1,4 +1,4 @@
-// components/icon: the mod's icons (tinted with the text color).
+// ui/components/icon: the mod's icons (tinted with the text color).
 import { svg } from "gpui-kit";
 import { icons } from "../theme.js";
 

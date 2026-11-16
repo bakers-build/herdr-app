@@ -1,4 +1,4 @@
-// components/table: column header and rows on a fixed grid (fixed px, one flexible column),
+// ui/components/table: column header and rows on a fixed grid (fixed px, one flexible column),
 // 12 px gap; the selected row has the accent outline on the selected color.
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";

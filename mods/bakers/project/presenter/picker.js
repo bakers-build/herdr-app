@@ -1,4 +1,4 @@
-// entity/project/presenter/picker: the projects as picker items, the current one marked.
+// project/presenter/picker: the projects as picker items, the current one marked.
 
 /** @param {{ uuid: string, name: string }[]} choices @param {string | null} current */
 export function pickerItems(choices, current) {

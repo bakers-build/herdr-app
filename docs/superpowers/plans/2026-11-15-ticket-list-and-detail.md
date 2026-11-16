@@ -1,5 +1,12 @@
 # Ticket list and ticket detail (R2-4, R2-3) Implementation Plan
 
+> **Superseded in part (2026-11-16).** The code layout and the data path changed after this
+> document was approved. The bakers mod is now a framework (`core/`, `form/`, `list/`, `ui/`) with
+> the modules `ticket/`, `project/` and `shell/`, as `docs/architecture.md` describes; there is no
+> `lib/` or `views/`. Reads go through JSON:API (`core/api.js`) with the CLI's short-lived token,
+> `bakers dropsh` as fallback; writes stay with `bakers tools`. Screens, keys and copy below still
+> apply.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the bakers layout, the Tickets tab (R2-4) and the ticket tab (R2-3) as Herdr mods, one to one with the wireframe at 1440 x 900 and with every drawn function.

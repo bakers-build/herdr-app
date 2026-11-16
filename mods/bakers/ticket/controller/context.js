@@ -1,4 +1,4 @@
-// ui/panel: the right panel's ticket child (frame R2-3, 368 px, cmd-shift-T). It follows
+// ticket/controller/context: the right panel's ticket child (frame R2-3, 368 px, cmd-shift-T). It follows
 // the focused ticket tab, else the selected list row, loads the ticket and its activity,
 // maps them with presenter/context and draws Agent and conductor, Properties, Activity and
 // Runs. Nothing here repeats the document; the panel never takes the focus.

@@ -1,4 +1,4 @@
-// presenter/tab: a ticket's tab name, "<ID> <state>", or "<ID> closed" after done or
+// ticket/presenter/tab: a ticket's tab name, "<ID> <state>", or "<ID> closed" after done or
 // cancelled, so the name follows the state.
 import { isClosed } from "../rules.js";
 

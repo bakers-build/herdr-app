@@ -1,4 +1,4 @@
-// ui/goto: Go to ticket (cmd-shift-O, frame R2-4): a 480 px popup that searches identifier or
+// ticket/controller/search: Go to ticket (cmd-shift-O, frame R2-4): a 480 px popup that searches identifier or
 // title words with bakers_ticket_search as the person types (200 ms debounce). Enter
 // opens the ticket as a tab, or selects its tab when it is open; Esc closes.
 import { div } from "gpui-kit";

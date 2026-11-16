@@ -1,4 +1,4 @@
-// form/edit: title and description of a ticket, edited in place. The description is
+// ticket/form/edit: title and description of a ticket, edited in place. The description is
 // replaced whole without a revision check (API), so the form warns once when the ticket
 // changed since editing began; sending again saves over it.
 import * as actions from "../commands.js";

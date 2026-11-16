@@ -1,6 +1,13 @@
 # Ticket list and ticket detail in Herdr (R2-4, R2-3): design
 
-Ticket: HERDRAPP-3. Status: proposal, waiting for approval in the ticket.
+Ticket: HERDRAPP-3. Status: approved in the ticket (2026-11-15).
+
+> **Superseded in part (2026-11-16).** The code layout and the data path changed after this
+> document was approved. The bakers mod is now a framework (`core/`, `form/`, `list/`, `ui/`) with
+> the modules `ticket/`, `project/` and `shell/`, as `docs/architecture.md` describes; there is no
+> `lib/` or `views/`. Reads go through JSON:API (`core/api.js`) with the CLI's short-lived token,
+> `bakers dropsh` as fallback; writes stay with `bakers tools`. Screens, keys and copy below still
+> apply.
 
 ## Intent
 

@@ -1,4 +1,4 @@
-// components/menu: the popup menu everything opens (the "..." menus, the view menu, the state
+// ui/components/menu: the popup menu everything opens (the "..." menus, the view menu, the state
 // menu, Type and Recipe). Items carry actions (core/actions.js). Up, Down, Enter and Esc
 // as in Herdr's menu mod (v0.1.15 defaults/mods/menu).
 import { div } from "gpui-kit";

@@ -67,7 +67,7 @@ export function reconcile() {
 
 /**
  * Opens a ticket as the preview tab, or pinned; an open ticket is only selected.
- * The name comes from the ticket presenter (entity/ticket/presenter/tab.js).
+ * The name comes from the ticket presenter (ticket/presenter/tab.js).
  * @param {string} id
  * @param {string} name
  * @param {{ pin?: boolean }} [opts]

@@ -1,4 +1,4 @@
-// presenter/agent: the agent line, shared by the teaser, the full view and the context.
+// ticket/presenter/field/agent-line: the agent line, shared by the teaser, the full view and the context.
 // "Claude Code needs you" in the blocked tone, then where (from the run terminal's
 // address) and since when.
 import { age, agentName, toMs } from "../../../core/format.js";

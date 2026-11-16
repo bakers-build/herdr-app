@@ -1,5 +1,5 @@
-// ui/ticket-tab: a ticket as its own tab (frame R2-3), one column of at most 760 px. It loads
-// the ticket (entity/ticket/data), maps it with presenter/full, and draws the header, the
+// ticket/controller/view: a ticket as its own tab (frame R2-3), one column of at most 760 px. It loads
+// the ticket (ticket/store.js), maps it with presenter/full, and draws the header, the
 // title and description (or the edit form), the Needs-you card, the comments and the
 // composer (the comment form). Keys: A acts on the card, E edits, G shows the agent, R moves
 // the run; cmd-Enter and Esc belong to the edit form or the composer while they are used.

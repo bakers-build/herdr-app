@@ -1,4 +1,4 @@
-// components/chip: the dashed chip, e.g. "API" for what the bakers API cannot deliver yet.
+// ui/components/chip: the dashed chip, e.g. "API" for what the bakers API cannot deliver yet.
 import { h_flex } from "gpui-base";
 import { theme } from "herdr";
 

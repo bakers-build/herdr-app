@@ -1,4 +1,4 @@
-// components/dot: a round 8 px status dot in a theme tone; ring draws the hollow one.
+// ui/components/dot: a round 8 px status dot in a theme tone; ring draws the hollow one.
 import { div } from "gpui-kit";
 import { theme } from "herdr";
 

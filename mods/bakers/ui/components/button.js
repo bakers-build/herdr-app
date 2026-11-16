@@ -1,4 +1,4 @@
-// components/button: a button as drawn: 1 px border, 6 px corners; primary is solid and
+// ui/components/button: a button as drawn: 1 px border, 6 px corners; primary is solid and
 // semibold; disabled shows half opacity and says why.
 import { h_flex } from "gpui-base";
 import { theme } from "herdr";
