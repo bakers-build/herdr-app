@@ -13,9 +13,37 @@ small framework (logic: `core`, `form`, `list`; drawing: `ui`) and modules (`tic
 `shell`), each with its model, repository, commands, store, lists, view modes, forms,
 operations, controllers and routes. See [docs/architecture.md](docs/architecture.md).
 
+## Releases
+
+Needs Herdr Desktop (started once), [Bun](https://bun.sh) and a signed-in `bakers` CLI on the
+PATH.
+
+**Download.** Take `herdr-bakers-<version>.zip` from the latest release on
+<https://github.com/bakers-build/herdr-app/releases/latest>. Pre-releases
+(`<version>-next.<n>`) are built from `next` and are marked as such.
+
+**Install.** Unpack it and run the installer; it needs no `bun install`:
+
+```sh
+unzip herdr-bakers-<version>.zip
+bun herdr-bakers-<version>/scripts/install.ts      # --dry-run shows what it would write
+herdr-app do layout.switch --name bakers
+```
+
+The first line it prints is `installing bakers <version>`.
+
+**Update.** Download the newer ZIP and run its installer the same way. It copies the new mod files
+over the installed ones and rewrites `layouts/bakers.json`; your keys are kept. Files that a newer
+release dropped stay behind; for a clean copy, delete `mods/bakers` in the Herdr home first.
+
+**Check the version.** The installed version is the `version` in
+`~/.config/herdr-app/mods/bakers/mod.json` (`$HERDR_APP_HOME/mods/bakers/mod.json`). A copy
+installed from a git checkout shows `0.0.0-dev`.
+
 ## Install
 
-Needs Herdr Desktop (started once) and a signed-in `bakers` CLI on the PATH.
+From a git checkout, for development. Needs Herdr Desktop (started once) and a signed-in `bakers`
+CLI on the PATH.
 
 ```sh
 bun install
@@ -69,6 +97,36 @@ bun run check   # lint, format check, type check and tests; or `just check`
 
 `bun run format` rewrites files to the house style. Which Herdr conventions this follows, and
 where and why it deviates, is in [docs/conventions.md](docs/conventions.md).
+
+## Release flow
+
+As in bakers-build: `next` is the integration branch, `main` the release branch.
+
+- Feature tickets branch from `next` and squash-merge into it; the PR title becomes the commit, so
+  CI (`pr-title`) requires a Conventional Commits title (`feat(scope): …`, `fix: …`, `…!:` for
+  breaking).
+- The version comes from those commits since the last `v*` tag: breaking → minor while 0.x, major
+  from 1.0; `feat` → minor; `fix`/`perf` → patch; other types release nothing. The repo's
+  `mod.json` stays at `0.0.0-dev`; the release ZIP carries the real version.
+- Dry run: `bun run release:version <SHA> --notes -` prints the next version and the notes, or
+  nothing when there is nothing to release. `bun run release:package <version>` builds the ZIP into
+  `dist/`.
+- Every push to `next` with releasable commits publishes a pre-release `v<x.y.z>-next.<n>`.
+- A deployment ticket (recipe `deploy-and-release`) freezes a SHA of `next` and merges it into `main`
+  as `chore(release): <x.y.z>` with a merge commit. The `release` job on `main` tags that SHA
+  `v<x.y.z>` and creates the GitHub release with the notes and the ZIP. `WORKFLOW.md` lists what
+  herdr-app uses instead of the recipe's deploy, login and `npm view` checks.
+
+Maintainer checklist, once, after the release flow lands on `main`:
+
+1. Create `next` from `main` at that merge (`v0.1.0` is then reachable from both).
+2. Set the project's base branch in bakers.build to `next`, and the forge merge rules in
+   `.bakers/project.config.js` to `next`: squash, delete source; `main`: merge commit, keep source.
+3. Set the GitHub default branch to `next`.
+4. Make `test` and `pr-title` required checks on `next` and `main`. Allow merge commits, and set the
+   squash default commit message to "Pull request title and description".
+5. Create the release environment (`branch: main`; `base_url`: the repo's releases page, which is
+   not checked) for deployment tickets.
 
 ## Not planned
 

@@ -131,10 +131,17 @@ test("install copies the mods, writes the bakers layout and merges keys; --dry-r
     join(home, "keys.json"),
     JSON.stringify({ global: { "cmd-shift-o": "pane.split:right" } }),
   );
-  const dry = await install({ home, dryRun: true, log: () => {} });
+  const lines: string[] = [];
+  const dry = await install({ home, dryRun: true, log: (l: string) => lines.push(l) });
+  expect(lines[0]).toBe("would install bakers 0.0.0-dev");
+  expect(lines.at(-1)).toEndWith("(bakers 0.0.0-dev)");
+  expect(dry.version).toBe("0.0.0-dev");
   expect(dry.written).toEqual([]);
   expect(dry.conflicts).toEqual(["cmd-shift-o is pane.split:right, not bakers.goto"]);
-  const done = await install({ home, dryRun: false, log: () => {} });
+  lines.length = 0;
+  const done = await install({ home, dryRun: false, log: (l: string) => lines.push(l) });
+  expect(lines[0]).toBe("installing bakers 0.0.0-dev");
+  expect(lines.at(-1)).toEndWith("(bakers 0.0.0-dev)");
   expect(done.written).toContain(join(home, "layouts", "bakers.json"));
   const layout = JSON.parse(await readFile(join(home, "layouts", "bakers.json"), "utf8"));
   expect(find(layout, "bakers-rail")).toBeDefined();

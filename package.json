@@ -13,7 +13,9 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "bun run lint && bun run format:check && bun run typecheck && bun run test",
-    "install:herdr": "bun scripts/install.ts"
+    "install:herdr": "bun scripts/install.ts",
+    "release:package": "bun scripts/release/package.ts",
+    "release:version": "bun scripts/release/version.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",

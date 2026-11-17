@@ -3,6 +3,8 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    # Updates go into the integration branch, like every other change.
+    target-branch: next
     schedule:
       interval: monthly
     groups:

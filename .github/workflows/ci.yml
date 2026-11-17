@@ -7,15 +7,18 @@ name: ci
 on:
   # Every branch, unlike Herdr (master only): each push gets checked.
   push:
+  # edited: a title change reruns the pr-title check.
   pull_request:
+    types: [opened, edited, synchronize, reopened]
 
 permissions:
   contents: read
 
-# A newer push cancels older runs of the same PR or ref.
+# A newer push cancels older runs of the same PR or ref, except on main and next, whose
+# runs release: a cancelled release could leave a tag without its release.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/next' }}
 
 env:
   BUN_VERSION: 1.4.4
@@ -57,3 +60,69 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: ${{ steps.cache.outputs.cache-primary-key }}
+
+  # The squash into next makes the PR title the commit that decides the version bump.
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+      # The title only ever reaches the script through env, never inside run.
+      - name: Check the PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: bun scripts/release/pr-title.ts
+
+  # Tags and publishes a GitHub release: stable vX.Y.Z on main (the merged next SHA),
+  # vX.Y.Z-next.N pre-releases on next. Nothing to release (or already released) is a no-op.
+  release:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/next')
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+      - name: Target
+        id: target
+        run: bun scripts/release/target.ts "${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+      - name: Version
+        id: version
+        env:
+          SHA: ${{ steps.target.outputs.sha }}
+          PRE: ${{ steps.target.outputs.pre }}
+        run: |
+          VERSION="$(bun scripts/release/version.ts "$SHA" ${PRE:+--pre "$PRE"} --notes notes.md)"
+          if [ -z "$VERSION" ]; then echo "nothing to release at $SHA"; fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Package and publish
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.target.outputs.sha }}
+          PRE: ${{ steps.target.outputs.pre }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          bun scripts/release/package.ts "$VERSION"
+          gh release create "v$VERSION" "dist/herdr-bakers-$VERSION.zip" --target "$SHA" --title "v$VERSION" --notes-file notes.md ${PRE:+--prerelease}
+          echo "released v$VERSION: $(gh release view "v$VERSION" --json url -q .url)"
+          echo "asset: herdr-bakers-$VERSION.zip"
