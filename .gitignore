@@ -9,3 +9,6 @@ mods/*/*.d.ts
 
 # bakers dropsh schema cache
 .dropsh/
+
+# Release packages (bun run release:package)
+dist/

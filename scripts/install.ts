@@ -6,6 +6,7 @@
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { bakersLayout, mergeKeys } from "./layout.js";
 
 type Options = { home?: string; from?: string; dryRun?: boolean; log?: (line: string) => void };
@@ -45,7 +46,10 @@ export async function install(options: Options = {}) {
     log: options.log ?? ((line) => console.log(line)),
   };
   const written: string[] = [];
-  const repo = new URL("..", import.meta.url).pathname;
+  // fileURLToPath, not .pathname: an unpacked release may sit in a path with spaces.
+  const repo = fileURLToPath(new URL("..", import.meta.url));
+  const { version } = JSON.parse(await readFile(join(repo, "mods", "bakers", "mod.json"), "utf8"));
+  o.log(`${o.dryRun ? "would install" : "installing"} bakers ${version}`);
 
   for (const mod of ["bakers"]) {
     const to = join(o.home, "mods", mod);
@@ -74,11 +78,13 @@ export async function install(options: Options = {}) {
     await update(keysPath, keysBefore, keysText, o, written);
 
   o.log(
-    o.dryRun
-      ? "dry run: nothing written"
-      : 'done: switch with layout.switch {"name": "bakers"} (cmd-shift-L)',
+    `${
+      o.dryRun
+        ? "dry run: nothing written"
+        : 'done: switch with layout.switch {"name": "bakers"} (cmd-shift-L)'
+    } (bakers ${version})`,
   );
-  return { written, conflicts };
+  return { written, conflicts, version: String(version) };
 }
 
 if (import.meta.main) {
