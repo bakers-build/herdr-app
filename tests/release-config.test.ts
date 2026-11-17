@@ -46,3 +46,7 @@ test("conventions.md records the release conventions", () => {
   for (const row of ["| Versioning |", "| Release artifact |", "| PR titles |", "| Branch model |"])
     expect(c).toContain(row);
 });
+
+test("the README does not promise that an update removes old files", () => {
+  expect(read("README.md")).not.toContain("replaces the mod folder");
+});

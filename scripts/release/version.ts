@@ -21,14 +21,18 @@ function lastTag(cwd: string, sha: string, stableOnly: boolean): string | null {
 
 function changesSince(cwd: string, from: string | null, sha: string): Change[] {
   const range = from ? `${from}..${sha}` : sha;
-  const out = git(cwd, "log", "--no-merges", "--format=%H%x1f%s%x1f%b%x1e", range);
+  // %B, not %s: %s joins the whole first paragraph, but only the first line is the header.
+  const out = git(cwd, "log", "--no-merges", "--format=%H%x1f%B%x1e", range);
   return out
     .split("\x1e")
     .map((rec) => rec.replace(/^\n/, ""))
     .filter((rec) => rec.length > 0)
     .map((rec): Commit => {
-      const [sha, subject, body = ""] = rec.split("\x1f");
-      return { sha, subject, body };
+      const [sha, message = ""] = rec.split("\x1f");
+      const at = message.indexOf("\n");
+      return at < 0
+        ? { sha, subject: message, body: "" }
+        : { sha, subject: message.slice(0, at), body: message.slice(at + 1) };
     })
     .map(toChange)
     .filter((c): c is Change => c !== null);
@@ -42,6 +46,8 @@ export function nextRelease(opts: {
   const { cwd } = opts;
   const sha = git(cwd, "rev-parse", "--verify", `${opts.sha}^{commit}`);
   const stable = lastTag(cwd, sha, true);
+  if (stable && !/^v\d+\.\d+\.\d+$/.test(stable))
+    throw new Error(`tag ${stable} is not v<major>.<minor>.<patch>; delete or fix it`);
   const base = stable ? stable.slice(1) : "0.0.0";
   const version = bump(base, changesSince(cwd, stable, sha));
   if (!version) return null;

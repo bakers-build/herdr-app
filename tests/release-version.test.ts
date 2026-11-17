@@ -157,3 +157,18 @@ test("the CLI fails on a bad SHA", () => {
   expect(out).toBe("");
   expect(err).not.toBe("");
 });
+
+test("only the first line of a message is the subject", () => {
+  const r = fresh();
+  r.commit("fix: multi\nsecond line without blank");
+  expect(nextRelease({ cwd: r.dir, sha: "HEAD" })?.notes).toContain("- multi (");
+  expect(nextRelease({ cwd: r.dir, sha: "HEAD" })?.notes).not.toContain("second line");
+});
+
+test("a malformed stable tag fails instead of releasing NaN", () => {
+  const r = fresh();
+  r.commit("feat: a");
+  r.tag("v1.2");
+  r.commit("fix: b");
+  expect(() => nextRelease({ cwd: r.dir, sha: "HEAD" })).toThrow("v1.2");
+});

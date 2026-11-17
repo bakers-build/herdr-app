@@ -32,8 +32,9 @@ herdr-app do layout.switch --name bakers
 
 The first line it prints is `installing bakers <version>`.
 
-**Update.** Download the newer ZIP and run its installer the same way. It replaces the mod folder
-and rewrites `layouts/bakers.json`; your keys are kept.
+**Update.** Download the newer ZIP and run its installer the same way. It copies the new mod files
+over the installed ones and rewrites `layouts/bakers.json`; your keys are kept. Files that a newer
+release dropped stay behind; for a clean copy, delete `mods/bakers` in the Herdr home first.
 
 **Check the version.** The installed version is the `version` in
 `~/.config/herdr-app/mods/bakers/mod.json` (`$HERDR_APP_HOME/mods/bakers/mod.json`). A copy
