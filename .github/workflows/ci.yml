@@ -90,6 +90,30 @@ jobs:
       - name: Contract test
         run: bun run test:contract
 
+  # Loads the mod in the pinned Herdr (herdr-app check): the Linux build from Herdr's
+  # releases, checksum from types/herdr-version.json, under a virtual display with
+  # software Vulkan (Mesa), as Herdr's own Linux CI renders headless.
+  herdr-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Herdr runtime libraries
+        timeout-minutes: 5
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends \
+            libxkbcommon0 libxkbcommon-x11-0 libxcb1 libwayland-client0 \
+            libvulkan1 mesa-vulkan-drivers libfontconfig1 libfreetype6 xvfb xauth
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+      - name: Herdr check
+        run: xvfb-run -a bun run herdr-check
+
   # The squash into next makes the PR title the commit that decides the version bump.
   pr-title:
     if: github.event_name == 'pull_request'

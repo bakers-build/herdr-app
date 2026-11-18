@@ -1,1 +1,8 @@
-{ "herdr": "0.1.16", "gpuiShell": "0.7.1" }
+{
+  "herdr": "0.1.16",
+  "gpuiShell": "0.7.1",
+  "builds": {
+    "linux-x86_64": "282d2632196b238206cfe66bfb61c0faf299ca1c91843bd076521bbe36571216",
+    "linux-aarch64": "efeef4f1759b0e8900f205c2c22b14287a112f874406539b4ea1b3be24b73631"
+  }
+}

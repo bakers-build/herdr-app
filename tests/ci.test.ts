@@ -94,3 +94,14 @@ test("the contract job runs the contract test with read-only rights", () => {
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   expect(pkg.scripts["test:contract"]).toBe("bun tests/contract/run.ts");
 });
+
+test("the herdr-check job loads the mod in the pinned Herdr on Linux", () => {
+  const job = ci.jobs["herdr-check"];
+  expect(job).toBeDefined();
+  expect(job["runs-on"]).toMatch(/^ubuntu-/);
+  expect(job["timeout-minutes"]).toBeLessThanOrEqual(15);
+  expect(job.permissions ?? ci.permissions).toEqual({ contents: "read" });
+  expect(runs("herdr-check").some((r) => r.includes("bun run herdr-check"))).toBe(true);
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  expect(pkg.scripts["herdr-check"]).toBe("bun scripts/check/herdr-check.ts");
+});
