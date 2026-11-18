@@ -21,8 +21,11 @@ This is a pure refactor: **nothing a user sees or does changes.**
 
 ## Goals
 
-- G1. One registry, `core/registry.js`, for lists, forms, actions, tab kinds and shell
+- G1. One registry, `core/registry.js`, for routes, lists, forms, actions, tab kinds and shell
   contributions. The three old registries are removed.
+- G1a. **Everything that draws starts with a route** (owner, 2026-11-18). Routes are entries in
+  the registry. A drawing contribution to a shell region names only a route, and the shell creates
+  that route's controller, as the router does for a tab or an overlay.
 - G2. Registration is explicit: each module exports `register()`, and `main.js` calls them. No file
   registers anything as a side effect of being imported.
 - G3. `core/tabs.js` manages keyed tabs of registered kinds and knows nothing about tickets.
@@ -82,14 +85,15 @@ The registry holds these types:
 
 | type | id | def | registered by |
 |---|---|---|---|
+| `route` | route name (`ticket.list`, `menu`, …) | the controller class | every module, `ui` (`menu`, `dialog`) |
 | `list` | list id (`needs-me`, `state`, …) | the list definition, unchanged | `ticket` |
 | `form` | form kind (`create`, `state`, …) | `{ build(props) }` | `ticket` |
 | `action` | action name (`ticket.refresh`, `form.open`, …) | `{ run(...args) }` | `ticket`, `project`, `ui` |
 | `tab` | kind (`ticket`) | see §2 | `ticket` |
-| `rail.item` | e.g. `ticket` | `{ order, render() }` | `ticket` |
-| `sidebar.section` | e.g. `ticket` | `{ order, title, init?(cx), rows() }` | `ticket` |
-| `sidebar.tool` | e.g. `project.picker` | `{ section, order, render() }` | `project` |
-| `status.item` | e.g. `ticket` | `{ order, parts(now), click?() }` | `ticket` |
+| `rail.item` | e.g. `ticket` | `{ order, route }` (`ticket.rail`) | `ticket` |
+| `sidebar.section` | e.g. `ticket` | `{ order, title, route }` (`ticket.sidebar`) | `ticket` |
+| `sidebar.tool` | e.g. `project.picker` | `{ section, order, route }` (`project.sidebar-tool`) | `project` |
+| `status.item` | e.g. `ticket` | `{ order, route }` (`ticket.status`) | `ticket` |
 | `window.task` | e.g. `ticket.refresh` | `{ every, run() }` | `ticket` |
 | `command` | the key command's name, e.g. `goto` | `{ run(arg, ctx) }` | `ticket` |
 | `tabs.decorate` | e.g. `ticket` | `{ decorate(tab, info) → { label?, dot? } }` | `ticket` |
@@ -100,6 +104,21 @@ is still an id, or an id and arguments, for example `state:working`. `form/regis
 `list/registry.js` are deleted. `core/actions.js` keeps only `perform(action, cx)`. It looks up the
 action under the `action` type. `copy` stays built into `perform`, because it alone needs the
 chooser's `cx`.
+
+**Contributed controllers.** A region creates each contribution's controller once, in its own
+`init`, as `new C({ view: route })`, and then calls `init(props, cx)`. In `render(cx)` it calls
+the controller's `render(cx)`, and in `close(cx)` it calls `close?.(cx)`. A contribution's
+`render` may return an element or an array of elements. The region spreads an array into its own
+`children`, so the drawn tree stays identical to today's. A status controller may also have
+`click()`; see §3. Contributed routes follow the same naming rule as every route
+(`<module>.<name>`).
+
+The non-drawing hooks (`window.task`, `command`, `tabs.decorate`, `tabs.panel`) are behaviour or
+data, not regions, so they stay functions and plain definitions.
+
+**The router.** `main.js` looks the route up with `get("route", props().view)`. Each
+`routes.js` keeps its map of route names to controllers, and `register.js` defines every entry as
+a `route`. `ROUTES` disappears from `main.js`.
 
 Registration: each module, and `ui` for its generic `form.open` action, gets a `register.js`
 that exports `register()`. `main.js` calls them in a fixed order (`ui`, `project`, `ticket`,
@@ -156,19 +175,22 @@ the kind `"ticket"`. Callers inside `ticket/` switch their import from `core/tab
 `shell/` imports only `core/`, `ui/` and `form/`. Each region draws its frame and then its
 contributions:
 
-- **Rail.** Shell draws the logo and the Spaces button. Below them come the `rail.item` renders in
-  order. Ticket registers the bakers button with the needs-you count. It reads the shared
+- **Rail.** Shell draws the logo and the Spaces button. Below them come the `rail.item`
+  controllers in order. Ticket registers the route `ticket.rail`
+  (`ticket/controller/rail.js`): the bakers button with the needs-you count. It reads the shared
   `bakers.needs` and opens the Tickets tab on Needs me.
 - **Sidebar.** Shell draws one card per `sidebar.section`. Each card's header holds the section's
   `title` and then its `sidebar.tool` renders, which sit at `ml_auto` as the picker does today. Its
-  body holds `navRows(section.rows())`. Ticket registers the section `ticket` (title "Tickets",
-  rows from `navItems`, a click sets the view and opens the Tickets tab, and `init` awaits
-  `ready()`). Project registers the tool `project.picker` with `section: "ticket"`. A module may
+  body is the section controller's render, an array of `navRows`. Ticket registers the section
+  `ticket` (title "Tickets", route `ticket.sidebar`, `ticket/controller/sidebar.js`): rows from
+  `navItems`, a click sets the view and opens the Tickets tab, and its `init` awaits `ready()` and
+  then notifies. Project registers the tool `project.picker` with `section: "ticket"` and the route
+  `project.sidebar-tool` (`project/controller/sidebar-tool.js`), the picker button. A module may
   name another module's section id, just as it may name a route.
 - **Status.** Shell draws the block: its size, padding, colours, border and pointer. Each
-  `status.item`'s `parts(now)` become the same text runs as today. A click on the block runs the
-  `click` of the first item that has one, so a click anywhere on the block still opens the Tickets
-  tab. The status block remains the once-per-window host. It starts each `window.task` at once and
+  `status.item` controller (ticket: route `ticket.status`, `ticket/controller/status.js`) renders
+  the same text runs as today, as an array. A click on the block runs `click()` on the first item
+  controller that has one, so a click anywhere on the block still opens the Tickets tab. The status block remains the once-per-window host. It starts each `window.task` at once and
   then every `every` ms (ticket: refresh, `publishNeeds`, `syncNames`, `watchNeeds`). It
   dispatches each `nextCommand()` to the `command` with that name, passing `{ width, left }`.
   `width` is the block's measured width. `left` is the rail width (56) plus the shown sidebar's
@@ -199,6 +221,9 @@ contributions:
   vocabulary. It covers every behaviour: preview replaced in place, pin, home at its index, rename,
   close by predicate and the focused key. A new `tests/ticket/tabs.test.ts` keeps every current
   ticket assertion, with the same expected `run()` calls, through `ticket/tabs.js` (AC4).
+- **Router.** "Every route is named after its module and reaches the router" now checks
+  `get("route", name)`. A new test in `tests/main.test.ts` checks that an unknown view still draws
+  "bakers: unknown view".
 - **`tests/core/registry.test.ts`**: define, replace, get, and all in order. The `getList` test in
   `tests/list/run.test.ts` moves to `findList` with the same assertions.
 - **`tests/architecture.test.ts`** gains these rules:
@@ -238,6 +263,8 @@ contributions:
 
 ## Calls made in this design (not discussed with the owner)
 
+0. Routes move into the registry, and drawing contributions name a route (the owner's answer,
+   2026-11-18). The non-drawing hooks stay functions.
 1. `copy` stays built into `perform`, not a registry entry, because it needs the chooser's `cx`.
 2. The preview's italic is drawn by shell from `core/tabs.preview()`, not through `tabs.decorate`.
 3. The project picker is a `sidebar.tool` aimed at the ticket section by id, so the card looks the

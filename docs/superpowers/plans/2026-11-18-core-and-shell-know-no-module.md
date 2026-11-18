@@ -5,8 +5,9 @@
 **Goal:** Make the generic part of the bakers mod (`core/`, `form/`, `list/`, `ui/`, the
 `shell` frame) know no domain module, with no change a user can see.
 
-**Architecture:** There is one registry, `core/registry.js`. `main.js` fills it per mod copy by
-calling each module's `register()`. `core/tabs.js` manages keyed tabs of registered kinds.
+**Architecture:** There is one registry, `core/registry.js`, and it holds the routes too. `main.js`
+fills it per mod copy by calling each module's `register()`, and routes through it. Every drawing
+contribution names a route, and the shell creates that route's controller. `core/tabs.js` manages keyed tabs of registered kinds.
 `shell` draws its frames and the contributions registered at its extension points. Golden render
 snapshots, taken before any change, prove that nothing visible moves.
 
@@ -125,7 +126,7 @@ used below.
   green.
 - [ ] **Step 5: Commit** with `feat(core): one registry`.
 
-### Task 3: Lists, forms and actions on the registry; explicit registration
+### Task 3: Routes, lists, forms and actions on the registry; explicit registration
 
 **Files:**
 - Create: `mods/bakers/list/lookup.js`, `mods/bakers/ui/register.js`,
@@ -149,7 +150,10 @@ used below.
   - `define("form", kind, { build })`; `ui/form/dialog.js` uses `get("form", kind)?.build`.
   - Each `register.js` exports `register(): void`.
   - `main.js` exports `registerAll(): void`, which calls `ui`, `project`, `ticket` and `shell`
-    in that order. It also calls it once at module top.
+    in that order. It also calls it once at module top. The router uses `get("route",
+    props().view)`, and `ROUTES` is removed.
+  - Each `register.js` defines every entry of its `routes.js` as `define("route", name, C)`.
+    `ui/register.js` defines `menu` and `dialog`.
   - List and form definition files export their definitions and no longer call `define`.
     `ticket/register.js` defines them, the actions `ticket.classify`, `ticket.labels`,
     `ticket.refresh`, `ticket.view`, `ticket.toggleClosed`, `tabs.closeFinished` and
@@ -164,6 +168,10 @@ used below.
     - `get("action","project.choose")`, `get("action","form.open")` and
       `get("action","tabs.closeAll")` exist.
   - In `tests/ui/menu.test.ts`, add the Review Focus 2 test.
+  - In `tests/main.test.ts`, the existing router tests switch from `ROUTES[name]` to
+    `get("route", name)` with the same expectations. Add `an unknown view draws "bakers: unknown
+    view"`. `tests/architecture.test.ts` "every route … reaches the router" compares
+    `get("route", name)` with `routes[name]`.
   - In `tests/list/run.test.ts`, `defineList(x)` becomes `define("list", x.id, x)` and `getList`
     becomes `findList`. The assertions stay the same.
 - [ ] **Step 2:** Run `bun test tests/main.test.ts tests/ui/menu.test.ts tests/list`. Expected:
@@ -231,19 +239,24 @@ used below.
 
 **Files:**
 - Modify: `shell/controller/rail.js` and `shell/controller/sidebar.js`
-- Create: `ticket/controller/shell.js` (the ticket's rail item and sidebar section) and
-  `project/controller/sidebar-tool.js` (the picker button, moved from `sidebar.js:20-50`)
-- Modify: `ticket/register.js`, `project/register.js`
+- Create: `ticket/controller/rail.js` (route `ticket.rail`, the bakers button),
+  `ticket/controller/sidebar.js` (route `ticket.sidebar`; `render` returns the `navRows` array)
+  and `project/controller/sidebar-tool.js` (route `project.sidebar-tool`, the picker button moved
+  from `shell/controller/sidebar.js:20-50`)
+- Modify: `ticket/routes.js`, `project/routes.js`, `ticket/register.js`, `project/register.js`
 - Test: `tests/shell/rail-and-toast.test.ts`, `tests/shell/sidebar.test.ts` (imports only)
 
 **Interfaces:**
-- Produces: the definitions `rail.item` `ticket`, `sidebar.section` `ticket` (`title:
-  "Tickets"`) and `sidebar.tool` `project.picker` (`section: "ticket"`), shaped as in spec §1 and
-  §3.
+- Produces: the definitions `rail.item` `ticket` (`{ order: 0, route: "ticket.rail" }`),
+  `sidebar.section` `ticket` (`{ order: 0, title: "Tickets", route: "ticket.sidebar" }`) and
+  `sidebar.tool` `project.picker` (`{ section: "ticket", order: 0, route: "project.sidebar-tool" }`).
+  The shell's contributed-controller lifecycle is in spec §1, *Contributed controllers*.
 
 - [ ] **Step 1: Failing test.** Add `shell draws registered contributions only` to
-  `tests/shell/sidebar.test.ts`. After `_resetForTests()`, register a `sidebar.section` `x`
-  (`title: "X"`, one row) and a `rail.item` `y`. Expect texts `["X", <row>]` from the sidebar and
+  `tests/shell/sidebar.test.ts`. After `_resetForTests()`, register a route `test.x` whose
+  controller renders one nav row, a `sidebar.section` `x` (`title: "X"`, `route: "test.x"`) and a
+  `rail.item` `y` on a route `test.y`. Also assert that the contributed controller's `init` ran
+  once across two renders. Expect texts `["X", <row>]` from the sidebar and
   the rail item, and no "Tickets".
 - [ ] **Step 2:** Run `bun test tests/shell`. Expected: FAIL.
 - [ ] **Step 3:** Implement it. The rail keeps the logo and Spaces. The sidebar card frame
@@ -258,16 +271,18 @@ used below.
 **Files:**
 - Modify: `shell/controller/status.js`
 - Create: `ticket/needs.js` (`watchNeeds`, moved unchanged), `ticket/controller/commands.js`
-  (`goto`, `tickets`, `panel`, `new`, `open`, moved from `status.js:71-120`) and
+  (`goto`, `tickets`, `panel`, `new`, `open`, moved from `status.js:71-120`),
   `ticket/window.js` (the window task: refresh, `publishNeeds`, `syncTicketNames`, `watchNeeds`)
-- Modify: `ticket/register.js`, `ticket/controller/shell.js` (the status item),
+  and `ticket/controller/status.js` (route `ticket.status`; `render` returns the parts array and
+  `click()` opens the Tickets tab)
+- Modify: `ticket/routes.js`, `ticket/register.js`,
   `tests/shell/rail-and-toast.test.ts:6` (import `watchNeeds` from `ticket/needs.js`)
 - Test: `tests/shell/status.test.ts`
 
 **Interfaces:**
 - Produces:
-  - `status.item` `ticket`: `{ parts(now), click }`, where `parts` returns `statusParts(...)`
-    unchanged and `click` is `ensureTicketsTab`;
+  - `status.item` `ticket`: `{ order: 0, route: "ticket.status" }`. The controller draws the
+    parts from `statusParts(...)` unchanged, and its `click()` is `ensureTicketsTab`;
   - `window.task` `ticket.refresh`: `{ every: 60000, run }`;
   - `command` `goto`, `tickets`, `panel`, `new` and `open`, each `{ run(arg, { width, left }) }`.
   - Shell computes `left = 56 + (shown sidebar ? sidebar.size.px : 0)` and `width` from
