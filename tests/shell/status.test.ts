@@ -66,3 +66,61 @@ test("status: global keys open Go to ticket, the Tickets tab and the ticket pane
   expect(runs()).toContainEqual(["layout.select", { stack: "panel-body", child: "ticket" }]);
   expect(runs()).toContainEqual(["layout.show", { id: "panel" }]);
 });
+
+const registry = await import("../../mods/bakers/core/registry.js");
+const { default: Status } = await import("../../mods/bakers/shell/controller/status.js");
+
+const sidebarLayout = (hidden: boolean) => ({
+  id: "root",
+  children: [{ id: "sidebar", hidden, size: { px: 220 }, children: [] }],
+});
+
+test("a command dispatches to its registered handler with width and left", async () => {
+  await load("bakers/main.js");
+  const seen: unknown[][] = [];
+  registry.define("command", "probe", { run: (...a: unknown[]) => void seen.push(a) });
+  env.layout = sidebarLayout(false);
+  env.commands.push("probe:a:b");
+  mount(Status, { view: "shell.status" });
+  await flush();
+  expect(seen).toEqual([["a:b", { width: 1440 - 56, left: 56 + 220 }]]);
+});
+
+test("an unknown command does nothing", async () => {
+  await load("bakers/main.js");
+  env.commands.push("nonesuch:x");
+  mount(Status, { view: "shell.status" });
+  await flush();
+  expect(env.calls.filter((c) => c.fn === "run" || c.fn === "openOverlay")).toEqual([]);
+});
+
+test("status with no items draws an empty block and a click does nothing", async () => {
+  await load("bakers/main.js");
+  registry._resetForTests();
+  const view = mount(Status, { view: "shell.status" });
+  await flush();
+  const root = view.render();
+  expect(texts(root)).toEqual([]);
+  env.calls.length = 0;
+  click(root);
+  expect(runs()).toEqual([]);
+});
+
+test("goto keeps its x with the sidebar shown and hidden", async () => {
+  for (const [hidden, x] of [
+    [false, 728],
+    [true, 508],
+  ] as const) {
+    reset();
+    resetMod();
+    const Bakers = await load("bakers/main.js");
+    activeSpace();
+    backend();
+    env.layout = sidebarLayout(hidden);
+    env.commands.push("goto");
+    mount(Bakers, { view: "shell.status" });
+    await flush();
+    const overlay = env.calls.find((c) => c.fn === "openOverlay")?.args[0] as any;
+    expect(overlay.at).toEqual({ x, y: 120 });
+  }
+});

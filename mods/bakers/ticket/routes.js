@@ -7,6 +7,7 @@ import List from "./controller/list.js";
 import Rail from "./controller/rail.js";
 import Search from "./controller/search.js";
 import Sidebar from "./controller/sidebar.js";
+import Status from "./controller/status.js";
 import View from "./controller/view.js";
 
 export default {
@@ -15,6 +16,7 @@ export default {
   "ticket.context": Context, // the right panel's child "ticket"
   "ticket.rail": Rail, // the rail button
   "ticket.sidebar": Sidebar, // the Tickets card in the sidebar
+  "ticket.status": Status, // the status block's item
   "ticket.search": Search, // popup, cmd-shift-O
   "ticket.conductor-picker": ConductorPicker, // popup, props.ticket
   "ticket.label-picker": LabelPicker, // popup, props.ticket

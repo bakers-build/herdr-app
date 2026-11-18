@@ -1,6 +1,8 @@
 // ticket/register: what the ticket module contributes to the registry: its routes, lists,
 // forms and the actions its menus run.
 import { define } from "../core/registry.js";
+import * as commands from "./controller/commands.js";
+import { windowTask } from "./window.js";
 import { closeAll, closeFinished } from "./tabs.js";
 import { classify, labels } from "./commands.js";
 import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./form/confirm.js";
@@ -25,6 +27,13 @@ export function register() {
   for (const [name, C] of Object.entries(routes)) define("route", name, C);
   define("rail.item", "ticket", { order: 0, route: "ticket.rail" });
   define("sidebar.section", "ticket", { order: 0, title: "Tickets", route: "ticket.sidebar" });
+  define("status.item", "ticket", { order: 0, route: "ticket.status" });
+  define("window.task", "ticket.refresh", windowTask());
+  define("command", "goto", commands.goto);
+  define("command", "tickets", commands.tickets);
+  define("command", "panel", commands.panel);
+  define("command", "new", commands.create);
+  define("command", "open", commands.open);
   for (const list of [needsMe, mine, open, state, closed]) define("list", list.id, list);
   define("form", "create", { build: createForm });
   define("form", "state", { build: stateForm });

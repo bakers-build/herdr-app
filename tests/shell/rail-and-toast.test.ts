@@ -3,7 +3,7 @@ import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, NOW, resetMod } from "../fixtures/shop";
 import { click, env, find, flush, load, mount, reset, runs, texts } from "../harness";
 
-const { watchNeeds } = await import("../../mods/bakers/shell/controller/status.js");
+const { watchNeeds } = await import("../../mods/bakers/ticket/needs.js");
 
 beforeEach(() => {
   reset();
