@@ -3,7 +3,7 @@
 //   bun scripts/check/hygiene.ts   → exit 1 and the offending paths on stderr
 
 const FORBIDDEN: RegExp[] = [
-  /^\.dropsh\//,
+  /(^|\/)\.dropsh\//,
   /^\.bakers\/log\.txt$/,
   /^\.bakers-worktrees\//,
   /(^|\/)node_modules\//,

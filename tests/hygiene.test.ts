@@ -16,6 +16,10 @@ test("forbidden returns only the cache paths", () => {
   expect(forbidden([".dropsh/cache/x", "mods/bakers/main.js"])).toEqual([".dropsh/cache/x"]);
 });
 
+test("forbidden finds a cache folder at any depth", () => {
+  expect(forbidden(["mods/bakers/.dropsh/cache/x"])).toEqual(["mods/bakers/.dropsh/cache/x"]);
+});
+
 test("forbidden flags runtime, build and Herdr-written files", () => {
   const bad = [
     "mods/bakers/ui/form/gpui-kit.d.ts",

@@ -17,6 +17,12 @@ export function totals(lcov: string): Coverage {
   return { lines: ratio(sum("LH"), sum("LF")), functions: ratio(sum("FNH"), sum("FNF")) };
 }
 
+/** Tracked source files missing from the report: no test loads them, so the totals miss them. */
+export function notMeasured(lcov: string, tracked: string[]): string[] {
+  const measured = new Set([...lcov.matchAll(/^SF:(.+)$/gm)].map((m) => m[1]));
+  return tracked.filter((f) => !measured.has(f));
+}
+
 export function belowFloor(found: Coverage, floor: Coverage): string[] {
   return (["lines", "functions"] as const)
     .filter((k) => found[k] < floor[k])
@@ -28,8 +34,14 @@ export function belowFloor(found: Coverage, floor: Coverage): string[] {
 
 if (import.meta.main) {
   const file = process.argv[2] ?? "coverage/lcov.info";
-  const found = totals(readFileSync(file, "utf8"));
-  const bad = belowFloor(found, FLOOR);
+  const lcov = readFileSync(file, "utf8");
+  const found = totals(lcov);
+  const files = Bun.spawnSync(["git", "ls-files", "-z", "mods", "scripts"]).stdout.toString();
+  const tracked = files.split("\0").filter((f) => /\.(js|ts)$/.test(f) && !f.endsWith(".d.ts"));
+  const bad = [
+    ...belowFloor(found, FLOOR),
+    ...notMeasured(lcov, tracked).map((f) => `${f}: no test loads it, so coverage cannot see it`),
+  ];
   process.stdout.write(
     `coverage: lines ${(found.lines * 100).toFixed(2)} %, functions ${(found.functions * 100).toFixed(2)} %\n`,
   );

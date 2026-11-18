@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { belowFloor, totals } from "../scripts/check/coverage";
+import { belowFloor, notMeasured, totals } from "../scripts/check/coverage";
 
 const lcov = [
   "TN:",
@@ -35,4 +35,9 @@ test("belowFloor is empty at or above the floor", () => {
   expect(belowFloor({ lines: 0.95, functions: 0.92 }, { lines: 0.92, functions: 0.92 })).toEqual(
     [],
   );
+});
+
+test("notMeasured names tracked source files the report does not list", () => {
+  expect(notMeasured(lcov, ["mods/a.js", "mods/b.js", "mods/new.js"])).toEqual(["mods/new.js"]);
+  expect(notMeasured(lcov, ["mods/a.js", "mods/b.js"])).toEqual([]);
 });
