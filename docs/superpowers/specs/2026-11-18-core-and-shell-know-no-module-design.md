@@ -281,3 +281,18 @@ contributions:
 9. Golden render snapshots back AC5 automatically. The 1440 x 900 screenshots of R2-4 and R2-3
    are still taken by a person in Herdr Desktop at review (`docs/screenshots.md`). This sandbox has
    no Herdr Desktop.
+
+## v3 refinement (2026-11-18)
+
+Three changes on top of the design above; nothing above is rewritten.
+
+1. **Route definitions live in `register.js`.** A route is `{ view, open? }`, defined one per line
+   in each module's `register.js` (and `ui/register.js` for `menu` and `dialog`) with a comment
+   saying where Herdr shows it. `routes.js` no longer exists. `open` holds the route's fixed
+   overlay fields (kind, width, height, modal, frame, key, keep).
+2. **Links are built from a route.** `core/router.js` offers `viewOf(route)` and
+   `openRoute(route, params, extra)`, the only code that opens a bakers overlay. A link is data:
+   `{ route, params }`; `extra` holds per-call fields such as `at`.
+3. **`controller/` is `view/`.** The folder follows gpui-kit's `View` contract (init, render,
+   close). `ticket/view/full.js`, the full view of one ticket (route `ticket.view`), replaces the
+   earlier `detail.js` naming.

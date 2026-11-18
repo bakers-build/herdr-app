@@ -459,7 +459,7 @@ hold, and route names, props, shared keys, key commands and every Herdr call sta
 tests that import from `controller/`, comments.
 
 - [ ] **Step 1:** `git mv mods/bakers/<m>/controller mods/bakers/<m>/view` for ticket, project and
-  shell; `git mv mods/bakers/ticket/view/view.js mods/bakers/ticket/view/detail.js`. Fix imports.
+  shell; `git mv mods/bakers/ticket/view/view.js mods/bakers/ticket/view/full.js`. Fix imports.
 - [ ] **Step 2:** Rename "controller" to "view" in comments, test names and the layer rules of
   `tests/architecture.test.ts` (the folder check becomes `view`). Assertions and expected values
   stay the same.

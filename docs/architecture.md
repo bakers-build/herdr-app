@@ -2,10 +2,10 @@
 
 `mods/bakers` is one Herdr mod. Herdr places it in several blocks, tabs and overlays, and
 gives each copy a **route name** in `props().view`. The router (`main.js`) runs that route's
-**controller**. Controllers belong to **modules** (ticket, project, shell). The modules build
+**view**. Views belong to **modules** (ticket, project, shell). The modules build
 on a small **framework**: logic (core, form, list) and drawing (ui). The structure follows Drupal: a
 module brings its entity's model, its lists (Views), its view modes, its forms, its
-operations, its controllers and its routes, and registers them in the framework's registry.
+operations, its views and its routes, and registers them in the framework's registry.
 
 ## The rule
 
@@ -20,7 +20,7 @@ strings or comments), and the shell imports none.
 
 ```
 mods/bakers/
-  main.js                       router: props().view → route (registry) → controller;
+  main.js                       router: props().view → route (registry) → view;
                                 registerAll() calls every register()
 
   core/      framework logic    technique, knows no module
@@ -30,6 +30,8 @@ mods/bakers/
     jsonapi.js                    a JSON:API document as plain entities (includes resolved)
     errors.js                     every failure in one kind: offline, api, invalid, denied,
                                   conflict, failed
+    router.js                     viewOf(route) and openRoute(route, params, extra): the view
+                                  a route names, and a route opened as an overlay
     registry.js                   the one registry: define(type, id, def), get, all (by order)
     tabs.js                       keyed tabs of registered kinds: by name, preview and pin
     herdr.js, actions.js, format.js
@@ -47,9 +49,9 @@ mods/bakers/
     icons/                        the mod's SVGs
 
   ticket/    module
-    register.js                   what the module puts in the registry (see below)
-    routes.js                     ticket.list, ticket.view, ticket.context, ticket.rail,
-                                  ticket.sidebar, ticket.status, ticket.search,
+    register.js                   what the module puts in the registry (see below), among it
+                                  the routes ticket.list, ticket.view, ticket.context,
+                                  ticket.rail, ticket.sidebar, ticket.status, ticket.search,
                                   ticket.conductor-picker, ticket.label-picker
     model.js                      the Ticket, Run, Comment shapes (JSDoc) and the mapping from
                                   JSON:API entities
@@ -71,14 +73,15 @@ mods/bakers/
     form/                         form definitions: comment, edit, confirm (state, freeze,
                                   unfreeze, move, cancel), create
     operations/                   what one can do with a ticket: the state menu, the "..." menu
-    controller/                   list, view, context, rail, sidebar, status, search,
-                                  conductor-picker, label-picker; commands (key commands)
-  project/   module             register.js, routes (project.picker, project.sidebar-tool),
+    view/                         list, full (the full view of one ticket), context, rail,
+                                  sidebar, status, search, conductor-picker, label-picker;
+                                  commands (key commands)
+  project/   module             register.js (routes project.picker, project.sidebar-tool),
                                   model, repository, state (the window's project),
-                                  presenter/picker, controller/ (picker, sidebar-tool)
-  shell/     module             the bakers part of Herdr's frame: register.js, routes
-                                  (shell.rail, shell.sidebar, shell.tabs, shell.status),
-                                  controller/ (the four regions and contributions.js, which
+                                  presenter/picker, view/ (picker, sidebar-tool)
+  shell/     module             the bakers part of Herdr's frame: register.js (routes
+                                  shell.rail, shell.sidebar, shell.tabs, shell.status),
+                                  view/ (the four regions and contributions.js, which
                                   draws what modules contribute); knows no other module
 ```
 
@@ -97,7 +100,7 @@ A type is any string. The registry knows none of them. The types the mod uses:
 
 | type | id | definition | registered by |
 |---|---|---|---|
-| `route` | route name (`ticket.list`, `menu`, …) | the controller class | every module, `ui` (`menu`, `dialog`) |
+| `route` | route name (`ticket.list`, `menu`, …) | `{ view, open? }`: the view class and the route's fixed overlay fields | every module, `ui` (`menu`, `dialog`) |
 | `list` | list id (`needs-me`, `state`, …) | the list definition | `ticket` |
 | `form` | form kind (`create`, `state`, …) | `{ build(props) }` | `ticket` |
 | `action` | action name (`ticket.refresh`, `form.open`, …) | `{ run(...args) }` | `ticket`, `project`, `ui` |
@@ -112,15 +115,15 @@ A type is any string. The registry knows none of them. The types the mod uses:
 | `tabs.panel` | panel child id (`files`, `changes`, `ticket`) | `{ order, label, bordered, enabled?() }` | `shell` (Files, Changes), `ticket` (Ticket) |
 
 **Who reads what.**
-- The router (`main.js`) reads `route`. `core/actions.js` (`perform`) reads `action`;
+- The router (`main.js`) reads `route` through `viewOf`. `core/actions.js` (`perform`) reads `action`;
   `copy` alone is built in, because it needs the chooser's context. `list/lookup.js`
   (`findList`) reads `list`. `ui/form/dialog.js` reads `form`. `core/tabs.js` reads `tab`.
 - The shell reads the rest. `shell.rail`, `shell.sidebar` and `shell.status` draw `rail.item`,
   `sidebar.section` (with its `sidebar.tool` buttons) and `status.item`, in order. Each
-  contribution names a route. `shell/controller/contributions.js` makes its controller once
-  from that route, starts it with `init`, draws it with `render` (an element or an array of
-  them) and stops it with `close`. A click on the status block runs the first item whose
-  controller has `click()`.
+  contribution names a route. `shell/view/contributions.js` finds the view with `viewOf`,
+  makes it once from that route, starts it with `init`, draws it with `render` (an element or
+  an array of them) and stops it with `close`. A click on the status block runs the first item
+  whose view has `click()`.
 - `shell.status` also starts every `window.task` (now and every `every` ms) and runs the key
   commands through `command`.
 - `shell.tabs` asks every `tabs.decorate` about every tab. The merged result takes the first
@@ -129,25 +132,52 @@ A type is any string. The registry knows none of them. The types the mod uses:
   `workspace.panels`, followed by the other enabled panels.
 
 **`register.js`.** Each module, and `ui` for its generic parts, has a `register.js` that
-exports `register()`. It defines the module's contributions, among them every entry of its
-`routes.js` as a `route`. Nothing registers as a side effect of an import. `main.js` exports
+exports `register()`. It defines the module's contributions, among them its routes, one per
+line, each with a comment saying where Herdr shows it:
+
+```js
+define("route", "ticket.list", { view: List }); // tab "Tickets"
+define("route", "ticket.search", { view: Search, open: { kind: "popup", width: 480 } }); // popup, cmd-shift-O
+```
+
+`view` is the view class (gpui-kit's `View` contract: `init`, `render`, `close`). `open` is
+optional and holds the overlay fields the route always has when it is opened as one: `kind`,
+`width`, `height`, `modal`, `frame`, `key`, `keep`. There is no `routes.js`.
+
+Nothing registers as a side effect of an import. `main.js` exports
 `registerAll()`, which calls `ui`, `project`, `ticket` and `shell` in this order, and calls it
 once when it loads, so every copy of the mod has a full registry. The tests call it after a
 registry reset.
 
+## Links
+
+`core/router.js` is the one place that opens a bakers overlay:
+
+```js
+viewOf(route)                      // the view class, or null for an unknown route
+openRoute(route, params = {}, extra = {})
+  // → openOverlay({ mod: "bakers", props: { view: route, ...params }, ...def.open, ...extra })
+  // returns the overlay id, or null for an unknown route
+```
+
+A link is data: `{ route, params }`. `params` join the view's props. `open` (in the route's
+definition) holds the fixed fields of the route; `extra` holds the fields computed per call,
+such as `at`, and wins over `open`. Overlays of other Herdr mods (`menu`, `new-menu`) keep
+their own `openOverlay` call.
+
 ## The routes
 
-| Route (`props.view`) | Controller | Herdr shows it as |
+| Route (`props.view`) | View | Herdr shows it as |
 |---|---|---|
-| `ticket.list` | `ticket/controller/list.js` | the tab "Tickets" |
-| `ticket.view` | `ticket/controller/view.js` | a tab "SHOP-41 working", `props.ticket` |
-| `ticket.context` | `ticket/controller/context.js` | the right panel's child `ticket` |
-| `ticket.search` | `ticket/controller/search.js` | a popup (cmd-shift-O) |
-| `ticket.rail`, `ticket.sidebar`, `ticket.status` | `ticket/controller/…` | what the ticket module contributes to the shell's rail, sidebar and status |
-| `ticket.conductor-picker`, `ticket.label-picker` | `ticket/controller/…` | popups |
-| `project.picker` | `project/controller/picker.js` | a popup from the sidebar |
-| `project.sidebar-tool` | `project/controller/sidebar-tool.js` | the project button in the Tickets card |
-| `shell.rail`, `shell.sidebar`, `shell.tabs`, `shell.status` | `shell/controller/…` | layout blocks (`scripts/layout.js`) |
+| `ticket.list` | `ticket/view/list.js` | the tab "Tickets" |
+| `ticket.view` | `ticket/view/full.js` | a tab "SHOP-41 working", `props.ticket` |
+| `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket` |
+| `ticket.search` | `ticket/view/search.js` | a popup (cmd-shift-O) |
+| `ticket.rail`, `ticket.sidebar`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail, sidebar and status |
+| `ticket.conductor-picker`, `ticket.label-picker` | `ticket/view/…` | popups |
+| `project.picker` | `project/view/picker.js` | a popup from the sidebar |
+| `project.sidebar-tool` | `project/view/sidebar-tool.js` | the project button in the Tickets card |
+| `shell.rail`, `shell.sidebar`, `shell.tabs`, `shell.status` | `shell/view/…` | layout blocks (`scripts/layout.js`) |
 | `menu`, `dialog` | `ui/components/menu.js`, `ui/form/dialog.js` | popup menus, form dialogs |
 
 ## How a screen comes about
@@ -155,9 +185,9 @@ registry reset.
 The Tickets list, from Herdr to the pixels:
 
 1. **Herdr** shows the tab with `props.view = "ticket.list"`.
-2. **`main.js`** looks the route up in the registry (`get("route", …)`) and runs
-   `ticket/controller/list.js`.
-3. **The controller** looks up the chosen list (`ticket/state.js` → `"state:working"`) with
+2. **`main.js`** looks the route's view up with `viewOf` (the `route` type of the registry) and
+   runs `ticket/view/list.js`.
+3. **The view** looks up the chosen list (`ticket/state.js` → `"state:working"`) with
    `findList` (`list/lookup.js`), which reads the `list` type of the registry: the definition `ticket/list/state.js` with the argument `working`.
 4. **The data:**
    - A local list takes the store's open tickets (`ticket/store.js`, loaded by
@@ -168,12 +198,12 @@ The Tickets list, from Herdr to the pixels:
    (the filter field), sort, group and pager.
 6. **`ticket/presenter/teaser.js`** turns each record into row props.
 7. **`ui/components/table.js`** and `ui/components/pager.js` draw them.
-8. **The controller** wires Up and Down, Enter, cmd-Enter, N, R and the menus. These go to
+8. **The view** wires Up and Down, Enter, cmd-Enter, N, R and the menus. These go to
    `core/tabs` (preview, pin), to forms (`ui/form/dialog.js` with
    `ticket/form/create.js`) and to registered actions.
 
 A ticket tab goes the same way:
-- `ticket/controller/view.js` loads one ticket (`store.ticket` → `repository.readTicket`, one
+- `ticket/view/full.js` loads one ticket (`store.ticket` → `repository.readTicket`, one
   request with `include`).
 - It maps the ticket with the view mode `presenter/full.js` and draws it.
 - It holds two inline forms, `form/comment.js` (the composer) and `form/edit.js`.
@@ -237,26 +267,32 @@ updates.
 
 ## The rules
 
-`tests/architecture.test.ts` checks:
+`tests/architecture.test.ts` checks, one test each:
 
-1. **The mod's top level** is `main.js`, `mod.json`, the framework and the modules.
-2. **The framework never imports a module.** Inside it, layers point down: core ← form,
-   list ← ui. The logic (core, form, list) never imports ui.
-3. **Module logic draws nothing.** Model, rules, repository, commands, store, state,
-   presenter, list, form and operations import no gpui, nothing from `ui/` and no controllers.
-   Only `controller/`, `routes.js` and `register.js` draw or assemble controllers.
-4. **Modules meet only through public parts.** A module uses another one only through its
-   `model.js`, `state.js`, `store.js`, `presenter/` and `list/`, never its repository,
-   commands, forms or controllers. Controllers reach other controllers only through route
-   names.
-5. **Reads only in `repository.js`, writes only in `commands.js`.**
-6. **Every route** is named after its module and is in the registry for the router.
-7. **The framework names no module,** not even in strings or comments.
-8. **The shell imports no other module.** It draws what they contribute through the registry.
-9. **There is one registry.** No file other than `core/registry.js` exports `define…` or
-   `register…`, except each `register.js` (`register`) and `main.js` (`registerAll`).
-   `define(` is called only in `register.js`. `list/registry.js` and `form/registry.js` are gone.
-10. **There is one mod.**
+1. **The mod is `main.js`, the framework and the modules.** The top level is `core`, `form`,
+   `list`, `main.js`, `mod.json`, `project`, `shell`, `ticket`, `ui`.
+2. **The framework never imports a module, and its layers point down.** core ← form, list ←
+   ui. The logic (core, form, list) never imports ui.
+3. **Module logic draws nothing: no gpui, no ui, no views.** Model, rules, repository,
+   commands, store, state, presenter, list, form and operations import no gpui, nothing from
+   `ui/` and no views. Only `view/` and `register.js` draw or assemble views.
+4. **A module uses another module only through its public parts, never its views.** The
+   public parts are `model.js`, `state.js`, `store.js`, `presenter/` and `list/`. A view
+   reaches another module's view only through route names.
+5. **Reads only in `repository.js` (JSON:API), writes only in `commands.js` (bakers tools).**
+6. **Every route is named after its module and reaches the router.** Each module's
+   `register.js` defines routes with its own prefix (`ticket.`, `project.`, `shell.`), and
+   `viewOf` finds a view class for each.
+7. **Every route is `menu`, `dialog` or named after a domain module.**
+8. **Only `core/router.js` opens a bakers overlay.** No other file calls `openOverlay` with
+   `mod: "bakers"`; they call `openRoute`.
+9. **No `routes.js` exists.** Routes are defined in `register.js`.
+10. **The framework names no module,** not even in strings or comments.
+11. **The shell imports no other module.** It draws what they contribute through the registry.
+12. **One registry.** No file other than `core/registry.js` exports `define…` or `register…`,
+    except each `register.js` (`register`) and `main.js` (`registerAll`). `define(` is called
+    only in `register.js`. `list/registry.js` and `form/registry.js` are gone.
+13. **There is one mod.**
 
 ## Errors
 
@@ -279,7 +315,7 @@ updates.
 - **Shared between copies (`setShared`):** identifiers, counts and flags only
   (`bakers.project`, `bakers.view`, `bakers.selected`, `bakers.preview`, `bakers.needs`,
   `bakers.showClosed`). No ticket content.
-- **Per copy:** a controller's own state, such as the selection, the page, a form's values and
+- **Per copy:** a view's own state, such as the selection, the page, a form's values and
   the open comment folds.
 
 ## Tests
@@ -292,7 +328,7 @@ The tests mirror the structure:
 | `tests/form/` | the form handling |
 | `tests/list/` | the list engine: filters, derived filters, exposed filter, sort, group, pager, server query |
 | `tests/ui/` | generic drawing |
-| `tests/ticket/` | store, presenters (pure), list definitions, form definitions; `controller/` drives each route over stubbed Herdr and a JSON:API test server (`tests/fixtures/jsonapi-server.ts`), pins the frames' copy and px, and ties clicks and keys to Herdr commands and bakers calls |
+| `tests/ticket/` | store, presenters (pure), list definitions, form definitions; `view/` drives each route over stubbed Herdr and a JSON:API test server (`tests/fixtures/jsonapi-server.ts`), pins the frames' copy and px, and ties clicks and keys to Herdr commands and bakers calls |
 | `tests/project/`, `tests/shell/` | the same for those modules |
 | `tests/architecture.test.ts`, `main.test.ts`, `install.test.ts` | the rules, the router, the layout transform and installer |
 
