@@ -20,6 +20,7 @@ test("pr-title passes the title only through env", () => {
   const job = ci.jobs["pr-title"];
   expect(job.if).toContain("pull_request");
   const check = steps("pr-title").find((s) => String(s.run ?? "").includes("pr-title.ts"));
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a literal GitHub/shell expression
   expect(check.env.PR_TITLE).toBe("${{ github.event.pull_request.title }}");
   for (const job of Object.keys(ci.jobs))
     for (const run of runs(job)) expect(run).not.toContain("github.event.pull_request.title");
@@ -49,8 +50,10 @@ test("release checks out the full history and creates the GitHub release", () =>
   expect(all).toContain("nothing to release");
   expect(all).toMatch(/gh release create "v\$VERSION" "dist\/herdr-bakers-\$VERSION\.zip"/);
   expect(all).toContain('--target "$SHA"');
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a literal GitHub/shell expression
   expect(all).toContain("${PRE:+--prerelease}");
   const create = steps("release").find((s) => String(s.run ?? "").includes("gh release create"));
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a literal GitHub/shell expression
   expect(create.env.GH_TOKEN).toBe("${{ github.token }}");
 });
 

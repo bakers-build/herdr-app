@@ -129,7 +129,8 @@ export default class Menu extends PopupList {
       key: it.key ?? String(i),
       choose: (/** @type {any} */ cx) => {
         this.close();
-        perform(it.action, cx);
+        // The menu is gone once an item is chosen; the action reports its own outcome.
+        void perform(it.action, cx);
       },
     }));
   }
