@@ -1,4 +1,4 @@
-// ticket/controller/conductor-picker (route ticket.conductor-picker): Move to... picks a
+// ticket/view/conductor-picker (route ticket.conductor-picker): Move to... picks a
 // conductor of the project (bb_conductor), then the move form asks before anything happens.
 import { h_flex } from "gpui-base";
 import { props } from "herdr";

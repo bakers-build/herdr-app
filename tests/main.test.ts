@@ -7,7 +7,7 @@ const { registerAll } = await import("../mods/bakers/main.js");
 
 beforeEach(reset);
 
-test("bakers routes each placement to its controller by props().view", async () => {
+test("bakers routes each placement to its view by props().view", async () => {
   const Bakers = await load("bakers/main.js");
   const names = all("route").map((d: any) => d.id);
   expect([...names].sort()).toEqual([

@@ -1,4 +1,4 @@
-// project/controller/sidebar-tool: the project button in the header of the Tickets card; it
+// project/view/sidebar-tool: the project button in the header of the Tickets card; it
 // opens the project picker when there is more than one project (sidebar.tool "project.picker").
 import { svg } from "gpui-kit";
 import { h_flex } from "gpui-base";

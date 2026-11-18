@@ -1,6 +1,6 @@
-// shell/controller/sidebar: the modules' section of the left sidebar (R2-3), below Herdr's Spaces
+// shell/view/sidebar: the modules' section of the left sidebar (R2-3), below Herdr's Spaces
 // and Agents: one card per sidebar.section, its header the title and the sidebar.tool buttons, its
-// body the section controller's rows.
+// body the section view's rows.
 import { h_flex, v_flex } from "gpui-base";
 import { all } from "../../core/registry.js";
 import { draw, launch, settle, stop } from "./contributions.js";

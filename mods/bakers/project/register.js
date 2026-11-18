@@ -1,8 +1,8 @@
 // project/register: what the project module contributes to the registry: its routes, its button in the
 // sidebar and the action that chooses a project.
 import { define } from "../core/registry.js";
-import Picker from "./controller/picker.js";
-import SidebarTool from "./controller/sidebar-tool.js";
+import Picker from "./view/picker.js";
+import SidebarTool from "./view/sidebar-tool.js";
 import { chooseProject } from "./state.js";
 
 export function register() {

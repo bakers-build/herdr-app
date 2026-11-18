@@ -1,4 +1,4 @@
-// ticket/controller/list (route ticket.list): the Tickets list (frame R2-4). It runs the chosen
+// ticket/view/list (route ticket.list): the Tickets list (frame R2-4). It runs the chosen
 // list definition (ticket/list) with the list engine over the store's open tickets, or over
 // the pages a server list loads, maps each row with the teaser view mode and draws the header,
 // the table, the pager and the hints. Keys: Up and Down select (the panel follows),

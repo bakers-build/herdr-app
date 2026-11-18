@@ -1,4 +1,4 @@
-// ticket/controller/rail: the bakers button with the needs-you count; it opens the Tickets tab on
+// ticket/view/rail: the bakers button with the needs-you count; it opens the Tickets tab on
 // Needs me. The shell's rail draws it (rail.item "ticket").
 import { shared } from "herdr";
 import { square } from "../../ui/components/square.js";

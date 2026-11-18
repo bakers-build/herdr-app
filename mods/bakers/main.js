@@ -1,12 +1,12 @@
 // main: the bakers mod, one mod in several places. Herdr gives each copy props().view, the name of
-// a route; the router finds the route's controller in the registry, where each module's
+// a route; the router finds the route's view in the registry, where each module's
 // register.js put it, and runs it, as Herdr's win98 mod routes its roles
 // (herdr-app v0.1.15 defaults/mods/win98/main.js).
 //
 //   core/ form/ list/ ui/           the framework: technique, form handling, list engine,
 //                                   generic drawing; knows no module
 //   ticket/ project/ shell/         the modules: model, repository, commands, store, state,
-//                                   presenters, lists, forms, operations, controllers, routes,
+//                                   presenters, lists, forms, operations, views, routes,
 //                                   register.js (what the module adds to the registry)
 //
 // docs/architecture.md describes the layers; tests/architecture.test.ts keeps them apart.

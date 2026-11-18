@@ -1,16 +1,16 @@
 // ticket/register: what the ticket module contributes to the registry: its routes, lists,
 // forms and the actions its menus run.
 import { define } from "../core/registry.js";
-import ConductorPicker from "./controller/conductor-picker.js";
-import Context from "./controller/context.js";
-import LabelPicker from "./controller/label-picker.js";
-import List from "./controller/list.js";
-import Rail from "./controller/rail.js";
-import Search from "./controller/search.js";
-import Sidebar from "./controller/sidebar.js";
-import Status from "./controller/status.js";
-import View from "./controller/view.js";
-import * as commands from "./controller/commands.js";
+import ConductorPicker from "./view/conductor-picker.js";
+import Context from "./view/context.js";
+import LabelPicker from "./view/label-picker.js";
+import List from "./view/list.js";
+import Rail from "./view/rail.js";
+import Search from "./view/search.js";
+import Sidebar from "./view/sidebar.js";
+import Status from "./view/status.js";
+import Full from "./view/full.js";
+import * as commands from "./view/commands.js";
 import { windowTask } from "./window.js";
 import { closeAll, closeFinished } from "./tabs.js";
 import { classify, labels } from "./commands.js";
@@ -46,7 +46,7 @@ export function register() {
     home: { name: "Tickets", route: "ticket.list", index: 1 },
   });
   define("route", "ticket.list", { view: List }); // tab "Tickets"
-  define("route", "ticket.view", { view: View }); // tab "<ID> <state>", props.ticket
+  define("route", "ticket.view", { view: Full }); // tab "<ID> <state>", props.ticket
   define("route", "ticket.context", { view: Context }); // the right panel's child "ticket"
   define("route", "ticket.rail", { view: Rail }); // the rail button
   define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar

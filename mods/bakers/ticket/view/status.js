@@ -1,4 +1,4 @@
-// ticket/controller/status: the status item of the ticket module: project, need-you count and
+// ticket/view/status: the status item of the ticket module: project, need-you count and
 // last update (or "bakers offline"); a click opens the Tickets tab. The shell's status block
 // draws it (status.item "ticket").
 import { div } from "gpui-kit";

@@ -2,10 +2,10 @@
 // Changes panel buttons.
 import { shared } from "herdr";
 import { define } from "../core/registry.js";
-import Rail from "./controller/rail.js";
-import Sidebar from "./controller/sidebar.js";
-import Status from "./controller/status.js";
-import Tabs from "./controller/tabs.js";
+import Rail from "./view/rail.js";
+import Sidebar from "./view/sidebar.js";
+import Status from "./view/status.js";
+import Tabs from "./view/tabs.js";
 
 /** @param {string} id */
 const panelOn = (id) => {

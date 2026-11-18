@@ -1,6 +1,6 @@
-// ticket/controller/commands: the key commands the ticket module answers (keys.json:
+// ticket/view/commands: the key commands the ticket module answers (keys.json:
 // bakers.goto, .tickets, .panel, .new, .open:<id>). They open overlays and tabs, so they
-// live with the controllers.
+// live with the views.
 import { layout, run } from "herdr";
 import { findNode } from "../../core/herdr.js";
 import { openRoute } from "../../core/router.js";

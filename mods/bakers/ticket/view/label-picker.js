@@ -1,4 +1,4 @@
-// ticket/controller/label-picker (route ticket.label-picker): labels used in the project, or a
+// ticket/view/label-picker (route ticket.label-picker): labels used in the project, or a
 // typed one; the chosen label is added at once.
 import { div } from "gpui-kit";
 import { Input, InputState } from "gpui-base";

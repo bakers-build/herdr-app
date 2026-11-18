@@ -2,9 +2,9 @@
 //   framework  core/ form/ list/ — logic: technique, form handling, list engine;
 //              ui/ — drawing: components, form drawing, theme, icons; knows no module
 //   modules    ticket/ project/ shell/ — each with model, repository (reads), commands
-//              (writes), store, state, presenter/, list/, form/, operations/, controller/,
+//              (writes), store, state, presenter/, list/, form/, operations/, view/,
 //              register.js (the module's routes and contributions)
-// Module logic draws nothing; controllers compose and draw; modules meet through each other's
+// Module logic draws nothing; views compose and draw; modules meet through each other's
 // public parts (model, state, store, presenter, list) and through route names.
 import { expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
@@ -28,8 +28,8 @@ async function files(dir: string): Promise<string[]> {
 
 const rel = (p: string) => relative(ROOT, p);
 const parts = (p: string) => rel(p).split("/");
-// register.js assembles the controllers, so it may import them.
-const isController = (p: string) => parts(p)[1] === "controller" || parts(p)[1] === "register.js";
+// register.js assembles the views, so it may import them.
+const isView = (p: string) => parts(p)[1] === "view" || parts(p)[1] === "register.js";
 
 async function edges() {
   const list: { from: string; to: string }[] = [];
@@ -75,22 +75,22 @@ test("the framework never imports a module, and its layers point down", async ()
   expect(show(bad)).toEqual([]);
 });
 
-test("module logic draws nothing: no gpui, no ui, no controllers", async () => {
+test("module logic draws nothing: no gpui, no ui, no views", async () => {
   const bad: string[] = [];
   for (const f of await files(ROOT)) {
-    if (!MODULES.includes(parts(f)[0]) || isController(f)) continue;
+    if (!MODULES.includes(parts(f)[0]) || isView(f)) continue;
     if (/from "gpui-(kit|base)"/.test(await readFile(f, "utf8"))) bad.push(`${rel(f)} draws`);
   }
   const imports = (await edges()).filter(
     (e) =>
       MODULES.includes(parts(e.from)[0]) &&
-      !isController(e.from) &&
-      (parts(e.to)[0] === "ui" || isController(e.to)),
+      !isView(e.from) &&
+      (parts(e.to)[0] === "ui" || isView(e.to)),
   );
   expect([...bad, ...show(imports)]).toEqual([]);
 });
 
-test("a module uses another module only through its public parts, never its controllers", async () => {
+test("a module uses another module only through its public parts, never its views", async () => {
   const bad = (await edges()).filter((e) => {
     const [a] = parts(e.from);
     const [b, second] = parts(e.to);

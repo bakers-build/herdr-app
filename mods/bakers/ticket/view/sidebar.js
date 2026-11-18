@@ -1,4 +1,4 @@
-// ticket/controller/sidebar: the rows of the Tickets card in the shell's sidebar: the views with
+// ticket/view/sidebar: the rows of the Tickets card in the shell's sidebar: the views with
 // their counts (sidebar.section "ticket").
 import { navRows } from "../../ui/components/nav.js";
 import { navItems } from "../list/index.js";

@@ -1,4 +1,4 @@
-// shell/controller/status: the status block, once per window. It draws the status.item
+// shell/view/status: the status block, once per window. It draws the status.item
 // contributions, starts each window.task (now and on its interval) and runs the key commands
 // (keys.json) through the registered command handlers.
 import { h_flex } from "gpui-base";
@@ -13,7 +13,7 @@ const RAIL = 56;
 export default class Status {
   /** The status bar's width; Herdr reports it on resize. */
   width = 1440 - RAIL;
-  /** @type {any[]} one controller per status item, made once */
+  /** @type {any[]} one view per status item, made once */
   items = [];
 
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */

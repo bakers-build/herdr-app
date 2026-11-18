@@ -68,7 +68,7 @@ test("status: global keys open Go to ticket, the Tickets tab and the ticket pane
 });
 
 const registry = await import("../../mods/bakers/core/registry.js");
-const { default: Status } = await import("../../mods/bakers/shell/controller/status.js");
+const { default: Status } = await import("../../mods/bakers/shell/view/status.js");
 
 const sidebarLayout = (hidden: boolean) => ({
   id: "root",

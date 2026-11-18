@@ -1,4 +1,4 @@
-// shell/controller/rail: the rail (R2-4, R2-3), 56 px: the logo and Herdr's Spaces button, then
+// shell/view/rail: the rail (R2-4, R2-3), 56 px: the logo and Herdr's Spaces button, then
 // the buttons modules register as rail.item.
 import { div } from "gpui-kit";
 import { v_flex } from "gpui-base";
@@ -10,7 +10,7 @@ import { square } from "../../ui/components/square.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 
 export default class Rail {
-  /** @type {any[]} one controller per rail item, made once */
+  /** @type {any[]} one view per rail item, made once */
   items = [];
 
   /** @param {import("gpui-shell").Props | undefined} _props @param {import("gpui-kit").AsyncContext} cx */
