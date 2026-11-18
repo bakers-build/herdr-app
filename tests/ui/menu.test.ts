@@ -82,3 +82,21 @@ test("a registry reset and refilled by registerAll() still runs a registered men
   expect(env.shared["bakers.view"]).toBe("mine");
   expect(closed()).toBe(true);
 });
+
+test("openMenu opens exactly the menu popup, at the given point when there is one", async () => {
+  await open({ view: "none" });
+  const { openMenu }: any = await import("../../mods/bakers/ui/components/menu.js");
+  const items = [{ label: "Refresh", action: ["ticket.refresh"] }];
+  env.calls.length = 0;
+  openMenu(items, { footer: "via API", footerApi: true });
+  openMenu(items, { footer: "via API", footerApi: true, at: { x: 5, y: 6 } });
+  const specs = env.calls.filter((c) => c.fn === "openOverlay").map((c: any) => c.args[0]);
+  const base = {
+    mod: "bakers",
+    props: { view: "menu", items, footer: "via API", footerApi: true },
+    kind: "popup",
+    width: 220,
+  };
+  expect(specs[0]).toEqual(base);
+  expect(specs[1]).toEqual({ ...base, at: { x: 5, y: 6 } });
+});

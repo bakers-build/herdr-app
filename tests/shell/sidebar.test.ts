@@ -73,6 +73,28 @@ test("sidebar: with one project the picker shows it; with two it opens the proje
   });
 });
 
+test("the sidebar's project button opens exactly the project picker popup", async () => {
+  const Bakers = await load("bakers/main.js");
+  activeSpace();
+  backend({
+    jsonapi: {
+      projects: [
+        { id: "p0", name: "infra" },
+        { id: "p1", name: "acme-shop" },
+      ],
+    },
+  });
+  const view = mount(Bakers, { view: "shell.sidebar" });
+  await flush();
+  click(find(view.render(), "project-picker"));
+  expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toEqual({
+    mod: "bakers",
+    props: { view: "project.picker" },
+    kind: "popup",
+    width: 220,
+  });
+});
+
 test("shell draws registered contributions only", async () => {
   const Bakers = await load("bakers/main.js");
   const { define, _resetForTests } = await import("../../mods/bakers/core/registry.js");

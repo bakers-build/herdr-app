@@ -132,6 +132,12 @@ test("a label's × removes it at once; + opens the label picker", async () => {
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
     props: { view: "ticket.label-picker", ticket: "SHOP-41" },
   });
+  expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toEqual({
+    mod: "bakers",
+    props: { view: "ticket.label-picker", ticket: "SHOP-41" },
+    kind: "popup",
+    width: 220,
+  });
   env.calls.length = 0;
   await actions.perform(["ticket.labels", "SHOP-41", { labels_add: ["ui"] }]);
   expect(writes()).toEqual([["bakers_ticket_update", { ticket: "SHOP-41", labels_add: ["ui"] }]]);
@@ -147,6 +153,12 @@ test("Unfreeze..., Move to... and Cancel run... ask first and send nothing", asy
   expect(opened[0]).toMatchObject({ view: "dialog", form: "unfreeze", ticket: "SHOP-41" });
   expect(opened[1]).toMatchObject({ view: "dialog", form: "cancel", ticket: "SHOP-41" });
   expect(opened[2]).toMatchObject({ view: "ticket.conductor-picker", ticket: "SHOP-41" });
+  expect(env.calls.filter((c) => c.fn === "openOverlay")[2].args[0]).toEqual({
+    mod: "bakers",
+    props: { view: "ticket.conductor-picker", ticket: "SHOP-41" },
+    kind: "popup",
+    width: 220,
+  });
   expect(writes()).toEqual([]);
 });
 
