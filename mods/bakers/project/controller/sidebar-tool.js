@@ -2,7 +2,7 @@
 // opens the project picker when there is more than one project (sidebar.tool "project.picker").
 import { svg } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { openOverlay } from "herdr";
+import { openRoute } from "../../core/router.js";
 import { chip } from "../../ui/components/chip.js";
 import { icons, tokens } from "../../ui/theme.js";
 import { currentProject, pickerAvailable, projectChoices } from "../state.js";
@@ -26,15 +26,6 @@ export default class ProjectSidebarTool {
       .child(currentProject()?.name ?? "No project")
       .child(svg(icons.down).size(10))
       .when(!pickerAvailable(), (el) => el.child(chip()))
-      .when(canPick, (el) =>
-        el.cursor_pointer().on_click(() =>
-          openOverlay({
-            mod: "bakers",
-            props: { view: "project.picker" },
-            kind: "popup",
-            width: 220,
-          }),
-        ),
-      );
+      .when(canPick, (el) => el.cursor_pointer().on_click(() => openRoute("project.picker")));
   }
 }

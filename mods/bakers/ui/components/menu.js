@@ -3,8 +3,9 @@
 // as in Herdr's menu mod (v0.1.15 defaults/mods/menu).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { closeOverlay, openOverlay, props } from "herdr";
+import { closeOverlay, props } from "herdr";
 import { perform } from "../../core/actions.js";
+import { openRoute } from "../../core/router.js";
 import { tokens, UI_FONT } from "../theme.js";
 import { chip } from "./chip.js";
 
@@ -18,13 +19,11 @@ import { chip } from "./chip.js";
  * @param {{ footer?: string, footerApi?: boolean, at?: { x: number, y: number } }} [o]
  */
 export function openMenu(items, o = {}) {
-  return openOverlay({
-    mod: "bakers",
-    props: { view: "menu", items, footer: o.footer, footerApi: o.footerApi },
-    kind: "popup",
-    width: 220,
-    ...(o.at ? { at: o.at } : {}),
-  });
+  return openRoute(
+    "menu",
+    { items, footer: o.footer, footerApi: o.footerApi },
+    o.at ? { at: o.at } : {},
+  );
 }
 
 /** Draws one menu row; shared with the pickers of the slices. @param {any} t @param {any} it @param {boolean} hot @param {(cx: any) => void} choose */

@@ -3,7 +3,7 @@
 //              ui/ — drawing: components, form drawing, theme, icons; knows no module
 //   modules    ticket/ project/ shell/ — each with model, repository (reads), commands
 //              (writes), store, state, presenter/, list/, form/, operations/, controller/,
-//              routes.js
+//              register.js (the module's routes and contributions)
 // Module logic draws nothing; controllers compose and draw; modules meet through each other's
 // public parts (model, state, store, presenter, list) and through route names.
 import { expect, test } from "bun:test";
@@ -125,6 +125,38 @@ test("every route is named after its module and reaches the router", async () =>
     for (const name of names) {
       if (!name.startsWith(`${m}.`)) bad.push(`${m}/register.js defines route ${name}`);
       if (typeof viewOf(name) !== "function") bad.push(`${m}: ${name} has no view`);
+    }
+  }
+  expect(bad).toEqual([]);
+});
+
+test("every route is menu, dialog or named after a domain module", async () => {
+  const { all } = await import("../mods/bakers/core/registry.js");
+  const { registerAll } = await import("../mods/bakers/main.js");
+  registerAll();
+  const mods = (await readdir(ROOT, { withFileTypes: true }))
+    .filter((e) => e.isDirectory() && !FRAMEWORK.includes(e.name))
+    .map((e) => e.name);
+  const bad = all("route")
+    .map((r: any) => r.id as string)
+    .filter((id) => id !== "menu" && id !== "dialog" && !mods.some((m) => id.startsWith(`${m}.`)));
+  expect(bad).toEqual([]);
+});
+
+test("only core/router.js opens a bakers overlay", async () => {
+  const bad: string[] = [];
+  for (const f of await files(ROOT)) {
+    if (rel(f) === "core/router.js") continue;
+    const src = await readFile(f, "utf8");
+    // the call's argument: from `openOverlay(` to its balanced closing parenthesis
+    for (const m of src.matchAll(/\bopenOverlay\(/g)) {
+      let depth = 1;
+      let i = m.index + m[0].length;
+      for (; i < src.length && depth > 0; i++) {
+        if (src[i] === "(") depth++;
+        else if (src[i] === ")") depth--;
+      }
+      if (/\bmod:\s*"bakers"/.test(src.slice(m.index, i))) bad.push(rel(f));
     }
   }
   expect(bad).toEqual([]);

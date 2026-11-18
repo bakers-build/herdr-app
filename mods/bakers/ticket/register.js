@@ -51,9 +51,15 @@ export function register() {
   define("route", "ticket.rail", { view: Rail }); // the rail button
   define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar
   define("route", "ticket.status", { view: Status }); // the status block's item
-  define("route", "ticket.search", { view: Search }); // popup, cmd-shift-O
-  define("route", "ticket.conductor-picker", { view: ConductorPicker }); // popup, props.ticket
-  define("route", "ticket.label-picker", { view: LabelPicker }); // popup, props.ticket
+  define("route", "ticket.search", { view: Search, open: { kind: "popup", width: 480 } }); // popup, cmd-shift-O
+  define("route", "ticket.conductor-picker", {
+    view: ConductorPicker,
+    open: { kind: "popup", width: 220 },
+  }); // popup, props.ticket
+  define("route", "ticket.label-picker", {
+    view: LabelPicker,
+    open: { kind: "popup", width: 220 },
+  }); // popup, props.ticket
   define("rail.item", "ticket", { order: 0, route: "ticket.rail" });
   define("sidebar.section", "ticket", { order: 0, title: "Tickets", route: "ticket.sidebar" });
   define("status.item", "ticket", { order: 0, route: "ticket.status" });

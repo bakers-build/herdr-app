@@ -1,7 +1,8 @@
 // project/state: the window's project, shared by every copy of the mod: the shared
 // uuid, else the project named in .bakers/project.config.js of the active space, read
 // through JSON:API (bb_project). Shared state carries only the project uuid.
-import { openOverlay, readTextFile, setShared, shared, spaces } from "herdr";
+import { readTextFile, setShared, shared, spaces } from "herdr";
+import { openRoute } from "../core/router.js";
 import { listProjects, readProject } from "./repository.js";
 import { asProject } from "./model.js";
 
@@ -62,12 +63,7 @@ async function resolve() {
   if (match) return chooseProject(match);
   if (choices.length) {
     chooseProject(choices[0]);
-    openOverlay({
-      mod: "bakers",
-      props: { view: "project.picker" },
-      kind: "popup",
-      width: 220,
-    });
+    openRoute("project.picker");
     return project;
   }
   return null;

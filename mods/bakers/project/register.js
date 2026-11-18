@@ -6,7 +6,7 @@ import SidebarTool from "./controller/sidebar-tool.js";
 import { chooseProject } from "./state.js";
 
 export function register() {
-  define("route", "project.picker", { view: Picker }); // popup from the sidebar's project button
+  define("route", "project.picker", { view: Picker, open: { kind: "popup", width: 220 } }); // popup from the sidebar's project button
   define("route", "project.sidebar-tool", { view: SidebarTool }); // the project button in the Tickets card's header
   define("sidebar.tool", "project.picker", {
     section: "ticket",

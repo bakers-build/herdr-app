@@ -1,8 +1,9 @@
 // ticket/controller/commands: the key commands the ticket module answers (keys.json:
 // bakers.goto, .tickets, .panel, .new, .open:<id>). They open overlays and tabs, so they
 // live with the controllers.
-import { layout, openOverlay, run } from "herdr";
+import { layout, run } from "herdr";
 import { findNode } from "../../core/herdr.js";
+import { openRoute } from "../../core/router.js";
 import { openForm } from "../../ui/form/dialog.js";
 import { tabName } from "../presenter/tab.js";
 import { getStore, ready } from "../store.js";
@@ -13,13 +14,7 @@ export const goto = {
   /** @param {string} _arg @param {{ width: number, left: number }} where */
   run(_arg, { width, left }) {
     const x = Math.max(0, Math.round(left + width / 2 - 240));
-    openOverlay({
-      mod: "bakers",
-      props: { view: "ticket.search" },
-      kind: "popup",
-      width: 480,
-      at: { x, y: 120 },
-    });
+    openRoute("ticket.search", {}, { at: { x, y: 120 } });
   },
 };
 

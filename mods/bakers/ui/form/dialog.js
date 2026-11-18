@@ -6,8 +6,9 @@
 // On success: close, a toast with the definition's text, then its after().
 import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { closeOverlay, notify, openOverlay, props } from "herdr";
+import { closeOverlay, notify, props } from "herdr";
 import { get } from "../../core/registry.js";
+import { openRoute } from "../../core/router.js";
 import { icons, tokens, UI_FONT } from "../theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
@@ -18,13 +19,7 @@ import { field, FormInputs, message } from "./inputs.js";
 
 /** @param {string} form a registered form kind @param {Record<string, unknown>} p */
 export function openForm(form, p = {}) {
-  return openOverlay({
-    mod: "bakers",
-    props: { view: "dialog", form, ...p },
-    kind: "dialog",
-    width: 460,
-    modal: true,
-  });
+  return openRoute("dialog", { form, ...p });
 }
 
 export default class Dialog {
