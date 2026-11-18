@@ -7,6 +7,6 @@ default:
 test:
     bun run test
 
-# Lint, format check, type check and tests
+# Lint, format check, type check, hygiene, Herdr types, tests with the coverage floor
 check:
     bun run check

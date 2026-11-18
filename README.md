@@ -92,8 +92,24 @@ Needs [Bun](https://bun.sh) 1.4.4, the version Herdr uses:
 ```sh
 curl -fsSL https://bun.sh/install | bash -s "bun-v1.4.4"
 bun install
-bun run check   # lint, format check, type check and tests; or `just check`
+bun run check   # every check below, as CI runs them; or `just check`
 ```
+
+### Checks
+
+`bun run check` runs, in order (CI job `test` runs the same steps):
+
+- `bun run lint`: Biome; unused imports and variables, floating promises and `console` in `mods/`
+  are errors.
+- `bun run format:check`: Biome formatting.
+- `bun run typecheck`: `tsc` with `strictNullChecks` and `noImplicitAny` against the vendored
+  Herdr types in `types/`.
+- `bun run hygiene`: no committed cache, runtime or Herdr-written file (`.dropsh/`, `dist/`,
+  `coverage/`, `mods/**/gpui-kit.d.ts`, ...).
+- `bun run herdr-types`: the vendored Herdr types match `types/herdr-version.json`, and so does an
+  installed `herdr-app`.
+- `bun run test`: `bun test --coverage`, then a repo-wide floor (lines 92 %, functions 90 %) that
+  also fails on a source file no test loads. To run one file, use `bun test <file>`.
 
 `bun run format` rewrites files to the house style. Which Herdr conventions this follows, and
 where and why it deviates, is in [docs/conventions.md](docs/conventions.md).
