@@ -63,7 +63,12 @@ function rawPreview() {
   return p && typeof p === "object" && p.id ? p : null;
 }
 
-/** The kind of a key: by the preview tab's name, else by the shape of the key. @param {string} key */
+/**
+ * The kind of a key: by the preview tab's name, else by the shape of the key. The fallback
+ * tries each kind's `match` on `<key> x`, so a kind's `match` must accept `<key> <word>`, and
+ * kinds must not overlap (the first registered that matches wins).
+ * @param {string} key
+ */
 function kindOf(key) {
   const open = (space()?.tabs ?? []).flatMap((t) => {
     const p = parseName(t.name);

@@ -7,7 +7,7 @@ import { STATES } from "../rules.js";
 /** The keys in navigation order: one row per state under Open by state. */
 export const NAV = ["needs-me", "mine", "open", ...STATES.map((s) => `state:${s}`), "closed"];
 
-/** A registered list; the key names one this module imports. @param {string} key */
+/** A registered list; the lists are registered by this module's register.js. @param {string} key */
 function known(key) {
   const list = findList(key);
   if (!list) throw new Error(`bakers: no list "${key}"`);

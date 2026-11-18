@@ -60,9 +60,9 @@ test("a menu item whose action is not registered closes the menu and does nothin
   expect(env.calls.filter((c) => c.fn !== "closeOverlay")).toEqual([]);
 });
 
-test("an overlay copy loaded fresh runs a registered menu action", async () => {
-  // Load main.js, then empty the registry so nothing from the harness or an earlier test is left,
-  // and register again as main.js does when Herdr loads the overlay copy.
+test("a registry reset and refilled by registerAll() still runs a registered menu action", async () => {
+  // Bun caches main.js, so it is not loaded fresh here: the registry is emptied so nothing from
+  // the harness or an earlier test is left, and registerAll() fills it again.
   const registry = await import("../../mods/bakers/core/registry.js");
   const Bakers = await load("bakers/main.js");
   const main = await import("../../mods/bakers/main.js");
