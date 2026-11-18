@@ -4,7 +4,8 @@ import { div } from "gpui-kit";
 import { v_flex } from "gpui-base";
 import { layout, run } from "herdr";
 import { findNode } from "../../core/herdr.js";
-import { all, get } from "../../core/registry.js";
+import { all } from "../../core/registry.js";
+import { draw, launch, settle, stop } from "./contributions.js";
 import { square } from "../../ui/components/square.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 
@@ -14,12 +15,9 @@ export default class Rail {
 
   /** @param {import("gpui-shell").Props | undefined} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
-    this.items = all("rail.item").map((item) => {
-      const C = get("route", item.route);
-      const c = new C({ view: item.route });
-      c.init?.({ view: item.route }, cx);
-      return c;
-    });
+    const started = all("rail.item").map((item) => launch(item.route, cx));
+    this.items = started.map((s) => s.c);
+    settle(started, cx);
   }
 
   /** @param {import("gpui-kit").Context} cx */
@@ -48,15 +46,12 @@ export default class Rail {
           .on_click(() => run("layout.toggle", { id: "sidebar" }))
           .child("Spaces"),
       );
-    for (const c of this.items) {
-      const out = c.render(cx);
-      rail.children(Array.isArray(out) ? out : [out]);
-    }
+    for (const c of this.items) rail.children(draw(c, cx));
     return rail;
   }
 
   /** @param {import("gpui-kit").AsyncContext} cx */
   async close(cx) {
-    for (const c of this.items) await c.close?.(cx);
+    await stop(this.items, cx);
   }
 }

@@ -2,16 +2,10 @@
 // and Agents: one card per sidebar.section, its header the title and the sidebar.tool buttons, its
 // body the section controller's rows.
 import { h_flex, v_flex } from "gpui-base";
-import { all, get } from "../../core/registry.js";
+import { all } from "../../core/registry.js";
+import { draw, launch, settle, stop } from "./contributions.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { heading } from "../../ui/components/text.js";
-
-/** @param {string} route @param {import("gpui-kit").AsyncContext} cx */
-function make(route, cx) {
-  const C = get("route", route);
-  const c = new C({ view: route });
-  return { c, ready: c.init?.({ view: route }, cx) };
-}
 
 export default class Sidebar {
   /** @type {{ title: string, c: any, tools: any[] }[]} one card per section, made once */
@@ -20,27 +14,24 @@ export default class Sidebar {
   /** @param {import("gpui-shell").Props | undefined} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     const tools = all("sidebar.tool");
-    /** @type {unknown[]} */
+    /** @type {{ ready: unknown }[]} */
     const pending = [];
     this.sections = all("sidebar.section").map((s) => {
-      const made = make(s.route, cx);
-      pending.push(made.ready);
+      const made = launch(s.route, cx);
+      pending.push(made);
       return {
         title: s.title,
         c: made.c,
         tools: tools
           .filter((tool) => tool.section === s.id)
           .map((tool) => {
-            const m = make(tool.route, cx);
-            pending.push(m.ready);
+            const m = launch(tool.route, cx);
+            pending.push(m);
             return m.c;
           }),
       };
     });
-    cx.spawn(async (cx) => {
-      await Promise.all(pending);
-      cx.notify();
-    });
+    settle(pending, cx);
   }
 
   /** @param {import("gpui-kit").Context} cx */
@@ -56,8 +47,7 @@ export default class Sidebar {
       .text_color(t.foreground);
     for (const s of this.sections) {
       const header = h_flex().gap(6).mb(4).items_center().child(heading(s.title));
-      for (const tool of s.tools) header.child(tool.render(cx));
-      const body = s.c.render(cx);
+      for (const tool of s.tools) header.children(draw(tool, cx));
       root.child(
         v_flex()
           .p(8)
@@ -67,7 +57,7 @@ export default class Sidebar {
           .border_color(t.border)
           .bg(t.surface)
           .child(header)
-          .children(Array.isArray(body) ? body : [body]),
+          .children(draw(s.c, cx)),
       );
     }
     return root;
@@ -75,9 +65,6 @@ export default class Sidebar {
 
   /** @param {import("gpui-kit").AsyncContext} cx */
   async close(cx) {
-    for (const s of this.sections) {
-      await s.c.close?.(cx);
-      for (const tool of s.tools) await tool.close?.(cx);
-    }
+    for (const s of this.sections) await stop([s.c, ...s.tools], cx);
   }
 }
