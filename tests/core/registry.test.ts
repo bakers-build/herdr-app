@@ -22,6 +22,11 @@ test("all sorts by order then by first definition; a redefinition keeps its plac
   expect(all[1]).toEqual({ id: "a", order: 0, v: 2 });
 });
 
+test("all reports the registry key even when a def carries a different id", () => {
+  registry.define("widget", "a", { id: "other", v: 1 });
+  expect(registry.all("widget")).toEqual([{ id: "a", v: 1 }]);
+});
+
 test("all of an unknown type is []", () => {
   expect(registry.all("nothing")).toEqual([]);
 });

@@ -28,11 +28,11 @@ export function get(type, id) {
   return TYPES.get(type)?.get(id)?.def ?? null;
 }
 
-/** @param {string} type @returns {any[]} `{ id, ...def }` sorted by order, then first definition */
+/** @param {string} type @returns {any[]} `{ ...def, id }` sorted by order, then first definition */
 export function all(type) {
   const entries = [...(TYPES.get(type) ?? [])];
   entries.sort(([, a], [, b]) => (a.def.order ?? 0) - (b.def.order ?? 0) || a.seq - b.seq);
-  return entries.map(([id, { def }]) => ({ id, ...def }));
+  return entries.map(([id, { def }]) => ({ ...def, id }));
 }
 
 /** Empties every type. For tests. */
