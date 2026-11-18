@@ -72,3 +72,14 @@ test("the test job checks repo hygiene, the Herdr types and coverage", () => {
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   expect(pkg.scripts.test).toBe("bun test --coverage && bun run coverage");
 });
+
+test("the test job lints the workflows with actionlint pinned by version and digest", () => {
+  const step = steps("test").find((s) => s.name === "Actionlint");
+  expect(step?.run).toMatch(
+    /^docker run --rm .*rhysd\/actionlint:\d+\.\d+\.\d+@sha256:[0-9a-f]{64} /,
+  );
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  // The local script runs the same image as CI.
+  const image = step.run.match(/rhysd\/actionlint:\S+/)[0];
+  expect(pkg.scripts["lint:ci"]).toContain(image);
+});

@@ -99,6 +99,8 @@ bun run check   # every check below, as CI runs them; or `just check`
 
 `bun run check` runs, in order (CI job `test` runs the same steps):
 
+- Actionlint (CI step; `bun run lint:ci` runs the same pinned image locally, needs Docker):
+  the workflow files, including shellcheck on their `run:` scripts.
 - `bun run lint`: Biome; unused imports and variables, floating promises and `console` in `mods/`
   are errors.
 - `bun run format:check`: Biome formatting.

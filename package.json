@@ -14,6 +14,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "bun run lint && bun run format:check && bun run typecheck && bun run hygiene && bun run herdr-types && bun run test",
+    "lint:ci": "docker run --rm -v \"$PWD:/repo\" -w /repo rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 -no-color",
     "hygiene": "bun scripts/check/hygiene.ts",
     "herdr-types": "bun scripts/check/herdr-types.ts",
     "install:herdr": "bun scripts/install.ts",
