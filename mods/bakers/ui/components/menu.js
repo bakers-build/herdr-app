@@ -3,9 +3,9 @@
 // as in Herdr's menu mod (v0.1.15 defaults/mods/menu).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { closeOverlay, openOverlay, props, theme } from "herdr";
+import { closeOverlay, openOverlay, props } from "herdr";
 import { perform } from "../../core/actions.js";
-import { UI_FONT } from "../theme.js";
+import { tokens, UI_FONT } from "../theme.js";
 import { chip } from "./chip.js";
 
 /**
@@ -90,7 +90,7 @@ export class PopupList {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const items = this.items();
     const choosable = items.filter((i) => !i.disabled);
     const top = this.top(t);

@@ -6,9 +6,9 @@
 // On success: close, a toast with the definition's text, then its after().
 import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { closeOverlay, notify, openOverlay, props, theme } from "herdr";
+import { closeOverlay, notify, openOverlay, props } from "herdr";
 import { register } from "../../core/actions.js";
-import { icons, UI_FONT } from "../theme.js";
+import { icons, tokens, UI_FONT } from "../theme.js";
 import { formKey } from "../../form/keys.js";
 import { formBuilder } from "../../form/registry.js";
 import { FormState } from "../../form/state.js";
@@ -69,7 +69,7 @@ export default class Dialog {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const root = v_flex()
       .id("confirm")
       .w_full()

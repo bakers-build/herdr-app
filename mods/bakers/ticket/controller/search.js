@@ -3,10 +3,10 @@
 // opens the ticket as a tab, or selects its tab when it is open; Esc closes.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
-import { closeOverlay, props, theme } from "herdr";
+import { closeOverlay, props } from "herdr";
 import { classify } from "../../core/errors.js";
 import { openTicket } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { mono } from "../../ui/components/text.js";
 import { getStore, ready } from "../store.js";
 import { searchTickets } from "../repository.js";
@@ -69,7 +69,7 @@ export default class Goto {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     return v_flex()
       .id("goto")
       .w(480)

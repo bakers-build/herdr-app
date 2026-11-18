@@ -2,12 +2,12 @@
 // with a chevron.
 import { svg } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { theme } from "herdr";
-import { icons } from "../theme.js";
+
+import { icons, tokens } from "../theme.js";
 
 /** @param {string} text @param {{ strong?: boolean, id?: string, chevron?: boolean, px?: number, size?: number, onClick?: (e: any, cx: any) => void }} [o] */
 export function pill(text, o = {}) {
-  const t = theme();
+  const t = tokens();
   return h_flex()
     .when(Boolean(o.id), (el) => el.id(o.id))
     .h(24)

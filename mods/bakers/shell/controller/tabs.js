@@ -12,8 +12,9 @@
 // The window button icons are Herdr's own, mods/tabs/win-*.svg, shipped with every install.
 import { div, svg, image } from "gpui-kit";
 import { h_flex, ScrollHandle } from "gpui-base";
-import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings } from "herdr";
+import { spaces, panes, run, openOverlay, window, shared, layout, settings } from "herdr";
 import { parseName, preview, reconcile } from "../../core/tabs.js";
+import { tokens } from "../../ui/theme.js";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -27,14 +28,14 @@ function find(node, id) {
 const storage = {
   get(key) {
     try {
-      return globalThis.localStorage?.getItem(key) ?? null;
+      return localStorage.getItem(key) ?? null;
     } catch {
       return null;
     }
   },
   set(key, value) {
     try {
-      globalThis.localStorage?.setItem(key, value);
+      localStorage.setItem(key, value);
     } catch {
       // per-copy memory only
     }
@@ -79,7 +80,7 @@ export default class BakersTabs {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     reconcile();
     const space = spaces().find((p) => p.active);
     const shown = space?.tabs ?? [];

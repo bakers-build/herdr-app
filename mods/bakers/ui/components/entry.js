@@ -3,8 +3,9 @@
 // bar (the comments of a ticket).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { theme } from "herdr";
+
 import { markdown } from "./markdown.js";
+import { tokens } from "../theme.js";
 
 /**
  * @param {{ key: string, meta: string[], body: string, firstLine: string, foldable: boolean, marked: boolean }} vm
@@ -12,7 +13,7 @@ import { markdown } from "./markdown.js";
  * @param {(cx: any) => void} onToggle
  */
 export function entry(vm, open, onToggle) {
-  const t = theme();
+  const t = tokens();
   const [head, ...rest] = vm.meta;
   return v_flex()
     .id(`comment-${vm.key}`)

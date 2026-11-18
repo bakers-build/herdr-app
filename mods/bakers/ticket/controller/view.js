@@ -5,10 +5,10 @@
 // the run; cmd-Enter and Esc belong to the edit form or the composer while they are used.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { notify, openOverlay, props, run, theme } from "herdr";
+import { notify, openOverlay, props, run } from "herdr";
 import { NO_TERMINAL, runTerminal } from "../../core/herdr.js";
 import { pin } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
 import { submit } from "../../form/submit.js";
@@ -227,7 +227,7 @@ export default class TicketTab {
 
   /** @param {any} vm */
   document(vm) {
-    const t = theme();
+    const t = tokens();
     const onEdit = (/** @type {any} */ _e, /** @type {any} */ cx) => {
       this.edit();
       cx.notify();
@@ -292,7 +292,7 @@ export default class TicketTab {
   }
 
   composerView() {
-    const t = theme();
+    const t = tokens();
     const answering = this.composer.mode === "answer";
     return h_flex()
       .id("composer")
@@ -315,7 +315,7 @@ export default class TicketTab {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const root = v_flex()
       .id("ticket")
       .size_full()

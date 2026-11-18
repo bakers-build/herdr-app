@@ -4,12 +4,12 @@
 // Runs. Nothing here repeats the document; the panel never takes the focus.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { exec, openOverlay, run, shared, theme, window } from "herdr";
+import { exec, openOverlay, run, shared, window } from "herdr";
 import { perform } from "../../core/actions.js";
 import { classify } from "../../core/errors.js";
 import { runTerminal } from "../../core/herdr.js";
 import { focusedTicket } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { chip } from "../../ui/components/chip.js";
 import { openForm } from "../../ui/form/dialog.js";
@@ -91,7 +91,7 @@ export default class Panel {
 
   /** @param {any} vm */
   agentSection(vm) {
-    const t = theme();
+    const t = tokens();
     const small = { h: 24, size: 11 };
     const term = runTerminal(vm.id, this.detail.ticket.id);
     return v_flex()
@@ -147,7 +147,7 @@ export default class Panel {
 
   /** @param {any} vm */
   properties(vm) {
-    const t = theme();
+    const t = tokens();
     const p = vm.properties;
     const label = (/** @type {string} */ text) =>
       div().text_size(11).text_color(t.muted).child(text);
@@ -311,7 +311,7 @@ export default class Panel {
 
   /** @param {any} vm */
   history(vm) {
-    const t = theme();
+    const t = tokens();
     const activity = v_flex()
       .id("activity")
       .gap(6)
@@ -365,7 +365,7 @@ export default class Panel {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const root = v_flex()
       .id("ticket-panel")
       .size_full()

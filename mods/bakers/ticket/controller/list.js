@@ -6,11 +6,11 @@
 // N a new ticket, R refreshes.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
-import { setShared, shared, theme } from "herdr";
+import { setShared, shared } from "herdr";
 import { register } from "../../core/actions.js";
 import { classify } from "../../core/errors.js";
 import { closeAll, closeFinished, openTicket } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { pager } from "../../ui/components/pager.js";
 import { openForm } from "../../ui/form/dialog.js";
@@ -200,7 +200,7 @@ export default class TicketList {
   }
 
   header() {
-    const t = theme();
+    const t = tokens();
     return h_flex()
       .id("list-header")
       .items_center()
@@ -247,7 +247,7 @@ export default class TicketList {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const { list, rows: records, more } = this.result();
     this.syncSelection(records);
     const now = Date.now();
