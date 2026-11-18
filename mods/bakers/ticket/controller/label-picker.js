@@ -8,10 +8,12 @@ import { PopupList } from "../../ui/components/menu.js";
 import { getStore } from "../store.js";
 
 export default class LabelPicker extends PopupList {
+  input = InputState.new({ placeholder: "Label name" });
+
+  /** @param {import("gpui-shell").Props | undefined} p @param {import("gpui-kit").AsyncContext} cx */
   init(p, cx) {
     super.init(p, cx);
     this.typing = true;
-    this.input = InputState.new({ placeholder: "Label name" });
     this.input.on("change", (_e, cx) => cx.notify());
     this.input.on("submit", (_e, cx) => this.add(this.input.value(), cx));
     this.input.focus();
@@ -37,6 +39,7 @@ export default class LabelPicker extends PopupList {
       .map((l) => ({ key: l, label: l, choose: (/** @type {any} */ cx) => this.add(l, cx) }));
   }
 
+  /** @param {Record<string, import("gpui-kit").Color>} t */
   top(t) {
     return div()
       .id("label-field")

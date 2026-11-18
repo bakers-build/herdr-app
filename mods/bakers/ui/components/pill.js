@@ -9,7 +9,7 @@ import { icons, tokens } from "../theme.js";
 export function pill(text, o = {}) {
   const t = tokens();
   return h_flex()
-    .when(Boolean(o.id), (el) => el.id(o.id))
+    .when(Boolean(o.id), (el) => el.id(o.id ?? ""))
     .h(24)
     .px(o.px ?? 8)
     .gap(4)
@@ -18,8 +18,13 @@ export function pill(text, o = {}) {
     .border(1)
     .border_color(o.strong ? t.foreground : t.border)
     .when(Boolean(o.strong) && o.size == null, (el) => el.font_semibold())
-    .when(o.size != null, (el) => el.text_size(o.size))
-    .when(Boolean(o.onClick), (el) => el.bg(t.surface).cursor_pointer().on_click(o.onClick))
+    .when(o.size != null, (el) => el.text_size(o.size ?? 0))
+    .when(Boolean(o.onClick), (el) =>
+      el
+        .bg(t.surface)
+        .cursor_pointer()
+        .on_click(o.onClick ?? (() => {})),
+    )
     .child(text)
     .when(Boolean(o.chevron), (el) => el.child(svg(icons.down).size(10)));
 }

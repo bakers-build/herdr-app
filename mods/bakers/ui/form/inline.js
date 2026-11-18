@@ -29,7 +29,7 @@ export function inlineForm(id, def, inputs, onButton) {
       el.child(div().text_size(11).font_semibold().text_color(t.accent).child(def.label)),
     )
     .children(texts.map((/** @type {any} */ f) => field(f, inputs)))
-    .when(Boolean(msg), (el) => el.child(msg))
+    .when(Boolean(msg), (el) => el.child(msg ?? ""))
     .when(Boolean(boxes.length || def.hint || buttons.length), (el) =>
       el.child(
         h_flex()

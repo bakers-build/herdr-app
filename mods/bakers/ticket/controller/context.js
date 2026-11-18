@@ -35,14 +35,21 @@ function openUrl(url) {
 }
 
 export default class Panel {
+  /** @type {string | null} what the last load was for: ticket and refresh time */
+  key = null;
+  /** @type {string | null} the followed ticket */
+  id = null;
+  /** @type {any} */
+  detail = null;
+  /** @type {import("../../core/errors.js").Failure | null} */
+  failure = null;
+  /** @type {any[] | null} */
+  activity = null;
+  activityServed = true;
+  runsOpen = false;
+
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
-    this.key = null;
-    this.id = null;
-    this.detail = null;
-    this.failure = null;
-    this.activity = null;
-    this.activityServed = true;
-    this.runsOpen = false;
     this.check(cx);
     cx.timer.every(CHECK_MS, (cx) => this.check(cx));
   }
@@ -51,7 +58,7 @@ export default class Panel {
     return focusedTicket() ?? /** @type {string | null} */ (shared("bakers.selected")) ?? null;
   }
 
-  /** Reloads when the followed ticket or the last refresh changed; no call otherwise. @param {any} cx */
+  /** Reloads when the followed ticket or the last refresh changed; no call otherwise. @param {import("gpui-kit").Context} cx */
   check(cx) {
     const id = this.following();
     const key = `${id}|${/** @type {any} */ (shared("bakers.needs"))?.updated ?? null}`;

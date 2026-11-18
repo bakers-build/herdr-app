@@ -20,16 +20,19 @@ import ticket from "./ticket/routes.js";
 export const ROUTES = { ...ticket, ...project, ...shell, menu: Menu, dialog: Dialog };
 
 export default class Bakers extends View {
+  /** @param {import("gpui-shell").Props | undefined} p @param {import("gpui-kit").AsyncContext} cx */
   init(p, cx) {
     const C = ROUTES[props()?.view];
     this.inner = C ? new C(p) : null;
     this.inner?.init?.(p, cx);
   }
 
+  /** @param {import("gpui-kit").Context} cx */
   render(cx) {
     return this.inner ? this.inner.render(cx) : div().child("bakers: unknown view");
   }
 
+  /** @param {import("gpui-kit").AsyncContext} cx */
   async close(cx) {
     await this.inner?.close?.(cx);
   }

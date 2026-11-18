@@ -137,7 +137,7 @@ test("a retry failing again still names the steps finished before", async () => 
   const s = new FormState(d);
   await submit(d, s);
   await submit(d, s);
-  expect(s.message.message).toBe("Comment posted; unfreezing failed: Not allowed");
+  expect(s.message?.message).toBe("Comment posted; unfreezing failed: Not allowed");
 });
 
 test("a definition may join done and failed with its own words", async () => {
@@ -155,7 +155,7 @@ test("a definition may join done and failed with its own words", async () => {
   );
   const s = new FormState(d);
   await submit(d, s);
-  expect(s.message.message).toBe("Run cancelled, not started on ci-box: Conductor offline");
+  expect(s.message?.message).toBe("Run cancelled, not started on ci-box: Conductor offline");
 });
 
 test("a first step failing says what failed", async () => {
@@ -169,7 +169,7 @@ test("a first step failing says what failed", async () => {
   ]);
   const s = new FormState(d);
   await submit(d, s);
-  expect(s.message.message).toBe("Not sent: offline");
+  expect(s.message?.message).toBe("Not sent: offline");
 });
 
 test("validation stops before any step and marks the field", async () => {
@@ -234,4 +234,18 @@ test("keys: inline forms send on cmd-Enter and cancel on Esc; dialogs never writ
   expect(formKey("enter", "dialog")).toBe("cancel");
   expect(formKey("escape", "dialog")).toBe("cancel");
   expect(formKey("cmd-enter", "dialog")).toBe(null);
+});
+
+test("a step rejecting without a reason still reports what failed", async () => {
+  const d = def([
+    {
+      run: async () => {
+        throw undefined;
+      },
+      failed: "Not sent",
+    },
+  ]);
+  const s = new FormState(d);
+  expect(await submit(d, s)).toEqual({ ok: false });
+  expect(s.message).toMatchObject({ kind: "failed", message: "Not sent: undefined" });
 });

@@ -12,9 +12,16 @@ import "./state.js";
 /** The keys in navigation order: one row per state under Open by state. */
 export const NAV = ["needs-me", "mine", "open", ...STATES.map((s) => `state:${s}`), "closed"];
 
+/** A registered list; the key names one this module imports. @param {string} key */
+function known(key) {
+  const list = getList(key);
+  if (!list) throw new Error(`bakers: no list "${key}"`);
+  return list;
+}
+
 /** @param {string} key */
 export function listFor(key) {
-  return getList(key) ?? getList("needs-me");
+  return getList(key) ?? known("needs-me");
 }
 
 /**
@@ -23,7 +30,7 @@ export function listFor(key) {
  */
 export function navItems(records, current) {
   return NAV.map((key) => {
-    const { def, args, label } = getList(key);
+    const { def, args, label } = known(key);
     return {
       key,
       label,
@@ -40,7 +47,7 @@ export function navItems(records, current) {
 /** The view menu: the sidebar's lists, a shortcut while it is hidden. @param {string} current */
 export function menuItems(current) {
   return NAV.map((key) => {
-    const { def, label } = getList(key);
+    const { def, label } = known(key);
     return {
       label,
       action: ["ticket.view", key],

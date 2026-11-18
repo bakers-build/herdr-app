@@ -16,6 +16,7 @@ import { spaces, panes, run, openOverlay, window, shared, layout, settings } fro
 import { parseName, preview, reconcile } from "../../core/tabs.js";
 import { tokens } from "../../ui/theme.js";
 
+/** @param {any} node @param {string} id @returns {any} */
 function find(node, id) {
   if (node?.id === id) return node;
   for (const child of node?.children ?? []) {
@@ -26,6 +27,7 @@ function find(node, id) {
 }
 
 const storage = {
+  /** @param {string} key */
   get(key) {
     try {
       return localStorage.getItem(key) ?? null;
@@ -33,6 +35,7 @@ const storage = {
       return null;
     }
   },
+  /** @param {string} key @param {string} value */
   set(key, value) {
     try {
       localStorage.setItem(key, value);
@@ -43,6 +46,21 @@ const storage = {
 };
 
 export default class BakersTabs {
+  /** @type {number | null} the tab a drag started on */
+  pressed = null;
+  /** @type {import("gpui-base").ScrollHandle} init makes it */
+  scroll = /** @type {any} */ (null);
+  /** @type {Record<string, string | null>} the open panel per space */
+  panels = {};
+  /** @type {string | undefined} the space last synced; undefined before the first */
+  space = undefined;
+  /** @type {{ want: string | null, until: number } | null} a panel switch on its way */
+  pending = null;
+  /** @type {string | undefined} */
+  selected = undefined;
+  /** @type {number | undefined} */
+  selectedIndex = undefined;
+
   init() {
     this.pressed = null;
     this.scroll = ScrollHandle.new();
@@ -50,6 +68,7 @@ export default class BakersTabs {
   }
 
   // The side panel is remembered per space (Herdr's tabs mod, unchanged).
+  /** @param {any} space @param {any} panel @param {any} body @param {(string | null)[]} enabled */
   syncPanel(space, panel, body, enabled) {
     if (!space || !panel) return;
     const now = panel.hidden ? null : (body?.active ?? null);
@@ -93,7 +112,9 @@ export default class BakersTabs {
     }
     const needs = /** @type {any} */ (shared("bakers.needs")) ?? { count: 0, ids: [] };
     const previewId = preview()?.id ?? null;
-    const stop = (_e, cx) => cx.stop_propagation();
+    const stop = (/** @type {unknown} */ _e, /** @type {import("gpui-kit").Context} */ cx) =>
+      cx.stop_propagation();
+    /** @param {string} id @param {any} label @param {(e: any, cx: import("gpui-kit").Context) => void} action */
     const button = (id, label, action) =>
       div()
         .id(id)
@@ -108,6 +129,7 @@ export default class BakersTabs {
         .on_mouse_down("left", stop)
         .on_click(action)
         .child(label);
+    /** @param {import("herdr").TabInfo} c @param {number} i */
     const item = (c, i) => {
       const ticket = parseName(c.name);
       const isTickets = c.name === "Tickets";
@@ -152,7 +174,7 @@ export default class BakersTabs {
           if (from !== null && from !== i)
             run("tab.move", {
               id: shown[from].id,
-              index: space.tabs.findIndex((x) => x.id === c.id) + 1,
+              index: shown.findIndex((x) => x.id === c.id) + 1,
             });
           else run("tab.select", { id: c.id });
         })
@@ -162,14 +184,16 @@ export default class BakersTabs {
             mod: "menu",
             kind: "popup",
             width: 200,
-            props: { tab: "tab", target: { id: c.id, space: space.id } },
+            props: { tab: "tab", target: { id: c.id, space: space?.id } },
           });
         })
         .when(Boolean(program?.icon), (el) =>
           el.child(
-            program.tint
-              ? svg(program.icon).size(14).text_color(t.muted)
-              : image(program.icon).size(14),
+            program?.tint
+              ? svg(program.icon ?? "")
+                  .size(14)
+                  .text_color(t.muted)
+              : image(program?.icon ?? "").size(14),
           ),
         )
         .child(
@@ -191,7 +215,12 @@ export default class BakersTabs {
           el.child(div().id(`dot-${c.id}`).size(6).rounded(3).flex_none().bg(t.blocked)),
         )
         .when(!asksYou && (c.status === "blocked" || c.status === "done"), (el) =>
-          el.child(div().size(6).rounded(3).bg(t[c.status])),
+          el.child(
+            div()
+              .size(6)
+              .rounded(3)
+              .bg(c.status === "done" ? t.done : t.blocked),
+          ),
         );
     };
     const root = /** @type {any} */ (layout()),
@@ -209,6 +238,7 @@ export default class BakersTabs {
       body = find(root, "panel-body");
     const enabled = /** @type {string[]} */ (shared("workspace.panels")) ?? ["files", "changes"];
     this.syncPanel(space, panel, body, [...enabled, "ticket"]);
+    /** @param {string} id @param {string} label @param {boolean} bordered */
     const panelButton = (id, label, bordered) => {
       const on = panel && !panel.hidden && body?.active === id;
       return h_flex()

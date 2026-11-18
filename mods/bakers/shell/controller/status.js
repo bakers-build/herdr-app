@@ -39,10 +39,14 @@ export function watchNeeds(prev, store) {
 }
 
 export default class Status {
+  /** The status bar's width; Herdr reports it on resize. */
+  width = 1440 - RAIL;
+  /** @type {string[] | null} the tickets that asked a question at the last refresh */
+  asked = null;
+
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
-    this.width = 1440 - RAIL;
-    this.asked = null;
-    const tick = (/** @type {any} */ cx) =>
+    const tick = (/** @type {import("gpui-kit").AsyncContext} */ cx) =>
       cx.spawn(async (cx) => {
         await this.refresh();
         cx.notify();
@@ -152,7 +156,7 @@ export default class Status {
         parts.map((p) =>
           div()
             .truncate()
-            .when(Boolean(p.tone), (el) => el.text_color(t[p.tone]))
+            .when(Boolean(p.tone), (el) => el.text_color(t[p.tone ?? "foreground"]))
             .when(Boolean(p.strong), (el) => el.font_semibold())
             .child(p.text),
         ),

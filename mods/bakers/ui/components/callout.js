@@ -25,7 +25,12 @@ export function callout(id, vm, buttons) {
         .items_center()
         .children(buttons)
         .when(Boolean(vm.hint), (el) =>
-          el.child(div().text_size(11).text_color(t.muted).child(vm.hint)),
+          el.child(
+            div()
+              .text_size(11)
+              .text_color(t.muted)
+              .child(vm.hint ?? ""),
+          ),
         ),
     );
 }

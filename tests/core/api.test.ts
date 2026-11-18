@@ -231,6 +231,6 @@ test("after falling back to dropsh, later reads ask the CLI for a token no more"
   };
   await api.read("x", "x", "1");
   await api.read("x", "x", "1");
-  const auth = env.calls.filter((c) => c.fn === "exec" && c.args[1][0] === "auth");
+  const auth = env.calls.filter((c) => c.fn === "exec" && (c.args as any[])[1][0] === "auth");
   expect(auth.length).toBe(1);
 });

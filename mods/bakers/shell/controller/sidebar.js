@@ -14,6 +14,7 @@ import { currentView, setView } from "../../ticket/state.js";
 import { navItems } from "../../ticket/list/index.js";
 
 export default class Sidebar {
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     cx.spawn(async (cx) => {
       await ready();

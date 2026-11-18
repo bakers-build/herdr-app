@@ -61,12 +61,17 @@ export function menuRow(t, it, hot, choose) {
 
 /** A popup frame with keyboard choice over `rows`; the slices' pickers use it too. */
 export class PopupList {
-  /** @param {any} cx */
+  /** @type {any} */ handle = null;
+  /** The keyboard-selected row among the choosable ones. */
+  at = 0;
+  /** True while a text field of the popup has the keyboard: Enter belongs to it. */
+  typing = false;
+
+  /** @param {unknown} _props @param {any} cx */
   init(_props, cx) {
     this.handle = cx.focus_handle();
     this.handle.focus();
     this.at = 0;
-    /** True while a text field of the popup has the keyboard: Enter belongs to it. */
     this.typing = false;
   }
 
@@ -135,6 +140,7 @@ export default class Menu extends PopupList {
     }));
   }
 
+  /** @param {Record<string, import("gpui-kit").Color>} t */
   bottom(t) {
     const p = props() ?? {};
     if (!p.footer) return null;

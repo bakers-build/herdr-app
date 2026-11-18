@@ -49,7 +49,8 @@ export async function submit(def, state) {
         results.push(state.finished.get(i)?.result);
         if (step.done) done.push(step.done);
       } catch (e) {
-        const f = classify(e);
+        // A step may reject without a reason, which classify maps to null.
+        const f = classify(e) ?? { kind: "failed", message: String(e), field: null, retry: true };
         const what = step.failed ?? "Not sent";
         const head = done.length
           ? `${done.join(def.join ?? "; ")}${def.join ?? "; "}${what}`

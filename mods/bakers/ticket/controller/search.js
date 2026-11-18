@@ -18,13 +18,20 @@ const HINT =
   "Identifier or words of the title. Enter opens it as a tab, or selects its tab if it is open.";
 
 export default class Goto {
+  /** @type {import("gpui-kit").FocusHandle} init sets it before the first render */
+  handle = /** @type {any} */ (null);
+  input = InputState.new({ placeholder: "" });
+  /** @type {any[]} */
+  results = [];
+  at = 0;
+  /** Counts keystrokes; a search answers only if no newer keystroke came. */
+  seq = 0;
+  /** @type {string | null} */
+  error = null;
+
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     this.handle = cx.focus_handle();
-    this.input = InputState.new({ placeholder: "" });
-    this.results = [];
-    this.at = 0;
-    this.seq = 0;
-    this.error = null;
     this.input.on("change", (_e, cx) => {
       const seq = ++this.seq;
       cx.timer.after(DEBOUNCE_MS, (cx) => {
@@ -38,7 +45,7 @@ export default class Goto {
     });
   }
 
-  /** @param {number} seq @param {any} cx */
+  /** @param {number} seq @param {import("gpui-kit").Context} cx */
   search(seq, cx) {
     const query = this.input.value().trim();
     if (!query) {
@@ -145,7 +152,12 @@ export default class Goto {
           ),
       )
       .when(Boolean(this.error), (el) =>
-        el.child(div().text_size(11).text_color(t.blocked).child(this.error)),
+        el.child(
+          div()
+            .text_size(11)
+            .text_color(t.blocked)
+            .child(this.error ?? ""),
+        ),
       )
       .child(div().text_size(11).text_color(t.muted).child(HINT));
   }

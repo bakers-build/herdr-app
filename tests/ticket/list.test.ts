@@ -33,7 +33,7 @@ test("Needs me: the tickets that need you, longest waiting first, with the reaso
 });
 
 test("Open by state: grouped in workflow order", () => {
-  expect(run("open").groups.map((g: any) => [g.key, g.rows.map((r: any) => r.id)])).toEqual([
+  expect(run("open").groups?.map((g: any) => [g.key, g.rows.map((r: any) => r.id)])).toEqual([
     ["qualification", ["SHOP-57"]],
     ["plan", ["SHOP-56"]],
     ["working", ["SHOP-41", "SHOP-58"]],
