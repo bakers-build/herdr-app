@@ -17,4 +17,4 @@ decided a design choice, the choice is named.
 | `defaults/mods/win98/` | The pattern for one mod with many roles: `main.js` routes `props().role`, `kit.js` is the shared kernel, one file per role; the bakers mod follows it with `props().view` and splits the code into layers (docs/architecture.md) |
 | `defaults/mods/workspace-status/main.js` | The status bar block the bakers status item sits beside |
 | `scripts/picker.test.ts` | The test pattern: real mod source over stubbed globals, recorded element calls |
-| `vendor/gpui-kit/crates/shell/src/typings.rs` | Source of the generated `gpui-kit.d.ts`: `InputState`, `TextareaState`, `Textarea`, `TextView.markdown`, `KeyEvent` (`keystroke` spells the platform key `cmd` everywhere), `ClickEvent.click_count`. The `types/gpui-base.d.ts` shim declares only these |
+| `vendor/gpui-kit/crates/shell/src/typings.rs` | Source of the generated `gpui-kit.d.ts`: `InputState`, `TextareaState`, `Textarea`, `TextView.markdown`, `KeyEvent` (`keystroke` spells the platform key `cmd` everywhere), `ClickEvent.click_count`. Vendored from an installed Herdr as `types/gpui-kit.d.ts` (see `docs/conventions.md`) |

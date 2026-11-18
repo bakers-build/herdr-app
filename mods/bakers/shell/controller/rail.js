@@ -2,16 +2,16 @@
 // with the needs-you count; bakers opens the Tickets tab on Needs me.
 import { div } from "gpui-kit";
 import { v_flex } from "gpui-base";
-import { layout, run, shared, theme } from "herdr";
+import { layout, run, shared } from "herdr";
 import { findNode } from "../../core/herdr.js";
 import { ensureTicketsTab } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { setView } from "../../ticket/state.js";
 import { railLabel } from "../../ticket/presenter/counts.js";
 
 export default class Rail {
   render() {
-    const t = theme();
+    const t = tokens();
     const label = railLabel(/** @type {any} */ (shared("bakers.needs"))?.count ?? 0);
     const sidebarShown = !findNode(layout(), "sidebar")?.hidden;
     const square = () =>

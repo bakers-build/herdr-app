@@ -4,11 +4,17 @@
 
 node_modules/
 # Written by Herdr into an installed mod folder
-mods/*/jsconfig.json
-mods/*/*.d.ts
+mods/**/jsconfig.json
+mods/**/*.d.ts
 
 # bakers dropsh schema cache
 .dropsh/
 
 # Release packages (bun run release:package)
 dist/
+
+# Run artefacts of agent runs (logs, spikes)
+assets-ai/
+
+# Test coverage reports (bun test --coverage)
+coverage/

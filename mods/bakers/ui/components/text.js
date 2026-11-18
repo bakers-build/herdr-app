@@ -1,7 +1,7 @@
 // ui/components/text: an identifier in the monospace font; an upper-case section heading.
 import { div } from "gpui-kit";
-import { theme } from "herdr";
-import { MONO_FONT } from "../theme.js";
+
+import { MONO_FONT, tokens } from "../theme.js";
 
 /** @param {string} text @param {number} [size] */
 export function mono(text, size = 12) {
@@ -10,6 +10,6 @@ export function mono(text, size = 12) {
 
 /** 11 px, 600, muted, upper case (the artboards' text-transform). @param {string} text */
 export function heading(text) {
-  const t = theme();
+  const t = tokens();
   return div().text_size(11).font_semibold().text_color(t.muted).child(text.toUpperCase());
 }

@@ -2,11 +2,11 @@
 // text, then buttons and a hint (the Needs-you card).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { theme } from "herdr";
+import { tokens } from "../theme.js";
 
 /** @param {string} id @param {{ label: string, title: string, text: string, hint?: string }} vm @param {any[]} buttons */
 export function callout(id, vm, buttons) {
-  const t = theme();
+  const t = tokens();
   return v_flex()
     .id(id)
     .gap(8)
@@ -25,7 +25,12 @@ export function callout(id, vm, buttons) {
         .items_center()
         .children(buttons)
         .when(Boolean(vm.hint), (el) =>
-          el.child(div().text_size(11).text_color(t.muted).child(vm.hint)),
+          el.child(
+            div()
+              .text_size(11)
+              .text_color(t.muted)
+              .child(vm.hint ?? ""),
+          ),
         ),
     );
 }

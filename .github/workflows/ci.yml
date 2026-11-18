@@ -1,4 +1,5 @@
-# Lint, format check, type check and test the mods on every push and PR.
+# Lint, format check, type check, hygiene and Herdr-types checks, and test with a coverage
+# floor, on every push and PR.
 # Follows Herdr's ci.yml (herdrdev/herdr-app v0.1.15): pinned Bun, actions pinned
 # to commits, read-only token, and caches that only pushes to main save, so PR
 # caches can't evict the one everybody restores. See docs/conventions.md.
@@ -33,6 +34,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The workflows themselves (with shellcheck on run: scripts); Docker is preinstalled.
+      - name: Actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 -no-color
       - name: Install Bun
         run: |
           curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
@@ -52,6 +56,13 @@ jobs:
         run: bun run format:check
       - name: Type check
         run: bun run typecheck
+      # No cache, runtime or Herdr-written file is committed (scripts/check/hygiene.ts).
+      - name: Hygiene
+        run: bun run hygiene
+      # The vendored Herdr types match types/herdr-version.json.
+      - name: Herdr types
+        run: bun run herdr-types
+      # bun test --coverage, then the repo-wide floor (scripts/check/coverage.ts).
       - name: Test
         run: bun run test
       - name: Save dependency cache
@@ -60,6 +71,48 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: ${{ steps.cache.outputs.cache-primary-key }}
+
+  # The mod's JSON:API reads against the real bakers server (release image, SQLite, the
+  # server's own e2e seed): tests/contract/run.ts. The image is public; no secret is used.
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Contract test
+        run: bun run test:contract
+
+  # Loads the mod in the pinned Herdr (herdr-app check): the Linux build from Herdr's
+  # releases, checksum from types/herdr-version.json, under a virtual display with
+  # software Vulkan (Mesa), as Herdr's own Linux CI renders headless.
+  herdr-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Herdr runtime libraries
+        timeout-minutes: 5
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends \
+            libxkbcommon0 libxkbcommon-x11-0 libxcb1 libwayland-client0 \
+            libvulkan1 mesa-vulkan-drivers libfontconfig1 libfreetype6 xvfb xauth
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+      - name: Herdr check
+        run: xvfb-run -a bun run herdr-check
 
   # The squash into next makes the PR title the commit that decides the version bump.
   pr-title:

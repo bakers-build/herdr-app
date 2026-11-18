@@ -10,10 +10,13 @@ import { listConductors } from "../repository.js";
 import { getStore, ready } from "../store.js";
 
 export default class ConductorPicker extends PopupList {
+  /** @type {any[] | null} null until loaded */
+  conductors = null;
+  served = true;
+
+  /** @param {import("gpui-shell").Props | undefined} p @param {import("gpui-kit").AsyncContext} cx */
   init(p, cx) {
     super.init(p, cx);
-    this.conductors = null;
-    this.served = true;
     cx.spawn(async (cx) => {
       try {
         const project = await ready();
@@ -42,6 +45,7 @@ export default class ConductorPicker extends PopupList {
     }));
   }
 
+  /** @param {Record<string, import("gpui-kit").Color>} t */
   bottom(t) {
     if (this.served && this.conductors && !this.conductors.length)
       return h_flex().px(8).py(6).text_color(t.muted).child("No conductor in this project.");

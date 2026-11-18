@@ -5,10 +5,10 @@
 // the run; cmd-Enter and Esc belong to the edit form or the composer while they are used.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { notify, openOverlay, props, run, theme } from "herdr";
+import { notify, openOverlay, props, run } from "herdr";
 import { NO_TERMINAL, runTerminal } from "../../core/herdr.js";
 import { pin } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
 import { submit } from "../../form/submit.js";
@@ -53,14 +53,26 @@ class Inline {
 }
 
 export default class TicketTab {
+  /** @type {string} the ticket, from the props; init sets it */
+  id = /** @type {any} */ (null);
+  /** @type {import("gpui-kit").FocusHandle} init sets it before the first render */
+  handle = /** @type {any} */ (null);
+  /** @type {any} */
+  detail = null;
+  /** @type {import("../../core/errors.js").Failure | null} */
+  failure = null;
+  /** @type {Set<string>} the expanded entries */
+  open = new Set();
+  /** @type {Inline | null} the open edit form */
+  editor = null;
+  /** @type {Inline} the comment form; init makes it */
+  composer = /** @type {any} */ (null);
+
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     this.id = props()?.ticket;
     this.handle = cx.focus_handle();
     this.handle.focus();
-    this.detail = null;
-    this.failure = null;
-    this.open = new Set();
-    this.editor = null;
     this.composer = this.makeComposer("comment");
     cx.spawn(async (cx) => {
       await this.load();
@@ -120,7 +132,7 @@ export default class TicketTab {
       openForm("state", { ticket: this.id, from: d.ticket.state, to: "working" });
   }
 
-  /** Sends an inline form with a variant; afterwards the composer is plain again. @param {Inline} f @param {string} variant @param {any} cx */
+  /** Sends an inline form with a variant; afterwards the composer is plain again. @param {Inline} f @param {string} variant @param {import("gpui-kit").Context} cx */
   send(f, variant, cx) {
     f.state.values.variant = variant;
     cx.spawn(async (cx) => {
@@ -227,12 +239,13 @@ export default class TicketTab {
 
   /** @param {any} vm */
   document(vm) {
-    const t = theme();
+    const t = tokens();
     const onEdit = (/** @type {any} */ _e, /** @type {any} */ cx) => {
       this.edit();
       cx.notify();
     };
     const card = this.card(vm.needs);
+    const editor = this.editor;
     return v_flex()
       .id("doc")
       .w_full()
@@ -250,13 +263,11 @@ export default class TicketTab {
             .child(vm.title),
         ),
       )
-      .when(Boolean(card), (el) => el.child(card))
-      .when(Boolean(this.editor), (el) =>
-        el.child(
-          inlineForm("editor", this.editor.def, this.editor.inputs, (v, cx) =>
-            this.send(this.editor, v, cx),
-          ),
-        ),
+      .when(Boolean(card), (el) => el.child(card ?? ""))
+      .children(
+        editor
+          ? [inlineForm("editor", editor.def, editor.inputs, (v, cx) => this.send(editor, v, cx))]
+          : [],
       )
       .when(!this.editor, (el) =>
         el.child(
@@ -292,7 +303,7 @@ export default class TicketTab {
   }
 
   composerView() {
-    const t = theme();
+    const t = tokens();
     const answering = this.composer.mode === "answer";
     return h_flex()
       .id("composer")
@@ -315,7 +326,7 @@ export default class TicketTab {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const root = v_flex()
       .id("ticket")
       .size_full()

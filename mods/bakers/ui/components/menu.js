@@ -3,9 +3,9 @@
 // as in Herdr's menu mod (v0.1.15 defaults/mods/menu).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { closeOverlay, openOverlay, props, theme } from "herdr";
+import { closeOverlay, openOverlay, props } from "herdr";
 import { perform } from "../../core/actions.js";
-import { UI_FONT } from "../theme.js";
+import { tokens, UI_FONT } from "../theme.js";
 import { chip } from "./chip.js";
 
 /**
@@ -61,12 +61,17 @@ export function menuRow(t, it, hot, choose) {
 
 /** A popup frame with keyboard choice over `rows`; the slices' pickers use it too. */
 export class PopupList {
-  /** @param {any} cx */
+  /** @type {any} */ handle = null;
+  /** The keyboard-selected row among the choosable ones. */
+  at = 0;
+  /** True while a text field of the popup has the keyboard: Enter belongs to it. */
+  typing = false;
+
+  /** @param {unknown} _props @param {any} cx */
   init(_props, cx) {
     this.handle = cx.focus_handle();
     this.handle.focus();
     this.at = 0;
-    /** True while a text field of the popup has the keyboard: Enter belongs to it. */
     this.typing = false;
   }
 
@@ -90,7 +95,7 @@ export class PopupList {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const items = this.items();
     const choosable = items.filter((i) => !i.disabled);
     const top = this.top(t);
@@ -129,11 +134,13 @@ export default class Menu extends PopupList {
       key: it.key ?? String(i),
       choose: (/** @type {any} */ cx) => {
         this.close();
-        perform(it.action, cx);
+        // The menu is gone once an item is chosen; the action reports its own outcome.
+        void perform(it.action, cx);
       },
     }));
   }
 
+  /** @param {Record<string, import("gpui-kit").Color>} t */
   bottom(t) {
     const p = props() ?? {};
     if (!p.footer) return null;

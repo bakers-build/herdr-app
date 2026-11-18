@@ -15,6 +15,7 @@ export const railLabel = (count) => ({
 export function statusParts(o) {
   if (o.failure?.kind === "offline") return [{ text: "bakers offline" }];
   if (!o.project) return o.failure ? [{ text: o.failure.message }] : [];
+  /** @type {{ text: string, tone?: string, strong?: boolean }[]} */
   const parts = [{ text: o.project }];
   if (o.count > 0) parts.push({ text: `${o.count} need you`, tone: "blocked", strong: true });
   if (o.updated) parts.push({ text: `updated ${age(o.now - o.updated)} ago` });

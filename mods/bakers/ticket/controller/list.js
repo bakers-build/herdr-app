@@ -6,11 +6,11 @@
 // N a new ticket, R refreshes.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
-import { setShared, shared, theme } from "herdr";
+import { setShared, shared } from "herdr";
 import { register } from "../../core/actions.js";
 import { classify } from "../../core/errors.js";
 import { closeAll, closeFinished, openTicket } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { pager } from "../../ui/components/pager.js";
 import { openForm } from "../../ui/form/dialog.js";
@@ -31,14 +31,29 @@ register("tabs.closeFinished", () => closeFinished());
 register("tabs.closeAll", () => closeAll());
 
 const CHECK_MS = 300;
+/** Stands in where a branch only runs with a failure; never shown. */
+const NO_FAILURE = { kind: "failed", message: "", retry: false };
 
 export default class TicketList {
+  /** @type {import("gpui-kit").FocusHandle} init sets it before the first render */
+  handle = /** @type {any} */ (null);
+  filter = InputState.new({ placeholder: "Filter, / focuses" });
+  filterFocused = false;
+  /** @type {string | null} */
+  selected = null;
+  page = 0;
+  /** @type {string | null} the view the page belongs to */
+  key = null;
+  /**
+   * Pages a server list loaded: rows, whether there is more, the page reached.
+   * @type {{ key: string | null, rows: any[], more: boolean, page: number, loading?: boolean, failure?: import("../../core/errors.js").Failure | null }}
+   */
+  server = { key: null, rows: [], more: false, page: -1 };
+
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     this.handle = cx.focus_handle();
     this.handle.focus();
-    this.filter = InputState.new({ placeholder: "Filter, / focuses" });
-    this.filterFocused = false;
-    this.selected = null;
     this.filter.on("change", (_e, cx) => cx.notify());
     this.filter.on("focus", (_e, cx) => {
       this.filterFocused = true;
@@ -48,10 +63,6 @@ export default class TicketList {
       this.filterFocused = false;
       cx?.notify?.();
     });
-    this.page = 0;
-    this.key = null;
-    /** Pages a server list loaded: rows, whether there is more, the page reached. */
-    this.server = { key: null, rows: [], more: false, page: -1 };
     cx.spawn(async (cx) => {
       await ready();
       this.check(cx);
@@ -68,7 +79,7 @@ export default class TicketList {
     return { list, server: null };
   }
 
-  /** A new list starts at page 0; a server list loads what is missing. @param {any} cx */
+  /** A new list starts at page 0; a server list loads what is missing. @param {import("gpui-kit").Context} cx */
   check(cx) {
     const { list, server } = this.wanted();
     const key = currentView();
@@ -172,7 +183,7 @@ export default class TicketList {
     ]);
   }
 
-  /** @param {any} cx */
+  /** @param {import("gpui-kit").Context} cx */
   refresh(cx) {
     cx.spawn(async (cx) => {
       await refresh();
@@ -200,7 +211,7 @@ export default class TicketList {
   }
 
   header() {
-    const t = theme();
+    const t = tokens();
     return h_flex()
       .id("list-header")
       .items_center()
@@ -247,7 +258,7 @@ export default class TicketList {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const { list, rows: records, more } = this.result();
     this.syncSelection(records);
     const now = Date.now();
@@ -301,7 +312,7 @@ export default class TicketList {
             ),
           )
           .when(Boolean(failure), (el) =>
-            el.child(failureView(failure, (_e, cx) => this.refresh(cx))),
+            el.child(failureView(failure ?? NO_FAILURE, (_e, cx) => this.refresh(cx))),
           )
           .child(
             v_flex()

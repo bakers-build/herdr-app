@@ -6,14 +6,12 @@
     "lib": ["ES2022"],
     "checkJs": true,
     "strict": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
     "noEmit": true,
     "types": ["bun"],
     "paths": {
-      "herdr": ["./types/herdr.d.ts"],
-      "gpui-kit": ["./types/gpui-kit.d.ts"],
-      "gpui-base": ["./types/gpui-base.d.ts"]
+      "herdr": ["./types/herdr.d.ts"]
     }
   },
   "include": [

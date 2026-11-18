@@ -29,7 +29,10 @@ export const KNOWN_TYPES = [
 const HEADER = /^(\w+)(?:\(([^)]+)\))?(!)?: (.+)$/;
 const BREAKING_FOOTER = /^BREAKING[ -]CHANGE: /m;
 
-export function parseHeader(line: string) {
+/** The header of a Conventional Commit; scope is null without parentheses. */
+export function parseHeader(
+  line: string,
+): { type: string; scope: string | null; bang: boolean; subject: string } | null {
   const m = HEADER.exec(line);
   if (!m || !(KNOWN_TYPES as readonly string[]).includes(m[1])) return null;
   const subject = m[4].trim();

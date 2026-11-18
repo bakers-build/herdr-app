@@ -5,11 +5,11 @@
 // (bakers.goto, .tickets, .panel, .new, .open).
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { layout, nextCommand, notify, openOverlay, run, theme } from "herdr";
+import { layout, nextCommand, notify, openOverlay, run } from "herdr";
 import { classify } from "../../core/errors.js";
 import { findNode } from "../../core/herdr.js";
 import { ensureTicketsTab, openTicket, syncNames } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { openForm } from "../../ui/form/dialog.js";
 import { currentProject } from "../../project/state.js";
 import { getStore, loadError, publishNeeds, ready } from "../../ticket/store.js";
@@ -39,10 +39,14 @@ export function watchNeeds(prev, store) {
 }
 
 export default class Status {
+  /** The status bar's width; Herdr reports it on resize. */
+  width = 1440 - RAIL;
+  /** @type {string[] | null} the tickets that asked a question at the last refresh */
+  asked = null;
+
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
-    this.width = 1440 - RAIL;
-    this.asked = null;
-    const tick = (/** @type {any} */ cx) =>
+    const tick = (/** @type {import("gpui-kit").AsyncContext} */ cx) =>
       cx.spawn(async (cx) => {
         await this.refresh();
         cx.notify();
@@ -120,7 +124,7 @@ export default class Status {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const store = getStore();
     const parts = statusParts({
       project: currentProject()?.name ?? null,
@@ -152,7 +156,7 @@ export default class Status {
         parts.map((p) =>
           div()
             .truncate()
-            .when(Boolean(p.tone), (el) => el.text_color(t[p.tone]))
+            .when(Boolean(p.tone), (el) => el.text_color(t[p.tone ?? "foreground"]))
             .when(Boolean(p.strong), (el) => el.font_semibold())
             .child(p.text),
         ),

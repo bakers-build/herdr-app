@@ -2,9 +2,9 @@
 // Agents: the Tickets card with the project picker and the views with their counts.
 import { svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { openOverlay, theme } from "herdr";
+import { openOverlay } from "herdr";
 import { ensureTicketsTab } from "../../core/tabs.js";
-import { icons, UI_FONT } from "../../ui/theme.js";
+import { icons, tokens, UI_FONT } from "../../ui/theme.js";
 import { chip } from "../../ui/components/chip.js";
 import { navRows } from "../../ui/components/nav.js";
 import { heading } from "../../ui/components/text.js";
@@ -14,6 +14,7 @@ import { currentView, setView } from "../../ticket/state.js";
 import { navItems } from "../../ticket/list/index.js";
 
 export default class Sidebar {
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     cx.spawn(async (cx) => {
       await ready();
@@ -22,7 +23,7 @@ export default class Sidebar {
   }
 
   picker() {
-    const t = theme();
+    const t = tokens();
     const canPick = pickerAvailable() && projectChoices().length > 1;
     return h_flex()
       .id("project-picker")
@@ -52,7 +53,7 @@ export default class Sidebar {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const rows = navItems(getStore().records(), currentView());
     return v_flex()
       .id("bakers-sidebar")

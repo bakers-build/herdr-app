@@ -2,8 +2,8 @@
 // 12 px gap; the selected row has the accent outline on the selected color.
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { theme } from "herdr";
-import { MONO_FONT } from "../theme.js";
+
+import { MONO_FONT, tokens } from "../theme.js";
 import { statusLine } from "./status-line.js";
 
 /** @param {any} el @param {number | null} w */
@@ -11,7 +11,7 @@ const sized = (el, w) => (w == null ? el.flex_1().min_w(0) : el.w(w).flex_none()
 
 /** @param {{ label: string, w: number | null }[]} columns */
 export function tableHeader(columns) {
-  const t = theme();
+  const t = tokens();
   return h_flex()
     .id("columns")
     .gap(12)
@@ -30,7 +30,7 @@ export function tableHeader(columns) {
  * @param {any} cell @param {number | null} w
  */
 function cellEl(cell, w) {
-  const t = theme();
+  const t = tokens();
   if (cell.status) return sized(statusLine(null, { ...cell.status, size: 12 }), w);
   const el = div()
     .when(Boolean(cell.mono), (e) => e.font_family(MONO_FONT).text_size(12))
@@ -49,7 +49,7 @@ function cellEl(cell, w) {
  * @param {(e: any, cx: any) => void} onClick
  */
 export function tableRow(row, columns, index, onClick) {
-  const t = theme();
+  const t = tokens();
   return h_flex()
     .id(`row-${row.key}`)
     .gap(12)

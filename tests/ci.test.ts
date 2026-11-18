@@ -20,6 +20,7 @@ test("pr-title passes the title only through env", () => {
   const job = ci.jobs["pr-title"];
   expect(job.if).toContain("pull_request");
   const check = steps("pr-title").find((s) => String(s.run ?? "").includes("pr-title.ts"));
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a literal GitHub/shell expression
   expect(check.env.PR_TITLE).toBe("${{ github.event.pull_request.title }}");
   for (const job of Object.keys(ci.jobs))
     for (const run of runs(job)) expect(run).not.toContain("github.event.pull_request.title");
@@ -49,8 +50,10 @@ test("release checks out the full history and creates the GitHub release", () =>
   expect(all).toContain("nothing to release");
   expect(all).toMatch(/gh release create "v\$VERSION" "dist\/herdr-bakers-\$VERSION\.zip"/);
   expect(all).toContain('--target "$SHA"');
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a literal GitHub/shell expression
   expect(all).toContain("${PRE:+--prerelease}");
   const create = steps("release").find((s) => String(s.run ?? "").includes("gh release create"));
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a literal GitHub/shell expression
   expect(create.env.GH_TOKEN).toBe("${{ github.token }}");
 });
 
@@ -58,4 +61,47 @@ test("workflow runs on main and next are not cancelled", () => {
   const cancel = String(ci.concurrency["cancel-in-progress"]);
   expect(cancel).toContain("refs/heads/main");
   expect(cancel).toContain("refs/heads/next");
+});
+
+test("the test job checks repo hygiene, the Herdr types and coverage", () => {
+  const named = (name: string) => steps("test").find((s) => s.name === name);
+  expect(named("Hygiene")?.run).toBe("bun run hygiene");
+  expect(named("Herdr types")?.run).toBe("bun run herdr-types");
+  // bun run test is bun test --coverage plus the floor check (package.json).
+  expect(named("Test")?.run).toBe("bun run test");
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  expect(pkg.scripts.test).toBe("bun test --coverage && bun run coverage");
+});
+
+test("the test job lints the workflows with actionlint pinned by version and digest", () => {
+  const step = steps("test").find((s) => s.name === "Actionlint");
+  expect(step?.run).toMatch(
+    /^docker run --rm .*rhysd\/actionlint:\d+\.\d+\.\d+@sha256:[0-9a-f]{64} /,
+  );
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  // The local script runs the same image as CI.
+  const image = step.run.match(/rhysd\/actionlint:\S+/)[0];
+  expect(pkg.scripts["lint:ci"]).toContain(image);
+});
+
+test("the contract job runs the contract test with read-only rights", () => {
+  const job = ci.jobs.contract;
+  expect(job).toBeDefined();
+  expect(job["runs-on"]).toBe("ubuntu-latest");
+  expect(job["timeout-minutes"]).toBeLessThanOrEqual(20);
+  expect(job.permissions ?? ci.permissions).toEqual({ contents: "read" });
+  expect(runs("contract")).toContain("bun run test:contract");
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  expect(pkg.scripts["test:contract"]).toBe("bun tests/contract/run.ts");
+});
+
+test("the herdr-check job loads the mod in the pinned Herdr on Linux", () => {
+  const job = ci.jobs["herdr-check"];
+  expect(job).toBeDefined();
+  expect(job["runs-on"]).toMatch(/^ubuntu-/);
+  expect(job["timeout-minutes"]).toBeLessThanOrEqual(15);
+  expect(job.permissions ?? ci.permissions).toEqual({ contents: "read" });
+  expect(runs("herdr-check").some((r) => r.includes("bun run herdr-check"))).toBe(true);
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  expect(pkg.scripts["herdr-check"]).toBe("bun scripts/check/herdr-check.ts");
 });
