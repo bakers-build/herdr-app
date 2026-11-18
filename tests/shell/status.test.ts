@@ -66,3 +66,138 @@ test("status: global keys open Go to ticket, the Tickets tab and the ticket pane
   expect(runs()).toContainEqual(["layout.select", { stack: "panel-body", child: "ticket" }]);
   expect(runs()).toContainEqual(["layout.show", { id: "panel" }]);
 });
+
+const registry = await import("../../mods/bakers/core/registry.js");
+const { default: Status } = await import("../../mods/bakers/shell/view/status.js");
+
+const sidebarLayout = (hidden: boolean) => ({
+  id: "root",
+  children: [{ id: "sidebar", hidden, size: { px: 220 }, children: [] }],
+});
+
+test("a command dispatches to its registered handler with width and left", async () => {
+  await load("bakers/main.js");
+  const seen: unknown[][] = [];
+  registry.define("command", "probe", { run: (...a: unknown[]) => void seen.push(a) });
+  env.layout = sidebarLayout(false);
+  env.commands.push("probe:a:b");
+  mount(Status, { view: "shell.status" });
+  await flush();
+  expect(seen).toEqual([["a:b", { width: 1440 - 56, left: 56 + 220 }]]);
+});
+
+test("an unknown command does nothing", async () => {
+  await load("bakers/main.js");
+  env.commands.push("nonesuch:x");
+  mount(Status, { view: "shell.status" });
+  await flush();
+  expect(env.calls.filter((c) => c.fn === "run" || c.fn === "openOverlay")).toEqual([]);
+});
+
+test("status with no items draws an empty block and a click does nothing", async () => {
+  await load("bakers/main.js");
+  registry._resetForTests();
+  const view = mount(Status, { view: "shell.status" });
+  await flush();
+  const root = view.render();
+  expect(texts(root)).toEqual([]);
+  env.calls.length = 0;
+  click(root);
+  expect(runs()).toEqual([]);
+});
+
+test("a status click runs only the first item's click", async () => {
+  await load("bakers/main.js");
+  registry._resetForTests();
+  const ran: string[] = [];
+  for (const name of ["first", "second"]) {
+    registry.define("route", `probe.${name}`, {
+      view: class {
+        render() {
+          return [];
+        }
+        click() {
+          ran.push(name);
+        }
+      },
+    });
+  }
+  registry.define("status.item", "second", { order: 1, route: "probe.second" });
+  registry.define("status.item", "first", { order: 0, route: "probe.first" });
+  const view = mount(Status, { view: "shell.status" });
+  await flush();
+  click(view.render());
+  expect(ran).toEqual(["first"]);
+});
+
+test("a status click skips an item without click() and runs the first one that has it", async () => {
+  await load("bakers/main.js");
+  registry._resetForTests();
+  const ran: string[] = [];
+  registry.define("route", "probe.plain", {
+    view: class {
+      render() {
+        return [];
+      }
+    },
+  });
+  registry.define("route", "probe.clicker", {
+    view: class {
+      render() {
+        return [];
+      }
+      click() {
+        ran.push("clicker");
+      }
+    },
+  });
+  registry.define("status.item", "plain", { order: 0, route: "probe.plain" });
+  registry.define("status.item", "clicker", { order: 1, route: "probe.clicker" });
+  const view = mount(Status, { view: "shell.status" });
+  await flush();
+  click(view.render());
+  expect(ran).toEqual(["clicker"]);
+});
+
+test("a contribution naming an unregistered route is skipped; the valid one still draws and the loops start", async () => {
+  await load("bakers/main.js");
+  registry._resetForTests();
+  const ran: string[] = [];
+  registry.define("route", "probe.ok", {
+    view: class {
+      render() {
+        return [];
+      }
+      click() {
+        ran.push("ok");
+      }
+    },
+  });
+  registry.define("status.item", "typo", { order: 0, route: "probe.missing" });
+  registry.define("status.item", "ok", { order: 1, route: "probe.ok" });
+  registry.define("window.task", "t", { every: 1000, run: () => void ran.push("task") });
+  const view = mount(Status, { view: "shell.status" });
+  await flush();
+  click(view.render());
+  expect(ran).toContain("task");
+  expect(ran).toContain("ok");
+});
+
+test("goto keeps its x with the sidebar shown and hidden", async () => {
+  for (const [hidden, x] of [
+    [false, 728],
+    [true, 508],
+  ] as const) {
+    reset();
+    resetMod();
+    const Bakers = await load("bakers/main.js");
+    activeSpace();
+    backend();
+    env.layout = sidebarLayout(hidden);
+    env.commands.push("goto");
+    mount(Bakers, { view: "shell.status" });
+    await flush();
+    const overlay = env.calls.find((c) => c.fn === "openOverlay")?.args[0] as any;
+    expect(overlay.at).toEqual({ x, y: 120 });
+  }
+});

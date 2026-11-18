@@ -1,19 +1,20 @@
-// shell/controller/tabs: the bakers tab bar (view "tabs" in the layout's tabs block). Copied from Herdr's `tabs` mod, herdrdev/herdr-app v0.1.15
+// shell/view/tabs: the bakers tab bar (view "tabs" in the layout's tabs block). Copied from Herdr's `tabs` mod, herdrdev/herdr-app v0.1.15
 // defaults/mods/tabs/main.js (Apache-2.0); the panel memory per space, drag to move,
 // rename on double-click, the tab menu and the window buttons are Herdr's.
 // What differs, as drawn in the wireframe frames R2-4 and R2-3:
 // - tabs are 26 px high, 10 px padding, 12 px text, 6 px corners, a 1 px border
 //   (foreground on the active tab, which is also semibold), 6 px apart, in a 40 px bar;
-// - the Tickets tab reads "Tickets <n>" with the needs-you count and stays at index 1;
-// - the preview ticket tab (shared "bakers.preview") is italic;
-// - a ticket tab whose ticket needs you (shared "bakers.needs") carries a 6 px dot in
-//   the theme's blocked color;
-// - the panel buttons are Files, Changes and Ticket (the bakers panel), as text.
+// - every tab is offered to every `tabs.decorate` contribution (a plain tab with kind
+//   null): a label and a 6 px dot in a theme color, drawn here; the preview tab
+//   (shared "bakers.preview") is italic; keyed and home tabs show no program icon and do
+//   not rename on double-click;
+// - the panel buttons are the `tabs.panel` contributions that are enabled, as text.
 // The window button icons are Herdr's own, mods/tabs/win-*.svg, shipped with every install.
 import { div, svg, image } from "gpui-kit";
 import { h_flex, ScrollHandle } from "gpui-base";
-import { spaces, panes, run, openOverlay, window, shared, layout, settings } from "herdr";
-import { parseName, preview, reconcile } from "../../core/tabs.js";
+import { spaces, panes, run, openOverlay, window, layout, settings, shared } from "herdr";
+import { all } from "../../core/registry.js";
+import { isHome, parseName, preview, reconcile } from "../../core/tabs.js";
 import { tokens } from "../../ui/theme.js";
 
 /** @param {any} node @param {string} id @returns {any} */
@@ -110,8 +111,7 @@ export default class BakersTabs {
       this.selectedIndex = active;
       if (active >= 0) this.scroll.scroll_to_item(active);
     }
-    const needs = /** @type {any} */ (shared("bakers.needs")) ?? { count: 0, ids: [] };
-    const previewId = preview()?.id ?? null;
+    const previewed = preview();
     const stop = (/** @type {unknown} */ _e, /** @type {import("gpui-kit").Context} */ cx) =>
       cx.stop_propagation();
     /** @param {string} id @param {any} label @param {(e: any, cx: import("gpui-kit").Context) => void} action */
@@ -131,16 +131,29 @@ export default class BakersTabs {
         .child(label);
     /** @param {import("herdr").TabInfo} c @param {number} i */
     const item = (c, i) => {
-      const ticket = parseName(c.name);
-      const isTickets = c.name === "Tickets";
-      const program =
-        isTickets || ticket
-          ? null
-          : (panes().find((p) => p.tab === c.id && p.program?.agent)?.program ??
-            panes().find((p) => p.tab === c.id)?.program);
+      const parsed = parseName(c.name);
+      const homeKind = isHome(c.name);
+      const keyed = Boolean(parsed || homeKind);
+      const kind = parsed?.kind ?? homeKind;
+      const info = {
+        kind: kind ?? null,
+        key: parsed ? parsed.key : null,
+        rest: parsed ? parsed.rest : null,
+        home: homeKind ?? null,
+      };
+      // Every decorator sees every tab; the first label and the first dot, in registry order, win.
+      const decorations = all("tabs.decorate").map((def) => def.decorate(c, info));
+      const decoration = {
+        label: decorations.find((d) => d?.label)?.label,
+        dot: decorations.find((d) => d?.dot)?.dot,
+      };
+      const program = keyed
+        ? null
+        : (panes().find((p) => p.tab === c.id && p.program?.agent)?.program ??
+          panes().find((p) => p.tab === c.id)?.program);
       const plain = /^tb\d+$/.test(c.name) ? (program?.name ?? "Terminal") : c.name;
-      const name = isTickets && needs.count ? `Tickets ${needs.count}` : plain;
-      const asksYou = Boolean(ticket && needs.ids?.includes(ticket.id));
+      const name = decoration?.label ?? plain;
+      const dot = decoration?.dot ?? null;
       return h_flex()
         .id(`tab-${c.id}`)
         .h(26)
@@ -161,12 +174,17 @@ export default class BakersTabs {
         .bg(t.surface)
         .text_color(c.active ? t.foreground : t.muted)
         .when(c.active, (el) => el.font_semibold())
-        .when(Boolean(ticket) && ticket?.id === previewId, (el) => el.italic())
+        .when(
+          Boolean(
+            parsed && previewed && previewed.kind === parsed.kind && previewed.key === parsed.key,
+          ),
+          (el) => el.italic(),
+        )
         .hover((s) => s.bg(t.hover))
         .on_mouse_down("left", (e, cx) => {
           cx.stop_propagation();
           this.pressed = i;
-          if (e.click_count === 2 && !ticket && !isTickets) run("tab.rename", { id: c.id });
+          if (e.click_count === 2 && !keyed) run("tab.rename", { id: c.id });
         })
         .on_mouse_up("left", () => {
           const from = this.pressed;
@@ -211,10 +229,10 @@ export default class BakersTabs {
               .spin(900),
           ),
         )
-        .when(asksYou, (el) =>
-          el.child(div().id(`dot-${c.id}`).size(6).rounded(3).flex_none().bg(t.blocked)),
+        .when(Boolean(dot), (el) =>
+          el.child(div().id(`dot-${c.id}`).size(6).rounded(3).flex_none().bg(t[dot])),
         )
-        .when(!asksYou && (c.status === "blocked" || c.status === "done"), (el) =>
+        .when(!dot && (c.status === "blocked" || c.status === "done"), (el) =>
           el.child(
             div()
               .size(6)
@@ -236,8 +254,11 @@ export default class BakersTabs {
         : 10;
     const panel = find(root, "panel"),
       body = find(root, "panel-body");
-    const enabled = /** @type {string[]} */ (shared("workspace.panels")) ?? ["files", "changes"];
-    this.syncPanel(space, panel, body, [...enabled, "ticket"]);
+    const panels = all("tabs.panel").filter((def) => def.enabled?.() ?? true);
+    // The ids Herdr's shared `workspace.panels` lists first, then the other enabled panels.
+    const listed = /** @type {string[]} */ (shared("workspace.panels")) ?? ["files", "changes"];
+    const ids = panels.map((def) => def.id);
+    this.syncPanel(space, panel, body, [...listed, ...ids.filter((id) => !listed.includes(id))]);
     /** @param {string} id @param {string} label @param {boolean} bordered */
     const panelButton = (id, label, bordered) => {
       const on = panel && !panel.hidden && body?.active === id;
@@ -309,9 +330,7 @@ export default class BakersTabs {
             ),
           ),
       )
-      .when(enabled.includes("files"), (el) => el.child(panelButton("files", "Files", false)))
-      .when(enabled.includes("changes"), (el) => el.child(panelButton("changes", "Changes", false)))
-      .child(panelButton("ticket", "Ticket", true))
+      .children(panels.map((def) => panelButton(def.id, def.label, Boolean(def.bordered))))
       .when(Boolean(w?.buttons), (el) =>
         el
           .child(

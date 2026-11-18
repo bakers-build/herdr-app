@@ -48,3 +48,55 @@ test("a disabled menu item does nothing", async () => {
   });
   expect(find(copy.render(), "pick-0").calls.on_click).toBeUndefined();
 });
+
+test("a menu item whose action is not registered closes the menu and does nothing", async () => {
+  const copy = await open({
+    view: "menu",
+    items: [{ label: "Mystery", action: ["no.such.action", "x"] }],
+  });
+  click(find(copy.render(), "pick-0"));
+  await flush();
+  expect(closed()).toBe(true);
+  expect(env.calls.filter((c) => c.fn !== "closeOverlay")).toEqual([]);
+});
+
+test("a registry reset and refilled by registerAll() still runs a registered menu action", async () => {
+  // Bun caches main.js, so it is not loaded fresh here: the registry is emptied so nothing from
+  // the harness or an earlier test is left, and registerAll() fills it again.
+  const registry = await import("../../mods/bakers/core/registry.js");
+  const Bakers = await load("bakers/main.js");
+  const main = await import("../../mods/bakers/main.js");
+  registry._resetForTests();
+  main.registerAll();
+  activeSpace();
+  backend(writeTools);
+  const copy = mount(Bakers, {
+    overlay: "overlay-7",
+    view: "menu",
+    items: [{ label: "Mine", action: ["ticket.view", "mine"] }],
+  });
+  await flush();
+  env.calls.length = 0;
+  click(find(copy.render(), "pick-0"));
+  await flush();
+  expect(env.shared["bakers.view"]).toBe("mine");
+  expect(closed()).toBe(true);
+});
+
+test("openMenu opens exactly the menu popup, at the given point when there is one", async () => {
+  await open({ view: "none" });
+  const { openMenu }: any = await import("../../mods/bakers/ui/components/menu.js");
+  const items = [{ label: "Refresh", action: ["ticket.refresh"] }];
+  env.calls.length = 0;
+  openMenu(items, { footer: "via API", footerApi: true });
+  openMenu(items, { footer: "via API", footerApi: true, at: { x: 5, y: 6 } });
+  const specs = env.calls.filter((c) => c.fn === "openOverlay").map((c: any) => c.args[0]);
+  const base = {
+    mod: "bakers",
+    props: { view: "menu", items, footer: "via API", footerApi: true },
+    kind: "popup",
+    width: 220,
+  };
+  expect(specs[0]).toEqual(base);
+  expect(specs[1]).toEqual({ ...base, at: { x: 5, y: 6 } });
+});

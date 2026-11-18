@@ -1,7 +1,6 @@
 // ticket/form/confirm: the confirmations of frames 4 and R3-2, registered as dialog forms. Each
 // says from and to, the consequence in the order it happens, and names the action and what
 // stays; the write happens only after the primary button.
-import { defineForm } from "../../form/registry.js";
 import * as actions from "../commands.js";
 import { getStore, ready, refresh } from "../store.js";
 import { CLOSING } from "../rules.js";
@@ -155,9 +154,3 @@ export const cancelForm = (p) => ({
   success: `Run of ${p.ticket} cancelled`,
   after: refresh,
 });
-
-defineForm("state", stateForm);
-defineForm("freeze", freezeForm);
-defineForm("unfreeze", unfreezeForm);
-defineForm("move", moveForm);
-defineForm("cancel", cancelForm);

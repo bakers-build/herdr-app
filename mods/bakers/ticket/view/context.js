@@ -1,14 +1,15 @@
-// ticket/controller/context: the right panel's ticket child (frame R2-3, 368 px, cmd-shift-T). It follows
+// ticket/view/context: the right panel's ticket child (frame R2-3, 368 px, cmd-shift-T). It follows
 // the focused ticket tab, else the selected list row, loads the ticket and its activity,
 // maps them with presenter/context and draws Agent and conductor, Properties, Activity and
 // Runs. Nothing here repeats the document; the panel never takes the focus.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { exec, openOverlay, run, shared, window } from "herdr";
+import { exec, run, shared, window } from "herdr";
 import { perform } from "../../core/actions.js";
+import { openRoute } from "../../core/router.js";
 import { classify } from "../../core/errors.js";
-import { runTerminal } from "../../core/herdr.js";
-import { focusedTicket } from "../../core/tabs.js";
+import { runTerminal } from "../terminal.js";
+import { focusedTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { chip } from "../../ui/components/chip.js";
@@ -130,13 +131,7 @@ export default class Panel {
             button(
               "move-to",
               "Move to...",
-              () =>
-                openOverlay({
-                  mod: "bakers",
-                  props: { view: "ticket.conductor-picker", ticket: vm.id },
-                  kind: "popup",
-                  width: 220,
-                }),
+              () => openRoute("ticket.conductor-picker", { ticket: vm.id }),
               small,
             ),
           )
@@ -225,14 +220,7 @@ export default class Panel {
           .text_size(11)
           .text_color(t.muted)
           .cursor_pointer()
-          .on_click(() =>
-            openOverlay({
-              mod: "bakers",
-              props: { view: "ticket.label-picker", ticket: vm.id },
-              kind: "popup",
-              width: 220,
-            }),
-          )
+          .on_click(() => openRoute("ticket.label-picker", { ticket: vm.id }))
           .child("+"),
       );
     return h_flex()

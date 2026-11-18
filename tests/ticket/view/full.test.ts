@@ -182,4 +182,10 @@ test("R starts Move to... with the conductor picker", async () => {
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
     props: { view: "ticket.conductor-picker", ticket: "SHOP-41" },
   });
+  expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toEqual({
+    mod: "bakers",
+    props: { view: "ticket.conductor-picker", ticket: "SHOP-41" },
+    kind: "popup",
+    width: 220,
+  });
 });

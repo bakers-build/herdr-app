@@ -1,11 +1,11 @@
-// ticket/controller/search: Go to ticket (cmd-shift-O, frame R2-4): a 480 px popup that searches identifier or
+// ticket/view/search: Go to ticket (cmd-shift-O, frame R2-4): a 480 px popup that searches identifier or
 // title words with bakers_ticket_search as the person types (200 ms debounce). Enter
 // opens the ticket as a tab, or selects its tab when it is open; Esc closes.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
 import { closeOverlay, props } from "herdr";
 import { classify } from "../../core/errors.js";
-import { openTicket } from "../../core/tabs.js";
+import { openTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { mono } from "../../ui/components/text.js";
 import { getStore, ready } from "../store.js";

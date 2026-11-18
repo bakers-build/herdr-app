@@ -3,7 +3,7 @@
 // tickets with those of the open tabs, and the open tickets' plan comments, and derives who
 // needs you from them.
 import { setShared } from "herdr";
-import { openTickets } from "../core/tabs.js";
+import { openTicketIds } from "./tabs.js";
 import { ensureProject, projectError } from "../project/state.js";
 import * as repository from "./repository.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
@@ -153,7 +153,7 @@ export function _resetForTests() {
 }
 
 export function getStore() {
-  if (!store) store = createStore(repository, { tabs: () => openTickets().map((o) => o.id) });
+  if (!store) store = createStore(repository, { tabs: () => openTicketIds() });
   return store;
 }
 

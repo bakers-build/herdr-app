@@ -3,7 +3,7 @@
 //   api       a tool this CLI does not serve                        -> the API chip
 //   invalid   the CLI rejected the input (validation)               -> the field's error
 //   denied    the server refuses the change (workflow, rights)      -> the server's words
-//   conflict  the ticket changed meanwhile                          -> warn once (form/submit)
+//   conflict  the record changed meanwhile                          -> warn once (form/submit)
 //   failed    anything else                                         -> the CLI's words, Retry
 
 /** @typedef {{ kind: "offline" | "api" | "invalid" | "denied" | "conflict" | "failed", message: string, field: string | null, retry: boolean }} Failure */

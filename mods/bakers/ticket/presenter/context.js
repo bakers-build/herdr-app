@@ -1,7 +1,7 @@
 // ticket/presenter/context: a ticket as the right panel shows it (R2-3): the header, Agent and
 // conductor, Properties, Activity and Runs. Nothing here repeats the full view.
 import { age, agentName, toMs } from "../../core/format.js";
-import { NO_TERMINAL } from "../../core/herdr.js";
+import { NO_TERMINAL } from "../terminal.js";
 import { activeRun } from "../rules.js";
 import { agentLine } from "./field/agent-line.js";
 

@@ -34,6 +34,12 @@ test("project: no match takes the first project by name and opens the picker", a
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
     props: { view: "project.picker" },
   });
+  expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toEqual({
+    mod: "bakers",
+    props: { view: "project.picker" },
+    kind: "popup",
+    width: 220,
+  });
 });
 
 test("project: an already shared project is read by its uuid", async () => {

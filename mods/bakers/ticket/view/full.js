@@ -1,13 +1,13 @@
-// ticket/controller/view: a ticket as its own tab (frame R2-3), one column of at most 760 px. It loads
+// ticket/view/full: a ticket as its own tab (frame R2-3), one column of at most 760 px. It loads
 // the ticket (ticket/store.js), maps it with presenter/full, and draws the header, the
 // title and description (or the edit form), the Needs-you card, the comments and the
 // composer (the comment form). Keys: A acts on the card, E edits, G shows the agent, R moves
 // the run; cmd-Enter and Esc belong to the edit form or the composer while they are used.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { notify, openOverlay, props, run } from "herdr";
-import { NO_TERMINAL, runTerminal } from "../../core/herdr.js";
-import { pin } from "../../core/tabs.js";
+import { notify, props, run } from "herdr";
+import { NO_TERMINAL, runTerminal } from "../terminal.js";
+import { pinTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
@@ -25,6 +25,7 @@ import { failureView, loading } from "../../ui/components/state.js";
 import { statusLine } from "../../ui/components/status-line.js";
 import { heading, mono } from "../../ui/components/text.js";
 import { classify } from "../../core/errors.js";
+import { openRoute } from "../../core/router.js";
 import { getStore, ready } from "../store.js";
 import { commentForm } from "../form/comment.js";
 import { editForm } from "../form/edit.js";
@@ -82,7 +83,7 @@ export default class TicketTab {
 
   /** @param {"comment" | "answer"} mode @param {string} [text] */
   makeComposer(mode, text = "") {
-    const c = new Inline(commentForm(this.id, mode, text), () => pin(this.id));
+    const c = new Inline(commentForm(this.id, mode, text), () => pinTicket(this.id));
     c.mode = mode;
     return c;
   }
@@ -119,7 +120,7 @@ export default class TicketTab {
 
   edit() {
     if (this.detail && !this.editor) {
-      this.editor = new Inline(editForm(this.detail.ticket), () => pin(this.id));
+      this.editor = new Inline(editForm(this.detail.ticket), () => pinTicket(this.id));
       this.editor.inputs.focus("title");
     }
   }
@@ -161,13 +162,7 @@ export default class TicketTab {
     } else if (k === "a") this.act();
     else if (k === "e") this.edit();
     else if (k === "g") this.showAgent();
-    else if (k === "r")
-      openOverlay({
-        mod: "bakers",
-        props: { view: "ticket.conductor-picker", ticket: this.id },
-        kind: "popup",
-        width: 220,
-      });
+    else if (k === "r") openRoute("ticket.conductor-picker", { ticket: this.id });
     else return;
     cx.stop_propagation();
     cx.notify();

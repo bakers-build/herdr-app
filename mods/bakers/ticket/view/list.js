@@ -1,4 +1,4 @@
-// ticket/controller/list (route ticket.list): the Tickets list (frame R2-4). It runs the chosen
+// ticket/view/list (route ticket.list): the Tickets list (frame R2-4). It runs the chosen
 // list definition (ticket/list) with the list engine over the store's open tickets, or over
 // the pages a server list loads, maps each row with the teaser view mode and draws the header,
 // the table, the pager and the hints. Keys: Up and Down select (the panel follows),
@@ -7,9 +7,8 @@
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
 import { setShared, shared } from "herdr";
-import { register } from "../../core/actions.js";
 import { classify } from "../../core/errors.js";
-import { closeAll, closeFinished, openTicket } from "../../core/tabs.js";
+import { openTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { pager } from "../../ui/components/pager.js";
@@ -26,9 +25,6 @@ import { emptyText, listFor, menuItems } from "../list/index.js";
 import { toQuery } from "../../list/query.js";
 import { runList } from "../../list/run.js";
 import { currentProject } from "../../project/state.js";
-
-register("tabs.closeFinished", () => closeFinished());
-register("tabs.closeAll", () => closeAll());
 
 const CHECK_MS = 300;
 /** Stands in where a branch only runs with a failure; never shown. */

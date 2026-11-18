@@ -1,27 +1,22 @@
 // ticket/list/index: the ticket lists in the order the sidebar and the view menu show them,
-// with their counts. Lists come from the definitions next to this file.
-import { getList } from "../../list/registry.js";
+// with their counts. The definitions are next to this file; ticket/register.js registers them.
+import { findList } from "../../list/lookup.js";
 import { runList } from "../../list/run.js";
 import { STATES } from "../rules.js";
-import "./closed.js";
-import "./mine.js";
-import "./needs-me.js";
-import "./open.js";
-import "./state.js";
 
 /** The keys in navigation order: one row per state under Open by state. */
 export const NAV = ["needs-me", "mine", "open", ...STATES.map((s) => `state:${s}`), "closed"];
 
-/** A registered list; the key names one this module imports. @param {string} key */
+/** A registered list; the lists are registered by this module's register.js. @param {string} key */
 function known(key) {
-  const list = getList(key);
+  const list = findList(key);
   if (!list) throw new Error(`bakers: no list "${key}"`);
   return list;
 }
 
 /** @param {string} key */
 export function listFor(key) {
-  return getList(key) ?? known("needs-me");
+  return findList(key) ?? known("needs-me");
 }
 
 /**

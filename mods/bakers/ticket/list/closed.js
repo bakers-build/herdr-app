@@ -1,9 +1,8 @@
 // ticket/list/closed: closed tickets, newest closing first. Closed tickets grow without end,
 // so the server filters, sorts and pages them (50 at a time).
-import { defineList } from "../../list/registry.js";
 import { query } from "../repository.js";
 
-export default defineList({
+export default {
   id: "closed",
   label: "Recently closed",
   dim: true,
@@ -20,4 +19,4 @@ export default defineList({
   row: { mode: "teaser" },
   empty: "No other closed tickets.",
   count: false,
-});
+};

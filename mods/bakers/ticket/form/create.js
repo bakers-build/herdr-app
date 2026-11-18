@@ -1,8 +1,7 @@
 // ticket/form/create: New ticket (N, cmd-shift-N, the header button), a minimal dialog: title,
 // type and description. bakers_ticket_create takes the project and the workflow of an
 // existing ticket; the new ticket then opens as a pinned tab. Frame 5 is not a pixel target.
-import { openTicket } from "../../core/tabs.js";
-import { defineForm } from "../../form/registry.js";
+import { openTicket } from "../tabs.js";
 import * as actions from "../commands.js";
 import { getStore, ready, refresh } from "../store.js";
 import { readTicket } from "../repository.js";
@@ -57,5 +56,3 @@ export const createForm = () => ({
     await refresh();
   },
 });
-
-defineForm("create", createForm);

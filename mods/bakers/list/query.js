@@ -1,7 +1,7 @@
 // list/query: a server list's definition as a core/api.js query (filter, sort, paging).
 
 /**
- * @param {any} def @param {any} ctx values for the conditions (project, args) @param {number} page
+ * @param {any} def @param {any} ctx the caller's values for the conditions, such as args @param {number} page
  * @returns {import("../core/api.js").Query}
  */
 export function toQuery(def, ctx, page) {
