@@ -59,3 +59,26 @@ test("a menu item whose action is not registered closes the menu and does nothin
   expect(closed()).toBe(true);
   expect(env.calls.filter((c) => c.fn !== "closeOverlay")).toEqual([]);
 });
+
+test("an overlay copy loaded fresh runs a registered menu action", async () => {
+  // Load main.js, then empty the registry so nothing from the harness or an earlier test is left,
+  // and register again as main.js does when Herdr loads the overlay copy.
+  const registry = await import("../../mods/bakers/core/registry.js");
+  const Bakers = await load("bakers/main.js");
+  const main = await import("../../mods/bakers/main.js");
+  registry._resetForTests();
+  main.registerAll();
+  activeSpace();
+  backend(writeTools);
+  const copy = mount(Bakers, {
+    overlay: "overlay-7",
+    view: "menu",
+    items: [{ label: "Mine", action: ["ticket.view", "mine"] }],
+  });
+  await flush();
+  env.calls.length = 0;
+  click(find(copy.render(), "pick-0"));
+  await flush();
+  expect(env.shared["bakers.view"]).toBe("mine");
+  expect(closed()).toBe(true);
+});
