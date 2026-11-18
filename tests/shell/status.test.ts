@@ -132,6 +132,65 @@ test("a status click runs only the first item's click", async () => {
   expect(ran).toEqual(["first"]);
 });
 
+test("a status click skips an item without click() and runs the first one that has it", async () => {
+  await load("bakers/main.js");
+  registry._resetForTests();
+  const ran: string[] = [];
+  registry.define(
+    "route",
+    "probe.plain",
+    class {
+      render() {
+        return [];
+      }
+    },
+  );
+  registry.define(
+    "route",
+    "probe.clicker",
+    class {
+      render() {
+        return [];
+      }
+      click() {
+        ran.push("clicker");
+      }
+    },
+  );
+  registry.define("status.item", "plain", { order: 0, route: "probe.plain" });
+  registry.define("status.item", "clicker", { order: 1, route: "probe.clicker" });
+  const view = mount(Status, { view: "shell.status" });
+  await flush();
+  click(view.render());
+  expect(ran).toEqual(["clicker"]);
+});
+
+test("a contribution naming an unregistered route is skipped; the valid one still draws and the loops start", async () => {
+  await load("bakers/main.js");
+  registry._resetForTests();
+  const ran: string[] = [];
+  registry.define(
+    "route",
+    "probe.ok",
+    class {
+      render() {
+        return [];
+      }
+      click() {
+        ran.push("ok");
+      }
+    },
+  );
+  registry.define("status.item", "typo", { order: 0, route: "probe.missing" });
+  registry.define("status.item", "ok", { order: 1, route: "probe.ok" });
+  registry.define("window.task", "t", { every: 1000, run: () => void ran.push("task") });
+  const view = mount(Status, { view: "shell.status" });
+  await flush();
+  click(view.render());
+  expect(ran).toContain("task");
+  expect(ran).toContain("ok");
+});
+
 test("goto keeps its x with the sidebar shown and hidden", async () => {
   for (const [hidden, x] of [
     [false, 728],

@@ -90,7 +90,7 @@ id:
 ```js
 define(type, id, def)   // adds or replaces; def.order (a number, default 0) sorts all()
 get(type, id)           // the definition, or null
-all(type)               // [{ id, ...def }] sorted by order, then by first definition
+all(type)               // [{ ...def, id }] sorted by order, then by first definition
 ```
 
 A type is any string. The registry knows none of them. The types the mod uses:
@@ -101,14 +101,14 @@ A type is any string. The registry knows none of them. The types the mod uses:
 | `list` | list id (`needs-me`, `state`, …) | the list definition | `ticket` |
 | `form` | form kind (`create`, `state`, …) | `{ build(props) }` | `ticket` |
 | `action` | action name (`ticket.refresh`, `form.open`, …) | `{ run(...args) }` | `ticket`, `project`, `ui` |
-| `tab` | kind (`ticket`) | `{ route, props(key), match, home? }`: a keyed tab of the kind; `match` reads the key (group 1) and the rest of the name (group 2); `home` is `{ name, route, index }` | `ticket` |
+| `tab` | kind (`ticket`) | `{ route, props(key), match, home? }`: a keyed tab of the kind; `match` reads the key (group 1) and the rest of the name (group 2), must accept `<key> <word>` (the key alone is tried as `<key> x`), and the kinds must not overlap; `home` is `{ name, route, index }` | `ticket` |
 | `rail.item` | e.g. `ticket` | `{ order, route }` | `ticket` |
 | `sidebar.section` | e.g. `ticket` | `{ order, title, route }` | `ticket` |
 | `sidebar.tool` | e.g. `project.picker` | `{ section, order, route }`: a button in the section's card | `project` |
 | `status.item` | e.g. `ticket` | `{ order, route }` | `ticket` |
 | `window.task` | e.g. `ticket.refresh` | `{ every, run() }` | `ticket` |
-| `command` | a key command's name (`goto`, `tickets`, `panel`, `new`, `open`) | `{ run(arg, ctx) }` | `ticket` |
-| `tabs.decorate` | e.g. `ticket` | `{ decorate(tab, info) → { label?, dot? } \| null }` | `ticket` |
+| `command` | a key command's name (`goto`, `tickets`, `panel`, `new`, `open`) | `{ run(arg, ctx) }`: `arg` is the text after the name, `ctx = { width, left }` (the status bar width, the x of its left edge) | `ticket` |
+| `tabs.decorate` | e.g. `ticket` | `{ decorate(tab, info) → { label?, dot? } \| null }`: `info = { kind, key, rest, home }` (`kind`, `key` and `rest` are null on a plain tab); `dot` is a theme token | `ticket` |
 | `tabs.panel` | panel child id (`files`, `changes`, `ticket`) | `{ order, label, bordered, enabled?() }` | `shell` (Files, Changes), `ticket` (Ticket) |
 
 **Who reads what.**

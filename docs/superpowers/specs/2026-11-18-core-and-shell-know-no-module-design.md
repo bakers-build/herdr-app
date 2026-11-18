@@ -77,7 +77,7 @@ The work fails, even if the tests pass, when any of these happens:
 ```js
 define(type, id, def)   // adds or replaces; def.order (number, default 0) sorts all()
 get(type, id)           // the definition or null
-all(type)               // [{ id, ...def }] sorted by order, then by definition order
+all(type)               // [{ ...def, id }] sorted by order, then by definition order
 _resetForTests()
 ```
 

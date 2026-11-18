@@ -16,20 +16,24 @@ export default class Sidebar {
     const tools = all("sidebar.tool");
     /** @type {{ ready: unknown }[]} */
     const pending = [];
-    this.sections = all("sidebar.section").map((s) => {
+    this.sections = all("sidebar.section").flatMap((s) => {
       const made = launch(s.route, cx);
+      if (!made) return [];
       pending.push(made);
-      return {
-        title: s.title,
-        c: made.c,
-        tools: tools
-          .filter((tool) => tool.section === s.id)
-          .map((tool) => {
-            const m = launch(tool.route, cx);
-            pending.push(m);
-            return m.c;
-          }),
-      };
+      return [
+        {
+          title: s.title,
+          c: made.c,
+          tools: tools
+            .filter((tool) => tool.section === s.id)
+            .flatMap((tool) => {
+              const m = launch(tool.route, cx);
+              if (!m) return [];
+              pending.push(m);
+              return [m.c];
+            }),
+        },
+      ];
     });
     settle(pending, cx);
   }

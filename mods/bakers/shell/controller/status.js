@@ -18,7 +18,9 @@ export default class Status {
 
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
-    const started = all("status.item").map((item) => launch(item.route, cx));
+    const started = all("status.item")
+      .map((item) => launch(item.route, cx))
+      .filter((s) => s !== null);
     this.items = started.map((s) => s.c);
     settle(started, cx);
     for (const task of all("window.task")) {

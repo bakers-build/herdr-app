@@ -15,7 +15,9 @@ export default class Rail {
 
   /** @param {import("gpui-shell").Props | undefined} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
-    const started = all("rail.item").map((item) => launch(item.route, cx));
+    const started = all("rail.item")
+      .map((item) => launch(item.route, cx))
+      .filter((s) => s !== null);
     this.items = started.map((s) => s.c);
     settle(started, cx);
   }
