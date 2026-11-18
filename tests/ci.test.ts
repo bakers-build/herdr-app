@@ -62,3 +62,13 @@ test("workflow runs on main and next are not cancelled", () => {
   expect(cancel).toContain("refs/heads/main");
   expect(cancel).toContain("refs/heads/next");
 });
+
+test("the test job checks repo hygiene, the Herdr types and coverage", () => {
+  const named = (name: string) => steps("test").find((s) => s.name === name);
+  expect(named("Hygiene")?.run).toBe("bun run hygiene");
+  expect(named("Herdr types")?.run).toBe("bun run herdr-types");
+  // bun run test is bun test --coverage plus the floor check (package.json).
+  expect(named("Test")?.run).toBe("bun run test");
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  expect(pkg.scripts.test).toBe("bun test --coverage && bun run coverage");
+});

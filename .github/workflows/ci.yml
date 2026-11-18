@@ -1,4 +1,5 @@
-# Lint, format check, type check and test the mods on every push and PR.
+# Lint, format check, type check, hygiene and Herdr-types checks, and test with a coverage
+# floor, on every push and PR.
 # Follows Herdr's ci.yml (herdrdev/herdr-app v0.1.15): pinned Bun, actions pinned
 # to commits, read-only token, and caches that only pushes to main save, so PR
 # caches can't evict the one everybody restores. See docs/conventions.md.
@@ -52,6 +53,13 @@ jobs:
         run: bun run format:check
       - name: Type check
         run: bun run typecheck
+      # No cache, runtime or Herdr-written file is committed (scripts/check/hygiene.ts).
+      - name: Hygiene
+        run: bun run hygiene
+      # The vendored Herdr types match types/herdr-version.json.
+      - name: Herdr types
+        run: bun run herdr-types
+      # bun test --coverage, then the repo-wide floor (scripts/check/coverage.ts).
       - name: Test
         run: bun run test
       - name: Save dependency cache
