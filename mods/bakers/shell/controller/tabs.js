@@ -4,16 +4,16 @@
 // What differs, as drawn in the wireframe frames R2-4 and R2-3:
 // - tabs are 26 px high, 10 px padding, 12 px text, 6 px corners, a 1 px border
 //   (foreground on the active tab, which is also semibold), 6 px apart, in a 40 px bar;
-// - a tab of a registered kind (core/tabs) is decorated by the module's `tabs.decorate`
-//   contribution: a label and a 6 px dot in a theme color, drawn here; the preview tab
+// - every tab is offered to every `tabs.decorate` contribution (a plain tab with kind
+//   null): a label and a 6 px dot in a theme color, drawn here; the preview tab
 //   (shared "bakers.preview") is italic; keyed and home tabs show no program icon and do
 //   not rename on double-click;
 // - the panel buttons are the `tabs.panel` contributions that are enabled, as text.
 // The window button icons are Herdr's own, mods/tabs/win-*.svg, shipped with every install.
 import { div, svg, image } from "gpui-kit";
 import { h_flex, ScrollHandle } from "gpui-base";
-import { spaces, panes, run, openOverlay, window, layout, settings } from "herdr";
-import { all, get } from "../../core/registry.js";
+import { spaces, panes, run, openOverlay, window, layout, settings, shared } from "herdr";
+import { all } from "../../core/registry.js";
 import { isHome, parseName, preview, reconcile } from "../../core/tabs.js";
 import { tokens } from "../../ui/theme.js";
 
@@ -135,14 +135,18 @@ export default class BakersTabs {
       const homeKind = isHome(c.name);
       const keyed = Boolean(parsed || homeKind);
       const kind = parsed?.kind ?? homeKind;
-      const decoration = kind
-        ? get("tabs.decorate", kind)?.decorate(c, {
-            kind,
-            key: parsed?.key ?? "",
-            rest: parsed?.rest ?? "",
-            home: Boolean(homeKind),
-          })
-        : null;
+      const info = {
+        kind: kind ?? null,
+        key: parsed ? parsed.key : null,
+        rest: parsed ? parsed.rest : null,
+        home: homeKind ?? null,
+      };
+      // Every decorator sees every tab; the first label and the first dot, in registry order, win.
+      const decorations = all("tabs.decorate").map((def) => def.decorate(c, info));
+      const decoration = {
+        label: decorations.find((d) => d?.label)?.label,
+        dot: decorations.find((d) => d?.dot)?.dot,
+      };
       const program = keyed
         ? null
         : (panes().find((p) => p.tab === c.id && p.program?.agent)?.program ??
@@ -251,12 +255,10 @@ export default class BakersTabs {
     const panel = find(root, "panel"),
       body = find(root, "panel-body");
     const panels = all("tabs.panel").filter((def) => def.enabled?.() ?? true);
-    this.syncPanel(
-      space,
-      panel,
-      body,
-      panels.map((def) => def.id),
-    );
+    // The ids Herdr's shared `workspace.panels` lists first, then the other enabled panels.
+    const listed = /** @type {string[]} */ (shared("workspace.panels")) ?? ["files", "changes"];
+    const ids = panels.map((def) => def.id);
+    this.syncPanel(space, panel, body, [...listed, ...ids.filter((id) => !listed.includes(id))]);
     /** @param {string} id @param {string} label @param {boolean} bordered */
     const panelButton = (id, label, bordered) => {
       const on = panel && !panel.hidden && body?.active === id;

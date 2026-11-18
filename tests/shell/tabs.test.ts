@@ -126,3 +126,45 @@ test("panel buttons come from tabs.panel in order and honour enabled", async () 
   });
   expect(ids).toEqual(["panel-a", "panel-b"]);
 });
+
+test("every tabs.decorate sees every tab, a plain tab included", async () => {
+  const Tabs = await load("bakers/main.js");
+  const view = mount(Tabs, { view: "shell.tabs" });
+  registry.define("tabs.decorate", "other", {
+    decorate: (_tab: any, info: any) => (info.kind === null ? { dot: "done" } : null),
+  });
+  space(
+    tab("t0", "Tickets", 1, { active: true }),
+    tab("t5", "SHOP-41 working", 2),
+    tab("t9", "tb9", 3),
+  );
+  env.shared["bakers.needs"] = { count: 1, ids: ["SHOP-41"], updated: 1 };
+  const root = view.render();
+  expect(find(root, "dot-t9").calls.bg).toEqual(["done"]);
+  expect(find(root, "dot-t5").calls.bg).toEqual(["blocked"]);
+  expect(texts(root).slice(0, 2)).toEqual(["Tickets 1", "SHOP-41 working"]);
+});
+
+test("syncPanel's enabled ids still include workspace.panels ids no panel registers", async () => {
+  const Tabs = await load("bakers/main.js");
+  space(tab("t0", "Tickets", 1, { active: true }));
+  env.shared["workspace.panels"] = ["changes", "gone"];
+  env.layout = {
+    id: "root",
+    children: [
+      {
+        id: "panel",
+        hidden: false,
+        children: [{ id: "panel-body", active: "files", children: [] }],
+      },
+    ],
+  };
+  const view = mount(Tabs, { view: "shell.tabs" });
+  view.inner.panels = { s1: "gone" };
+  env.calls.length = 0;
+  view.render();
+  expect(runs()).toEqual([
+    ["layout.select", { stack: "panel-body", child: "gone" }],
+    ["layout.show", { id: "panel" }],
+  ]);
+});

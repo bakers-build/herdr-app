@@ -20,10 +20,11 @@ import { setShared, shared } from "herdr";
 /**
  * The ticket tab bar decoration: "Tickets <n>" on the home tab while tickets need you, the
  * blocked dot on a ticket tab that needs you.
- * @param {any} _tab @param {{ key: string, home: boolean }} info
+ * @param {any} _tab @param {{ kind: string | null, key: string | null, home: string | null }} info
  * @returns {{ label?: string, dot?: string } | null}
  */
-function decorate(_tab, { key, home }) {
+function decorate(_tab, { kind, key, home }) {
+  if (kind !== "ticket") return null;
   const needs = /** @type {any} */ (shared("bakers.needs")) ?? { count: 0, ids: [] };
   if (home) return needs.count ? { label: `Tickets ${needs.count}` } : null;
   return needs.ids?.includes(key) ? { dot: "blocked" } : null;
