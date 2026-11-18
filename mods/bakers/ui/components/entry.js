@@ -1,6 +1,6 @@
 // ui/components/entry: one entry of a feed: a muted meta line (first part strong), then the
 // body; foldable entries show their first line until opened; marked ones carry an accent
-// bar (the comments of a ticket).
+// bar (the comments of an item).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 

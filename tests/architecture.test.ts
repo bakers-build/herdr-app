@@ -123,6 +123,69 @@ test("every route is named after its module and reaches the router", async () =>
   }
 });
 
+// The generic part is the framework; every other top-level folder is a domain module.
+async function domain() {
+  const tops = await readdir(ROOT, { withFileTypes: true });
+  return tops
+    .filter((e) => e.isDirectory() && !e.name.startsWith(".") && !FRAMEWORK.includes(e.name))
+    .map((e) => e.name)
+    .sort();
+}
+
+test("the framework names no module, not even in strings or comments", async () => {
+  const names = await domain();
+  const bad: string[] = [];
+  for (const f of await files(ROOT)) {
+    if (!FRAMEWORK.includes(parts(f)[0])) continue;
+    const src = await readFile(f, "utf8");
+    src.split("\n").forEach((line, i) => {
+      for (const m of names)
+        if (new RegExp(`\\b(${m}s?|${m}\\.)\\b`, "i").test(line))
+          bad.push(`${rel(f)}:${i + 1} names ${m}: ${line.trim()}`);
+    });
+  }
+  expect(bad).toEqual([]);
+});
+
+test("shell imports no other module", async () => {
+  const names = (await domain()).filter((m) => m !== "shell");
+  const bad = (await edges()).filter(
+    (e) => parts(e.from)[0] === "shell" && names.includes(parts(e.to)[0]),
+  );
+  expect(show(bad)).toEqual([]);
+});
+
+test("one registry: no other define/register exports, define( only in register.js, old registries gone", async () => {
+  const bad: string[] = [];
+  for (const f of await files(ROOT)) {
+    const r = rel(f);
+    const src = await readFile(f, "utf8");
+    const isRegister = /^[^/]+\/register\.js$/.test(r);
+    if (r !== "core/registry.js") {
+      // each register.js exports its own register; main.js exports registerAll, which calls them.
+      for (const m of src.matchAll(
+        /^export\s+(?:async\s+)?(?:function|const|let)\s+(define\w*|register\w*)/gm,
+      ))
+        if (!(isRegister && m[1] === "register") && !(r === "main.js" && m[1] === "registerAll"))
+          bad.push(`${r} exports ${m[1]}`);
+      for (const m of src.matchAll(/^export\s*\{([^}]*)\}/gms))
+        for (const n of m[1].split(",").map(
+          (x) =>
+            x
+              .trim()
+              .split(/\s+as\s+/)
+              .pop() as string,
+        ))
+          if (/^(define|register)/.test(n)) bad.push(`${r} exports ${n}`);
+    }
+    if (!isRegister && r !== "core/registry.js" && /(^|[^\w.])define\(/.test(src))
+      bad.push(`${r} calls define(`);
+  }
+  for (const old of ["list/registry.js", "form/registry.js"])
+    if ((await files(ROOT)).some((f) => rel(f) === old)) bad.push(`${old} exists`);
+  expect(bad).toEqual([]);
+});
+
 test("there is one mod", async () => {
   expect(await readdir(resolve(import.meta.dir, "../mods"))).toEqual(["bakers"]);
 });
