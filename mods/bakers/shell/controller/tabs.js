@@ -13,7 +13,7 @@
 import { div, svg, image } from "gpui-kit";
 import { h_flex, ScrollHandle } from "gpui-base";
 import { spaces, panes, run, openOverlay, window, shared, layout, settings } from "herdr";
-import { parseName, preview, reconcile } from "../../core/tabs.js";
+import { isHome, parseName, preview, reconcile } from "../../core/tabs.js";
 import { tokens } from "../../ui/theme.js";
 
 /** @param {any} node @param {string} id @returns {any} */
@@ -111,7 +111,7 @@ export default class BakersTabs {
       if (active >= 0) this.scroll.scroll_to_item(active);
     }
     const needs = /** @type {any} */ (shared("bakers.needs")) ?? { count: 0, ids: [] };
-    const previewId = preview()?.id ?? null;
+    const previewId = preview()?.key ?? null;
     const stop = (/** @type {unknown} */ _e, /** @type {import("gpui-kit").Context} */ cx) =>
       cx.stop_propagation();
     /** @param {string} id @param {any} label @param {(e: any, cx: import("gpui-kit").Context) => void} action */
@@ -132,7 +132,7 @@ export default class BakersTabs {
     /** @param {import("herdr").TabInfo} c @param {number} i */
     const item = (c, i) => {
       const ticket = parseName(c.name);
-      const isTickets = c.name === "Tickets";
+      const isTickets = isHome(c.name) === "ticket";
       const program =
         isTickets || ticket
           ? null
@@ -140,7 +140,7 @@ export default class BakersTabs {
             panes().find((p) => p.tab === c.id)?.program);
       const plain = /^tb\d+$/.test(c.name) ? (program?.name ?? "Terminal") : c.name;
       const name = isTickets && needs.count ? `Tickets ${needs.count}` : plain;
-      const asksYou = Boolean(ticket && needs.ids?.includes(ticket.id));
+      const asksYou = Boolean(ticket && needs.ids?.includes(ticket.key));
       return h_flex()
         .id(`tab-${c.id}`)
         .h(26)
@@ -161,7 +161,7 @@ export default class BakersTabs {
         .bg(t.surface)
         .text_color(c.active ? t.foreground : t.muted)
         .when(c.active, (el) => el.font_semibold())
-        .when(Boolean(ticket) && ticket?.id === previewId, (el) => el.italic())
+        .when(Boolean(ticket) && ticket?.key === previewId, (el) => el.italic())
         .hover((s) => s.bg(t.hover))
         .on_mouse_down("left", (e, cx) => {
           cx.stop_propagation();

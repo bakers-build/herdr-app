@@ -1,7 +1,7 @@
 // ticket/register: what the ticket module contributes to the registry: its routes, lists,
 // forms and the actions its menus run.
 import { define } from "../core/registry.js";
-import { closeAll, closeFinished } from "../core/tabs.js";
+import { closeAll, closeFinished } from "./tabs.js";
 import { classify, labels } from "./commands.js";
 import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./form/confirm.js";
 import { createForm } from "./form/create.js";
@@ -16,6 +16,12 @@ import { refresh } from "./store.js";
 import { setShared } from "herdr";
 
 export function register() {
+  define("tab", "ticket", {
+    route: "ticket.view",
+    props: (/** @type {string} */ key) => ({ ticket: key }),
+    match: /^([A-Z][A-Z0-9_]*-\d+) (\S+)$/, // group 1 = key, group 2 = the name's state part
+    home: { name: "Tickets", route: "ticket.list", index: 1 },
+  });
   for (const [name, C] of Object.entries(routes)) define("route", name, C);
   for (const list of [needsMe, mine, open, state, closed]) define("list", list.id, list);
   define("form", "create", { build: createForm });

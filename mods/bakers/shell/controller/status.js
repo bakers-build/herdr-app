@@ -8,7 +8,7 @@ import { h_flex } from "gpui-base";
 import { layout, nextCommand, notify, openOverlay, run } from "herdr";
 import { classify } from "../../core/errors.js";
 import { findNode } from "../../core/herdr.js";
-import { ensureTicketsTab, openTicket, syncNames } from "../../core/tabs.js";
+import { ensureTicketsTab, openTicket, syncTicketNames } from "../../ticket/tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { openForm } from "../../ui/form/dialog.js";
 import { currentProject } from "../../project/state.js";
@@ -67,7 +67,7 @@ export default class Status {
     const store = getStore();
     if (store.updated && Date.now() - store.updated > 1000) await store.refresh();
     publishNeeds();
-    syncNames((id) => {
+    syncTicketNames((id) => {
       const r = store.byId(id);
       return r ? tabName(r) : null;
     });

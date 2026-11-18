@@ -5,7 +5,7 @@ import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
 import { closeOverlay, props } from "herdr";
 import { classify } from "../../core/errors.js";
-import { openTicket } from "../../core/tabs.js";
+import { openTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { mono } from "../../ui/components/text.js";
 import { getStore, ready } from "../store.js";

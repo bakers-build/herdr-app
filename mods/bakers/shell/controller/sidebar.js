@@ -3,7 +3,7 @@
 import { svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { openOverlay } from "herdr";
-import { ensureTicketsTab } from "../../core/tabs.js";
+import { ensureTicketsTab } from "../../ticket/tabs.js";
 import { icons, tokens, UI_FONT } from "../../ui/theme.js";
 import { chip } from "../../ui/components/chip.js";
 import { navRows } from "../../ui/components/nav.js";

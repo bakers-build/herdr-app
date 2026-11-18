@@ -6,8 +6,8 @@
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { notify, openOverlay, props, run } from "herdr";
-import { NO_TERMINAL, runTerminal } from "../../core/herdr.js";
-import { pin } from "../../core/tabs.js";
+import { NO_TERMINAL, runTerminal } from "../terminal.js";
+import { pinTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
@@ -82,7 +82,7 @@ export default class TicketTab {
 
   /** @param {"comment" | "answer"} mode @param {string} [text] */
   makeComposer(mode, text = "") {
-    const c = new Inline(commentForm(this.id, mode, text), () => pin(this.id));
+    const c = new Inline(commentForm(this.id, mode, text), () => pinTicket(this.id));
     c.mode = mode;
     return c;
   }
@@ -119,7 +119,7 @@ export default class TicketTab {
 
   edit() {
     if (this.detail && !this.editor) {
-      this.editor = new Inline(editForm(this.detail.ticket), () => pin(this.id));
+      this.editor = new Inline(editForm(this.detail.ticket), () => pinTicket(this.id));
       this.editor.inputs.focus("title");
     }
   }
