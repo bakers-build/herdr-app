@@ -2,7 +2,7 @@
 import { El } from "./harness";
 
 /**
- * An element as `{ kind, arg, calls, nodes }`: builder calls with their arguments, children in
+ * An element as `{ kind, arg, calls, nodes }`: every builder call per name (in call order) with its arguments, children in
  * order. Functions become "[fn]", object keys are sorted, text nodes stay strings.
  */
 export function serialise(root: El): unknown {
@@ -18,7 +18,7 @@ function plain(value: unknown, seen: WeakSet<object>): unknown {
   if (value instanceof El) {
     out = {
       arg: plain(value.arg, seen),
-      calls: plain(value.calls, seen),
+      calls: plain(value.all, seen),
       kind: value.kind,
       nodes: value.nodes.map((n) => plain(n, seen)),
     };

@@ -5,30 +5,50 @@ exports[`golden: shell.rail 1`] = `
   "arg": undefined,
   "calls": {
     "bg": [
-      "chrome",
+      [
+        "chrome",
+      ],
     ],
     "border_color": [
-      "border",
+      [
+        "border",
+      ],
     ],
     "border_r": [
-      1,
+      [
+        1,
+      ],
     ],
     "font_family": [
-      "Inter",
+      [
+        "Inter",
+      ],
     ],
     "gap": [
-      10,
+      [
+        10,
+      ],
     ],
-    "h_full": [],
+    "h_full": [
+      [],
+    ],
     "id": [
-      "rail",
+      [
+        "rail",
+      ],
     ],
-    "items_center": [],
+    "items_center": [
+      [],
+    ],
     "pt": [
-      12,
+      [
+        12,
+      ],
     ],
     "w": [
-      56,
+      [
+        56,
+      ],
     ],
   },
   "kind": "v_flex",
@@ -37,16 +57,24 @@ exports[`golden: shell.rail 1`] = `
       "arg": undefined,
       "calls": {
         "bg": [
-          "border",
+          [
+            "border",
+          ],
         ],
         "mb": [
-          8,
+          [
+            8,
+          ],
         ],
         "rounded": [
-          5,
+          [
+            5,
+          ],
         ],
         "size": [
-          20,
+          [
+            20,
+          ],
         ],
       },
       "kind": "div",
@@ -56,38 +84,66 @@ exports[`golden: shell.rail 1`] = `
       "arg": undefined,
       "calls": {
         "accessibility_label": [
-          "Spaces, sidebar shown",
+          [
+            "Spaces, sidebar shown",
+          ],
         ],
         "bg": [
-          "surface",
+          [
+            "surface",
+          ],
         ],
         "border": [
-          1,
+          [
+            1,
+          ],
         ],
         "border_color": [
-          "foreground",
+          [
+            "foreground",
+          ],
         ],
-        "cursor_pointer": [],
-        "flex": [],
+        "cursor_pointer": [
+          [],
+        ],
+        "flex": [
+          [],
+        ],
         "id": [
-          "rail-spaces",
+          [
+            "rail-spaces",
+          ],
         ],
-        "items_center": [],
-        "justify_center": [],
+        "items_center": [
+          [],
+        ],
+        "justify_center": [
+          [],
+        ],
         "on_click": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
         "size": [
-          36,
+          [
+            36,
+          ],
         ],
         "text_color": [
-          "foreground",
+          [
+            "foreground",
+          ],
         ],
         "text_size": [
-          9,
+          [
+            9,
+          ],
         ],
       },
       "kind": "div",
@@ -99,39 +155,69 @@ exports[`golden: shell.rail 1`] = `
       "arg": undefined,
       "calls": {
         "accessibility_label": [
-          "bakers, 2 tickets need you",
+          [
+            "bakers, 2 tickets need you",
+          ],
         ],
         "bg": [
-          "surface",
+          [
+            "surface",
+          ],
         ],
         "border": [
-          1,
+          [
+            1,
+          ],
         ],
         "border_color": [
-          "accent",
+          [
+            "accent",
+          ],
         ],
-        "cursor_pointer": [],
-        "flex": [],
-        "font_semibold": [],
+        "cursor_pointer": [
+          [],
+        ],
+        "flex": [
+          [],
+        ],
+        "font_semibold": [
+          [],
+        ],
         "id": [
-          "rail-bakers",
+          [
+            "rail-bakers",
+          ],
         ],
-        "items_center": [],
-        "justify_center": [],
+        "items_center": [
+          [],
+        ],
+        "justify_center": [
+          [],
+        ],
         "on_click": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
         "size": [
-          36,
+          [
+            36,
+          ],
         ],
         "text_color": [
-          "blocked",
+          [
+            "blocked",
+          ],
         ],
         "text_size": [
-          10,
+          [
+            10,
+          ],
         ],
       },
       "kind": "div",
@@ -148,25 +234,39 @@ exports[`golden: shell.sidebar 1`] = `
   "arg": undefined,
   "calls": {
     "font_family": [
-      "Inter",
+      [
+        "Inter",
+      ],
     ],
     "id": [
-      "bakers-sidebar",
+      [
+        "bakers-sidebar",
+      ],
     ],
     "px": [
-      10,
+      [
+        10,
+      ],
     ],
     "py": [
-      12,
+      [
+        12,
+      ],
     ],
     "text_color": [
-      "foreground",
+      [
+        "foreground",
+      ],
     ],
     "text_size": [
-      12,
+      [
+        12,
+      ],
     ],
     "w": [
-      220,
+      [
+        220,
+      ],
     ],
   },
   "kind": "v_flex",
@@ -175,22 +275,34 @@ exports[`golden: shell.sidebar 1`] = `
       "arg": undefined,
       "calls": {
         "bg": [
-          "surface",
+          [
+            "surface",
+          ],
         ],
         "border": [
-          1,
+          [
+            1,
+          ],
         ],
         "border_color": [
-          "border",
+          [
+            "border",
+          ],
         ],
         "gap": [
-          2,
+          [
+            2,
+          ],
         ],
         "p": [
-          8,
+          [
+            8,
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
       },
       "kind": "v_flex",
@@ -199,11 +311,17 @@ exports[`golden: shell.sidebar 1`] = `
           "arg": undefined,
           "calls": {
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "mb": [
-              4,
+              [
+                4,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -211,12 +329,18 @@ exports[`golden: shell.sidebar 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "font_semibold": [],
+                "font_semibold": [
+                  [],
+                ],
                 "text_color": [
-                  "muted",
+                  [
+                    "muted",
+                  ],
                 ],
                 "text_size": [
-                  11,
+                  [
+                    11,
+                  ],
                 ],
               },
               "kind": "div",
@@ -228,33 +352,55 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "bg": [
-                  "surface",
+                  [
+                    "surface",
+                  ],
                 ],
                 "border": [
-                  1,
+                  [
+                    1,
+                  ],
                 ],
                 "border_color": [
-                  "border",
+                  [
+                    "border",
+                  ],
                 ],
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
                 "h": [
-                  20,
+                  [
+                    20,
+                  ],
                 ],
                 "id": [
-                  "project-picker",
+                  [
+                    "project-picker",
+                  ],
                 ],
-                "items_center": [],
-                "ml_auto": [],
+                "items_center": [
+                  [],
+                ],
+                "ml_auto": [
+                  [],
+                ],
                 "px": [
-                  6,
+                  [
+                    6,
+                  ],
                 ],
                 "rounded": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
                 "text_size": [
-                  11,
+                  [
+                    11,
+                  ],
                 ],
               },
               "kind": "h_flex",
@@ -264,7 +410,9 @@ exports[`golden: shell.sidebar 1`] = `
                   "arg": "mods/bakers/ui/icons/chevron-down.svg",
                   "calls": {
                     "size": [
-                      10,
+                      [
+                        10,
+                      ],
                     ],
                   },
                   "kind": "svg",
@@ -278,32 +426,56 @@ exports[`golden: shell.sidebar 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "selected",
+              [
+                "selected",
+              ],
             ],
-            "cursor_pointer": [],
-            "font_semibold": [],
+            "cursor_pointer": [
+              [],
+            ],
+            "font_semibold": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "view-needs-me",
+              [
+                "view-needs-me",
+              ],
             ],
-            "items_center": [],
-            "justify_between": [],
+            "items_center": [
+              [],
+            ],
+            "justify_between": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              6,
+              [
+                6,
+              ],
             ],
             "py": [
-              4,
+              [
+                4,
+              ],
             ],
             "rounded": [
-              4,
+              [
+                4,
+              ],
             ],
             "text_color": [
-              "accent",
+              [
+                "accent",
+              ],
             ],
           },
           "kind": "h_flex",
@@ -312,9 +484,13 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -335,18 +511,30 @@ exports[`golden: shell.sidebar 1`] = `
           "arg": undefined,
           "calls": {
             "id": [
-              "view-mine",
+              [
+                "view-mine",
+              ],
             ],
-            "items_center": [],
-            "justify_between": [],
+            "items_center": [
+              [],
+            ],
+            "justify_between": [
+              [],
+            ],
             "px": [
-              6,
+              [
+                6,
+              ],
             ],
             "py": [
-              4,
+              [
+                4,
+              ],
             ],
             "rounded": [
-              4,
+              [
+                4,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -355,9 +543,13 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -366,29 +558,51 @@ exports[`golden: shell.sidebar 1`] = `
                   "arg": undefined,
                   "calls": {
                     "border": [
-                      1,
+                      [
+                        1,
+                      ],
                     ],
                     "border_color": [
-                      "muted",
+                      [
+                        "muted",
+                      ],
                     ],
-                    "border_dashed": [],
-                    "flex_none": [],
-                    "font_semibold": [],
+                    "border_dashed": [
+                      [],
+                    ],
+                    "flex_none": [
+                      [],
+                    ],
+                    "font_semibold": [
+                      [],
+                    ],
                     "h": [
-                      14,
+                      [
+                        14,
+                      ],
                     ],
-                    "items_center": [],
+                    "items_center": [
+                      [],
+                    ],
                     "px": [
-                      4,
+                      [
+                        4,
+                      ],
                     ],
                     "rounded": [
-                      3,
+                      [
+                        3,
+                      ],
                     ],
                     "text_color": [
-                      "muted",
+                      [
+                        "muted",
+                      ],
                     ],
                     "text_size": [
-                      8,
+                      [
+                        8,
+                      ],
                     ],
                   },
                   "kind": "h_flex",
@@ -403,26 +617,44 @@ exports[`golden: shell.sidebar 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "cursor_pointer": [],
+            "cursor_pointer": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "view-open",
+              [
+                "view-open",
+              ],
             ],
-            "items_center": [],
-            "justify_between": [],
+            "items_center": [
+              [],
+            ],
+            "justify_between": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              6,
+              [
+                6,
+              ],
             ],
             "py": [
-              4,
+              [
+                4,
+              ],
             ],
             "rounded": [
-              4,
+              [
+                4,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -431,9 +663,13 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -444,7 +680,9 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "text_color": [
-                  "muted",
+                  [
+                    "muted",
+                  ],
                 ],
               },
               "kind": "div",
@@ -457,32 +695,54 @@ exports[`golden: shell.sidebar 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "cursor_pointer": [],
+            "cursor_pointer": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "view-state:qualification",
+              [
+                "view-state:qualification",
+              ],
             ],
-            "items_center": [],
-            "justify_between": [],
+            "items_center": [
+              [],
+            ],
+            "justify_between": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "pl": [
-              18,
+              [
+                18,
+              ],
             ],
             "pr": [
-              6,
+              [
+                6,
+              ],
             ],
             "py": [
-              2,
+              [
+                2,
+              ],
             ],
             "rounded": [
-              4,
+              [
+                4,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
           },
           "kind": "h_flex",
@@ -491,9 +751,13 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -513,32 +777,54 @@ exports[`golden: shell.sidebar 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "cursor_pointer": [],
+            "cursor_pointer": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "view-state:plan",
+              [
+                "view-state:plan",
+              ],
             ],
-            "items_center": [],
-            "justify_between": [],
+            "items_center": [
+              [],
+            ],
+            "justify_between": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "pl": [
-              18,
+              [
+                18,
+              ],
             ],
             "pr": [
-              6,
+              [
+                6,
+              ],
             ],
             "py": [
-              2,
+              [
+                2,
+              ],
             ],
             "rounded": [
-              4,
+              [
+                4,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
           },
           "kind": "h_flex",
@@ -547,9 +833,13 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -569,32 +859,54 @@ exports[`golden: shell.sidebar 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "cursor_pointer": [],
+            "cursor_pointer": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "view-state:working",
+              [
+                "view-state:working",
+              ],
             ],
-            "items_center": [],
-            "justify_between": [],
+            "items_center": [
+              [],
+            ],
+            "justify_between": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "pl": [
-              18,
+              [
+                18,
+              ],
             ],
             "pr": [
-              6,
+              [
+                6,
+              ],
             ],
             "py": [
-              2,
+              [
+                2,
+              ],
             ],
             "rounded": [
-              4,
+              [
+                4,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
           },
           "kind": "h_flex",
@@ -603,9 +915,13 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -625,32 +941,54 @@ exports[`golden: shell.sidebar 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "cursor_pointer": [],
+            "cursor_pointer": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "view-state:review",
+              [
+                "view-state:review",
+              ],
             ],
-            "items_center": [],
-            "justify_between": [],
+            "items_center": [
+              [],
+            ],
+            "justify_between": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "pl": [
-              18,
+              [
+                18,
+              ],
             ],
             "pr": [
-              6,
+              [
+                6,
+              ],
             ],
             "py": [
-              2,
+              [
+                2,
+              ],
             ],
             "rounded": [
-              4,
+              [
+                4,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
           },
           "kind": "h_flex",
@@ -659,9 +997,13 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -681,29 +1023,49 @@ exports[`golden: shell.sidebar 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "cursor_pointer": [],
+            "cursor_pointer": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "view-closed",
+              [
+                "view-closed",
+              ],
             ],
-            "items_center": [],
-            "justify_between": [],
+            "items_center": [
+              [],
+            ],
+            "justify_between": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              6,
+              [
+                6,
+              ],
             ],
             "py": [
-              4,
+              [
+                4,
+              ],
             ],
             "rounded": [
-              4,
+              [
+                4,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
           },
           "kind": "h_flex",
@@ -712,9 +1074,13 @@ exports[`golden: shell.sidebar 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  4,
+                  [
+                    4,
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -734,41 +1100,71 @@ exports[`golden: shell.status 1`] = `
   "arg": undefined,
   "calls": {
     "bg": [
-      "chrome",
+      [
+        "chrome",
+      ],
     ],
     "border_color": [
-      "border",
+      [
+        "border",
+      ],
     ],
     "border_t": [
-      1,
+      [
+        1,
+      ],
     ],
-    "cursor_pointer": [],
+    "cursor_pointer": [
+      [],
+    ],
     "font_family": [
-      "Inter",
+      [
+        "Inter",
+      ],
     ],
     "gap": [
-      10,
+      [
+        10,
+      ],
     ],
     "id": [
-      "bakers-status",
+      [
+        "bakers-status",
+      ],
     ],
-    "items_center": [],
-    "justify_end": [],
+    "items_center": [
+      [],
+    ],
+    "justify_end": [
+      [],
+    ],
     "on_click": [
-      "[fn]",
+      [
+        "[fn]",
+      ],
     ],
     "on_size_change": [
-      "[fn]",
+      [
+        "[fn]",
+      ],
     ],
     "px": [
-      12,
+      [
+        12,
+      ],
     ],
-    "size_full": [],
+    "size_full": [
+      [],
+    ],
     "text_color": [
-      "muted",
+      [
+        "muted",
+      ],
     ],
     "text_size": [
-      11,
+      [
+        11,
+      ],
     ],
   },
   "kind": "h_flex",
@@ -776,7 +1172,9 @@ exports[`golden: shell.status 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "truncate": [],
+        "truncate": [
+          [],
+        ],
       },
       "kind": "div",
       "nodes": [
@@ -786,11 +1184,17 @@ exports[`golden: shell.status 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "font_semibold": [],
-        "text_color": [
-          "blocked",
+        "font_semibold": [
+          [],
         ],
-        "truncate": [],
+        "text_color": [
+          [
+            "blocked",
+          ],
+        ],
+        "truncate": [
+          [],
+        ],
       },
       "kind": "div",
       "nodes": [
@@ -800,7 +1204,9 @@ exports[`golden: shell.status 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "truncate": [],
+        "truncate": [
+          [],
+        ],
       },
       "kind": "div",
       "nodes": [
@@ -816,41 +1222,71 @@ exports[`golden: shell.status bakers offline 1`] = `
   "arg": undefined,
   "calls": {
     "bg": [
-      "chrome",
+      [
+        "chrome",
+      ],
     ],
     "border_color": [
-      "border",
+      [
+        "border",
+      ],
     ],
     "border_t": [
-      1,
+      [
+        1,
+      ],
     ],
-    "cursor_pointer": [],
+    "cursor_pointer": [
+      [],
+    ],
     "font_family": [
-      "Inter",
+      [
+        "Inter",
+      ],
     ],
     "gap": [
-      10,
+      [
+        10,
+      ],
     ],
     "id": [
-      "bakers-status",
+      [
+        "bakers-status",
+      ],
     ],
-    "items_center": [],
-    "justify_end": [],
+    "items_center": [
+      [],
+    ],
+    "justify_end": [
+      [],
+    ],
     "on_click": [
-      "[fn]",
+      [
+        "[fn]",
+      ],
     ],
     "on_size_change": [
-      "[fn]",
+      [
+        "[fn]",
+      ],
     ],
     "px": [
-      12,
+      [
+        12,
+      ],
     ],
-    "size_full": [],
+    "size_full": [
+      [],
+    ],
     "text_color": [
-      "muted",
+      [
+        "muted",
+      ],
     ],
     "text_size": [
-      11,
+      [
+        11,
+      ],
     ],
   },
   "kind": "h_flex",
@@ -858,7 +1294,9 @@ exports[`golden: shell.status bakers offline 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "truncate": [],
+        "truncate": [
+          [],
+        ],
       },
       "kind": "div",
       "nodes": [
@@ -874,64 +1312,106 @@ exports[`golden: shell.tabs R2-4 1`] = `
   "arg": undefined,
   "calls": {
     "bg": [
-      "chrome",
+      [
+        "chrome",
+      ],
     ],
     "border_b": [
-      1,
+      [
+        1,
+      ],
     ],
     "border_color": [
-      "border",
+      [
+        "border",
+      ],
     ],
     "gap": [
-      6,
+      [
+        6,
+      ],
     ],
     "h": [
-      40,
+      [
+        40,
+      ],
     ],
-    "items_center": [],
+    "items_center": [
+      [],
+    ],
     "min_w": [
-      0,
+      [
+        0,
+      ],
     ],
     "on_mouse_up:left": [
-      "left",
-      "[fn]",
+      [
+        "left",
+        "[fn]",
+      ],
     ],
     "on_scroll_wheel": [
-      "[fn]",
+      [
+        "[fn]",
+      ],
     ],
     "pl": [
-      10,
+      [
+        10,
+      ],
     ],
     "px": [
-      10,
+      [
+        10,
+      ],
     ],
-    "size_full": [],
+    "size_full": [
+      [],
+    ],
   },
   "kind": "h_flex",
   "nodes": [
     {
       "arg": undefined,
       "calls": {
-        "flex_1": [],
+        "flex_1": [
+          [],
+        ],
         "gap": [
-          6,
+          [
+            6,
+          ],
         ],
-        "h_full": [],
+        "h_full": [
+          [],
+        ],
         "id": [
-          "tab-scroll",
+          [
+            "tab-scroll",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "min_w": [
-          0,
+          [
+            0,
+          ],
         ],
         "on_size_change": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
-        "overflow_x_scrollbar": [],
+        "overflow_x_scrollbar": [
+          [],
+        ],
         "track_scroll": [
-          {
-            "scroll_to_item": "[fn]",
-          },
+          [
+            {
+              "scroll_to_item": "[fn]",
+            },
+          ],
         ],
       },
       "kind": "h_flex",
@@ -940,55 +1420,91 @@ exports[`golden: shell.tabs R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "foreground",
+              [
+                "foreground",
+              ],
             ],
-            "flex_none": [],
-            "font_semibold": [],
+            "flex_none": [
+              [],
+            ],
+            "font_semibold": [
+              [],
+            ],
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
             "h": [
-              26,
+              [
+                26,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-t0",
+              [
+                "tab-t0",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_mouse_down:right": [
-              "right",
-              "[fn]",
+              [
+                "right",
+                "[fn]",
+              ],
             ],
             "on_mouse_up:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_size_change": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "foreground",
+              [
+                "foreground",
+              ],
             ],
             "text_size": [
-              12,
+              [
+                12,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -997,9 +1513,13 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "arg": undefined,
               "calls": {
                 "max_w": [
-                  220,
+                  [
+                    220,
+                  ],
                 ],
-                "truncate": [],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -1012,51 +1532,83 @@ exports[`golden: shell.tabs R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
             "h": [
-              26,
+              [
+                26,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-t5",
+              [
+                "tab-t5",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_mouse_down:right": [
-              "right",
-              "[fn]",
+              [
+                "right",
+                "[fn]",
+              ],
             ],
             "on_mouse_up:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
             "text_size": [
-              12,
+              [
+                12,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -1065,9 +1617,13 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "arg": undefined,
               "calls": {
                 "max_w": [
-                  220,
+                  [
+                    220,
+                  ],
                 ],
-                "truncate": [],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -1078,17 +1634,27 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "arg": undefined,
               "calls": {
                 "bg": [
-                  "blocked",
+                  [
+                    "blocked",
+                  ],
                 ],
-                "flex_none": [],
+                "flex_none": [
+                  [],
+                ],
                 "id": [
-                  "dot-t5",
+                  [
+                    "dot-t5",
+                  ],
                 ],
                 "rounded": [
-                  3,
+                  [
+                    3,
+                  ],
                 ],
                 "size": [
-                  6,
+                  [
+                    6,
+                  ],
                 ],
               },
               "kind": "div",
@@ -1100,52 +1666,86 @@ exports[`golden: shell.tabs R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
             "h": [
-              26,
+              [
+                26,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-t6",
+              [
+                "tab-t6",
+              ],
             ],
-            "italic": [],
-            "items_center": [],
+            "italic": [
+              [],
+            ],
+            "items_center": [
+              [],
+            ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_mouse_down:right": [
-              "right",
-              "[fn]",
+              [
+                "right",
+                "[fn]",
+              ],
             ],
             "on_mouse_up:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
             "text_size": [
-              12,
+              [
+                12,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -1154,9 +1754,13 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "arg": undefined,
               "calls": {
                 "max_w": [
-                  220,
+                  [
+                    220,
+                  ],
                 ],
-                "truncate": [],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -1167,17 +1771,27 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "arg": undefined,
               "calls": {
                 "bg": [
-                  "blocked",
+                  [
+                    "blocked",
+                  ],
                 ],
-                "flex_none": [],
+                "flex_none": [
+                  [],
+                ],
                 "id": [
-                  "dot-t6",
+                  [
+                    "dot-t6",
+                  ],
                 ],
                 "rounded": [
-                  3,
+                  [
+                    3,
+                  ],
                 ],
                 "size": [
-                  6,
+                  [
+                    6,
+                  ],
                 ],
               },
               "kind": "div",
@@ -1189,51 +1803,83 @@ exports[`golden: shell.tabs R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
             "h": [
-              26,
+              [
+                26,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-t7",
+              [
+                "tab-t7",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_mouse_down:right": [
-              "right",
-              "[fn]",
+              [
+                "right",
+                "[fn]",
+              ],
             ],
             "on_mouse_up:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
             "text_size": [
-              12,
+              [
+                12,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -1242,9 +1888,13 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "arg": undefined,
               "calls": {
                 "max_w": [
-                  220,
+                  [
+                    220,
+                  ],
                 ],
-                "truncate": [],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -1257,51 +1907,83 @@ exports[`golden: shell.tabs R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
             "h": [
-              26,
+              [
+                26,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-t8",
+              [
+                "tab-t8",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_mouse_down:right": [
-              "right",
-              "[fn]",
+              [
+                "right",
+                "[fn]",
+              ],
             ],
             "on_mouse_up:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
             "text_size": [
-              12,
+              [
+                12,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -1310,9 +1992,13 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "arg": undefined,
               "calls": {
                 "max_w": [
-                  220,
+                  [
+                    220,
+                  ],
                 ],
-                "truncate": [],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -1324,31 +2010,53 @@ exports[`golden: shell.tabs R2-4 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "flex": [],
-            "flex_none": [],
+            "flex": [
+              [],
+            ],
+            "flex_none": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-new",
+              [
+                "tab-new",
+              ],
             ],
-            "items_center": [],
-            "justify_center": [],
+            "items_center": [
+              [],
+            ],
+            "justify_center": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "size": [
-              26,
+              [
+                26,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
           },
           "kind": "div",
@@ -1361,35 +2069,57 @@ exports[`golden: shell.tabs R2-4 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "flex_none": [],
+        "flex_none": [
+          [],
+        ],
         "h": [
-          26,
+          [
+            26,
+          ],
         ],
         "hover": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "id": [
-          "panel-files",
+          [
+            "panel-files",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "on_click": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "on_mouse_down:left": [
-          "left",
-          "[fn]",
+          [
+            "left",
+            "[fn]",
+          ],
         ],
         "px": [
-          10,
+          [
+            10,
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
         "text_color": [
-          "muted",
+          [
+            "muted",
+          ],
         ],
         "text_size": [
-          12,
+          [
+            12,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -1400,35 +2130,57 @@ exports[`golden: shell.tabs R2-4 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "flex_none": [],
+        "flex_none": [
+          [],
+        ],
         "h": [
-          26,
+          [
+            26,
+          ],
         ],
         "hover": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "id": [
-          "panel-changes",
+          [
+            "panel-changes",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "on_click": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "on_mouse_down:left": [
-          "left",
-          "[fn]",
+          [
+            "left",
+            "[fn]",
+          ],
         ],
         "px": [
-          10,
+          [
+            10,
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
         "text_color": [
-          "muted",
+          [
+            "muted",
+          ],
         ],
         "text_size": [
-          12,
+          [
+            12,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -1440,43 +2192,71 @@ exports[`golden: shell.tabs R2-4 1`] = `
       "arg": undefined,
       "calls": {
         "bg": [
-          "surface",
+          [
+            "surface",
+          ],
         ],
         "border": [
-          1,
+          [
+            1,
+          ],
         ],
         "border_color": [
-          "border",
+          [
+            "border",
+          ],
         ],
-        "flex_none": [],
+        "flex_none": [
+          [],
+        ],
         "h": [
-          26,
+          [
+            26,
+          ],
         ],
         "hover": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "id": [
-          "panel-ticket",
+          [
+            "panel-ticket",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "on_click": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "on_mouse_down:left": [
-          "left",
-          "[fn]",
+          [
+            "left",
+            "[fn]",
+          ],
         ],
         "px": [
-          10,
+          [
+            10,
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
         "text_color": [
-          "muted",
+          [
+            "muted",
+          ],
         ],
         "text_size": [
-          12,
+          [
+            12,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -1493,64 +2273,106 @@ exports[`golden: shell.tabs R2-3 1`] = `
   "arg": undefined,
   "calls": {
     "bg": [
-      "chrome",
+      [
+        "chrome",
+      ],
     ],
     "border_b": [
-      1,
+      [
+        1,
+      ],
     ],
     "border_color": [
-      "border",
+      [
+        "border",
+      ],
     ],
     "gap": [
-      6,
+      [
+        6,
+      ],
     ],
     "h": [
-      40,
+      [
+        40,
+      ],
     ],
-    "items_center": [],
+    "items_center": [
+      [],
+    ],
     "min_w": [
-      0,
+      [
+        0,
+      ],
     ],
     "on_mouse_up:left": [
-      "left",
-      "[fn]",
+      [
+        "left",
+        "[fn]",
+      ],
     ],
     "on_scroll_wheel": [
-      "[fn]",
+      [
+        "[fn]",
+      ],
     ],
     "pl": [
-      10,
+      [
+        10,
+      ],
     ],
     "px": [
-      10,
+      [
+        10,
+      ],
     ],
-    "size_full": [],
+    "size_full": [
+      [],
+    ],
   },
   "kind": "h_flex",
   "nodes": [
     {
       "arg": undefined,
       "calls": {
-        "flex_1": [],
+        "flex_1": [
+          [],
+        ],
         "gap": [
-          6,
+          [
+            6,
+          ],
         ],
-        "h_full": [],
+        "h_full": [
+          [],
+        ],
         "id": [
-          "tab-scroll",
+          [
+            "tab-scroll",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "min_w": [
-          0,
+          [
+            0,
+          ],
         ],
         "on_size_change": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
-        "overflow_x_scrollbar": [],
+        "overflow_x_scrollbar": [
+          [],
+        ],
         "track_scroll": [
-          {
-            "scroll_to_item": "[fn]",
-          },
+          [
+            {
+              "scroll_to_item": "[fn]",
+            },
+          ],
         ],
       },
       "kind": "h_flex",
@@ -1559,54 +2381,88 @@ exports[`golden: shell.tabs R2-3 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
             "h": [
-              26,
+              [
+                26,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-t0",
+              [
+                "tab-t0",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_mouse_down:right": [
-              "right",
-              "[fn]",
+              [
+                "right",
+                "[fn]",
+              ],
             ],
             "on_mouse_up:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_size_change": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
             "text_size": [
-              12,
+              [
+                12,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -1615,9 +2471,13 @@ exports[`golden: shell.tabs R2-3 1`] = `
               "arg": undefined,
               "calls": {
                 "max_w": [
-                  220,
+                  [
+                    220,
+                  ],
                 ],
-                "truncate": [],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -1630,55 +2490,91 @@ exports[`golden: shell.tabs R2-3 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "foreground",
+              [
+                "foreground",
+              ],
             ],
-            "flex_none": [],
-            "font_semibold": [],
+            "flex_none": [
+              [],
+            ],
+            "font_semibold": [
+              [],
+            ],
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
             "h": [
-              26,
+              [
+                26,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-t5",
+              [
+                "tab-t5",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_mouse_down:right": [
-              "right",
-              "[fn]",
+              [
+                "right",
+                "[fn]",
+              ],
             ],
             "on_mouse_up:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "on_size_change": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "foreground",
+              [
+                "foreground",
+              ],
             ],
             "text_size": [
-              12,
+              [
+                12,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -1687,9 +2583,13 @@ exports[`golden: shell.tabs R2-3 1`] = `
               "arg": undefined,
               "calls": {
                 "max_w": [
-                  220,
+                  [
+                    220,
+                  ],
                 ],
-                "truncate": [],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -1700,17 +2600,27 @@ exports[`golden: shell.tabs R2-3 1`] = `
               "arg": undefined,
               "calls": {
                 "bg": [
-                  "blocked",
+                  [
+                    "blocked",
+                  ],
                 ],
-                "flex_none": [],
+                "flex_none": [
+                  [],
+                ],
                 "id": [
-                  "dot-t5",
+                  [
+                    "dot-t5",
+                  ],
                 ],
                 "rounded": [
-                  3,
+                  [
+                    3,
+                  ],
                 ],
                 "size": [
-                  6,
+                  [
+                    6,
+                  ],
                 ],
               },
               "kind": "div",
@@ -1721,31 +2631,53 @@ exports[`golden: shell.tabs R2-3 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "flex": [],
-            "flex_none": [],
+            "flex": [
+              [],
+            ],
+            "flex_none": [
+              [],
+            ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "tab-new",
+              [
+                "tab-new",
+              ],
             ],
-            "items_center": [],
-            "justify_center": [],
+            "items_center": [
+              [],
+            ],
+            "justify_center": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "size": [
-              26,
+              [
+                26,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
           },
           "kind": "div",
@@ -1758,35 +2690,57 @@ exports[`golden: shell.tabs R2-3 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "flex_none": [],
+        "flex_none": [
+          [],
+        ],
         "h": [
-          26,
+          [
+            26,
+          ],
         ],
         "hover": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "id": [
-          "panel-files",
+          [
+            "panel-files",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "on_click": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "on_mouse_down:left": [
-          "left",
-          "[fn]",
+          [
+            "left",
+            "[fn]",
+          ],
         ],
         "px": [
-          10,
+          [
+            10,
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
         "text_color": [
-          "muted",
+          [
+            "muted",
+          ],
         ],
         "text_size": [
-          12,
+          [
+            12,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -1797,35 +2751,57 @@ exports[`golden: shell.tabs R2-3 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "flex_none": [],
+        "flex_none": [
+          [],
+        ],
         "h": [
-          26,
+          [
+            26,
+          ],
         ],
         "hover": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "id": [
-          "panel-changes",
+          [
+            "panel-changes",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "on_click": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "on_mouse_down:left": [
-          "left",
-          "[fn]",
+          [
+            "left",
+            "[fn]",
+          ],
         ],
         "px": [
-          10,
+          [
+            10,
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
         "text_color": [
-          "muted",
+          [
+            "muted",
+          ],
         ],
         "text_size": [
-          12,
+          [
+            12,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -1837,44 +2813,74 @@ exports[`golden: shell.tabs R2-3 1`] = `
       "arg": undefined,
       "calls": {
         "bg": [
-          "surface",
+          [
+            "surface",
+          ],
         ],
         "border": [
-          1,
+          [
+            1,
+          ],
         ],
         "border_color": [
-          "foreground",
+          [
+            "foreground",
+          ],
         ],
-        "flex_none": [],
-        "font_semibold": [],
+        "flex_none": [
+          [],
+        ],
+        "font_semibold": [
+          [],
+        ],
         "h": [
-          26,
+          [
+            26,
+          ],
         ],
         "hover": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "id": [
-          "panel-ticket",
+          [
+            "panel-ticket",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "on_click": [
-          "[fn]",
+          [
+            "[fn]",
+          ],
         ],
         "on_mouse_down:left": [
-          "left",
-          "[fn]",
+          [
+            "left",
+            "[fn]",
+          ],
         ],
         "px": [
-          10,
+          [
+            10,
+          ],
         ],
         "rounded": [
-          6,
+          [
+            6,
+          ],
         ],
         "text_color": [
-          "foreground",
+          [
+            "foreground",
+          ],
         ],
         "text_size": [
-          12,
+          [
+            12,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -1891,32 +2897,50 @@ exports[`golden: ticket.list R2-4 1`] = `
   "arg": undefined,
   "calls": {
     "bg": [
-      "surface",
+      [
+        "surface",
+      ],
     ],
     "font_family": [
-      "Inter",
+      [
+        "Inter",
+      ],
     ],
     "id": [
-      "tickets",
+      [
+        "tickets",
+      ],
     ],
     "min_h": [
-      0,
+      [
+        0,
+      ],
     ],
     "on_key_down": [
-      "[fn]",
+      [
+        "[fn]",
+      ],
     ],
-    "size_full": [],
+    "size_full": [
+      [],
+    ],
     "text_color": [
-      "foreground",
+      [
+        "foreground",
+      ],
     ],
     "text_size": [
-      13,
+      [
+        13,
+      ],
     ],
     "track_focus": [
-      {
-        "focus": "[fn]",
-        "focused": true,
-      },
+      [
+        {
+          "focus": "[fn]",
+          "focused": true,
+        },
+      ],
     ],
   },
   "kind": "v_flex",
@@ -1925,23 +2949,37 @@ exports[`golden: ticket.list R2-4 1`] = `
       "arg": undefined,
       "calls": {
         "border_b": [
-          1,
+          [
+            1,
+          ],
         ],
         "border_color": [
-          "border",
+          [
+            "border",
+          ],
         ],
         "gap": [
-          8,
+          [
+            8,
+          ],
         ],
         "id": [
-          "list-header",
+          [
+            "list-header",
+          ],
         ],
-        "items_center": [],
+        "items_center": [
+          [],
+        ],
         "px": [
-          12,
+          [
+            12,
+          ],
         ],
         "py": [
-          10,
+          [
+            10,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -1950,34 +2988,58 @@ exports[`golden: ticket.list R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
-            "cursor_pointer": [],
-            "font_semibold": [],
+            "cursor_pointer": [
+              [],
+            ],
+            "font_semibold": [
+              [],
+            ],
             "gap": [
-              6,
+              [
+                6,
+              ],
             ],
             "h": [
-              28,
+              [
+                28,
+              ],
             ],
             "id": [
-              "view-menu",
+              [
+                "view-menu",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -1986,9 +3048,13 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": "mods/bakers/ui/icons/chevron-down.svg",
               "calls": {
-                "flex_none": [],
+                "flex_none": [
+                  [],
+                ],
                 "size": [
-                  12,
+                  [
+                    12,
+                  ],
                 ],
               },
               "kind": "svg",
@@ -2000,36 +3066,58 @@ exports[`golden: ticket.list R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
             "h": [
-              28,
+              [
+                28,
+              ],
             ],
             "id": [
-              "filter",
+              [
+                "filter",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_mouse_down:left": [
-              "left",
-              "[fn]",
+              [
+                "left",
+                "[fn]",
+              ],
             ],
             "px": [
-              8,
+              [
+                8,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "foreground",
+              [
+                "foreground",
+              ],
             ],
             "w": [
-              220,
+              [
+                220,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -2046,7 +3134,9 @@ exports[`golden: ticket.list R2-4 1`] = `
                 "text": "",
               },
               "calls": {
-                "w_full": [],
+                "w_full": [
+                  [],
+                ],
               },
               "kind": "Input",
               "nodes": [],
@@ -2056,7 +3146,9 @@ exports[`golden: ticket.list R2-4 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "flex_1": [],
+            "flex_1": [
+              [],
+            ],
           },
           "kind": "div",
           "nodes": [],
@@ -2065,37 +3157,63 @@ exports[`golden: ticket.list R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "surface",
+              [
+                "surface",
+              ],
             ],
             "border": [
-              1,
+              [
+                1,
+              ],
             ],
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
-            "cursor_pointer": [],
-            "flex_none": [],
+            "cursor_pointer": [
+              [],
+            ],
+            "flex_none": [
+              [],
+            ],
             "h": [
-              28,
+              [
+                28,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "list-menu",
+              [
+                "list-menu",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              10,
+              [
+                10,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "foreground",
+              [
+                "foreground",
+              ],
             ],
           },
           "kind": "h_flex",
@@ -2107,32 +3225,56 @@ exports[`golden: ticket.list R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "solid",
+              [
+                "solid",
+              ],
             ],
-            "cursor_pointer": [],
-            "flex_none": [],
-            "font_semibold": [],
+            "cursor_pointer": [
+              [],
+            ],
+            "flex_none": [
+              [],
+            ],
+            "font_semibold": [
+              [],
+            ],
             "h": [
-              28,
+              [
+                28,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "new-ticket",
+              [
+                "new-ticket",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              12,
+              [
+                12,
+              ],
             ],
             "rounded": [
-              6,
+              [
+                6,
+              ],
             ],
             "text_color": [
-              "solid_foreground",
+              [
+                "solid_foreground",
+              ],
             ],
           },
           "kind": "h_flex",
@@ -2146,29 +3288,47 @@ exports[`golden: ticket.list R2-4 1`] = `
       "arg": undefined,
       "calls": {
         "border_b": [
-          1,
+          [
+            1,
+          ],
         ],
         "border_color": [
-          "border",
+          [
+            "border",
+          ],
         ],
-        "font_semibold": [],
+        "font_semibold": [
+          [],
+        ],
         "gap": [
-          12,
+          [
+            12,
+          ],
         ],
         "id": [
-          "columns",
+          [
+            "columns",
+          ],
         ],
         "px": [
-          12,
+          [
+            12,
+          ],
         ],
         "py": [
-          6,
+          [
+            6,
+          ],
         ],
         "text_color": [
-          "muted",
+          [
+            "muted",
+          ],
         ],
         "text_size": [
-          11,
+          [
+            11,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -2176,9 +3336,13 @@ exports[`golden: ticket.list R2-4 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "w": [
-              76,
+              [
+                76,
+              ],
             ],
           },
           "kind": "div",
@@ -2189,9 +3353,13 @@ exports[`golden: ticket.list R2-4 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "flex_1": [],
+            "flex_1": [
+              [],
+            ],
             "min_w": [
-              0,
+              [
+                0,
+              ],
             ],
           },
           "kind": "div",
@@ -2202,9 +3370,13 @@ exports[`golden: ticket.list R2-4 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "w": [
-              170,
+              [
+                170,
+              ],
             ],
           },
           "kind": "div",
@@ -2215,9 +3387,13 @@ exports[`golden: ticket.list R2-4 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "w": [
-              150,
+              [
+                150,
+              ],
             ],
           },
           "kind": "div",
@@ -2228,9 +3404,13 @@ exports[`golden: ticket.list R2-4 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "flex_none": [],
+            "flex_none": [
+              [],
+            ],
             "w": [
-              44,
+              [
+                44,
+              ],
             ],
           },
           "kind": "div",
@@ -2243,14 +3423,22 @@ exports[`golden: ticket.list R2-4 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "flex_1": [],
+        "flex_1": [
+          [],
+        ],
         "id": [
-          "rows",
+          [
+            "rows",
+          ],
         ],
         "min_h": [
-          0,
+          [
+            0,
+          ],
         ],
-        "overflow_y_scrollbar": [],
+        "overflow_y_scrollbar": [
+          [],
+        ],
       },
       "kind": "v_flex",
       "nodes": [
@@ -2258,39 +3446,65 @@ exports[`golden: ticket.list R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "bg": [
-              "selected",
+              [
+                "selected",
+              ],
             ],
             "border": [
-              2,
+              [
+                2,
+              ],
             ],
             "border_color": [
-              "accent",
+              [
+                "accent",
+              ],
             ],
-            "cursor_pointer": [],
+            "cursor_pointer": [
+              [],
+            ],
             "gap": [
-              12,
+              [
+                12,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "row-SHOP-41",
+              [
+                "row-SHOP-41",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "min_h": [
-              28,
+              [
+                28,
+              ],
             ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              12,
+              [
+                12,
+              ],
             ],
             "py": [
-              10,
+              [
+                10,
+              ],
             ],
             "selected": [
-              true,
+              [
+                true,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -2298,15 +3512,23 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_none": [],
+                "flex_none": [
+                  [],
+                ],
                 "font_family": [
-                  "JetBrains Mono",
+                  [
+                    "JetBrains Mono",
+                  ],
                 ],
                 "text_size": [
-                  12,
+                  [
+                    12,
+                  ],
                 ],
                 "w": [
-                  76,
+                  [
+                    76,
+                  ],
                 ],
               },
               "kind": "div",
@@ -2317,11 +3539,17 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_1": [],
-                "min_w": [
-                  0,
+                "flex_1": [
+                  [],
                 ],
-                "truncate": [],
+                "min_w": [
+                  [
+                    0,
+                  ],
+                ],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -2331,13 +3559,21 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_none": [],
-                "font_semibold": [],
+                "flex_none": [
+                  [],
+                ],
+                "font_semibold": [
+                  [],
+                ],
                 "text_color": [
-                  "blocked",
+                  [
+                    "blocked",
+                  ],
                 ],
                 "w": [
-                  170,
+                  [
+                    170,
+                  ],
                 ],
               },
               "kind": "div",
@@ -2348,20 +3584,34 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_none": [],
-                "flex_wrap": [],
-                "gap": [
-                  6,
+                "flex_none": [
+                  [],
                 ],
-                "items_center": [],
+                "flex_wrap": [
+                  [],
+                ],
+                "gap": [
+                  [
+                    6,
+                  ],
+                ],
+                "items_center": [
+                  [],
+                ],
                 "text_color": [
-                  "blocked",
+                  [
+                    "blocked",
+                  ],
                 ],
                 "text_size": [
-                  12,
+                  [
+                    12,
+                  ],
                 ],
                 "w": [
-                  150,
+                  [
+                    150,
+                  ],
                 ],
               },
               "kind": "h_flex",
@@ -2370,14 +3620,22 @@ exports[`golden: ticket.list R2-4 1`] = `
                   "arg": undefined,
                   "calls": {
                     "bg": [
-                      "blocked",
+                      [
+                        "blocked",
+                      ],
                     ],
-                    "flex_none": [],
+                    "flex_none": [
+                      [],
+                    ],
                     "rounded": [
-                      4,
+                      [
+                        4,
+                      ],
                     ],
                     "size": [
-                      8,
+                      [
+                        8,
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -2386,7 +3644,9 @@ exports[`golden: ticket.list R2-4 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "truncate": [],
+                    "truncate": [
+                      [],
+                    ],
                   },
                   "kind": "div",
                   "nodes": [
@@ -2398,15 +3658,23 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_none": [],
+                "flex_none": [
+                  [],
+                ],
                 "text_color": [
-                  "muted",
+                  [
+                    "muted",
+                  ],
                 ],
                 "text_size": [
-                  12,
+                  [
+                    12,
+                  ],
                 ],
                 "w": [
-                  44,
+                  [
+                    44,
+                  ],
                 ],
               },
               "kind": "div",
@@ -2420,36 +3688,60 @@ exports[`golden: ticket.list R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "border_color": [
-              "border",
+              [
+                "border",
+              ],
             ],
             "border_t": [
-              1,
+              [
+                1,
+              ],
             ],
-            "cursor_pointer": [],
+            "cursor_pointer": [
+              [],
+            ],
             "gap": [
-              12,
+              [
+                12,
+              ],
             ],
             "hover": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "id": [
-              "row-SHOP-56",
+              [
+                "row-SHOP-56",
+              ],
             ],
-            "items_center": [],
+            "items_center": [
+              [],
+            ],
             "min_h": [
-              28,
+              [
+                28,
+              ],
             ],
             "on_click": [
-              "[fn]",
+              [
+                "[fn]",
+              ],
             ],
             "px": [
-              12,
+              [
+                12,
+              ],
             ],
             "py": [
-              10,
+              [
+                10,
+              ],
             ],
             "selected": [
-              false,
+              [
+                false,
+              ],
             ],
           },
           "kind": "h_flex",
@@ -2457,15 +3749,23 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_none": [],
+                "flex_none": [
+                  [],
+                ],
                 "font_family": [
-                  "JetBrains Mono",
+                  [
+                    "JetBrains Mono",
+                  ],
                 ],
                 "text_size": [
-                  12,
+                  [
+                    12,
+                  ],
                 ],
                 "w": [
-                  76,
+                  [
+                    76,
+                  ],
                 ],
               },
               "kind": "div",
@@ -2476,11 +3776,17 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_1": [],
-                "min_w": [
-                  0,
+                "flex_1": [
+                  [],
                 ],
-                "truncate": [],
+                "min_w": [
+                  [
+                    0,
+                  ],
+                ],
+                "truncate": [
+                  [],
+                ],
               },
               "kind": "div",
               "nodes": [
@@ -2490,13 +3796,21 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_none": [],
-                "font_semibold": [],
+                "flex_none": [
+                  [],
+                ],
+                "font_semibold": [
+                  [],
+                ],
                 "text_color": [
-                  "blocked",
+                  [
+                    "blocked",
+                  ],
                 ],
                 "w": [
-                  170,
+                  [
+                    170,
+                  ],
                 ],
               },
               "kind": "div",
@@ -2507,20 +3821,34 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_none": [],
-                "flex_wrap": [],
-                "gap": [
-                  6,
+                "flex_none": [
+                  [],
                 ],
-                "items_center": [],
+                "flex_wrap": [
+                  [],
+                ],
+                "gap": [
+                  [
+                    6,
+                  ],
+                ],
+                "items_center": [
+                  [],
+                ],
                 "text_color": [
-                  "muted",
+                  [
+                    "muted",
+                  ],
                 ],
                 "text_size": [
-                  12,
+                  [
+                    12,
+                  ],
                 ],
                 "w": [
-                  150,
+                  [
+                    150,
+                  ],
                 ],
               },
               "kind": "h_flex",
@@ -2529,17 +3857,27 @@ exports[`golden: ticket.list R2-4 1`] = `
                   "arg": undefined,
                   "calls": {
                     "border": [
-                      1,
+                      [
+                        1,
+                      ],
                     ],
                     "border_color": [
-                      "muted",
+                      [
+                        "muted",
+                      ],
                     ],
-                    "flex_none": [],
+                    "flex_none": [
+                      [],
+                    ],
                     "rounded": [
-                      4,
+                      [
+                        4,
+                      ],
                     ],
                     "size": [
-                      8,
+                      [
+                        8,
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -2548,7 +3886,9 @@ exports[`golden: ticket.list R2-4 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "truncate": [],
+                    "truncate": [
+                      [],
+                    ],
                   },
                   "kind": "div",
                   "nodes": [
@@ -2560,15 +3900,23 @@ exports[`golden: ticket.list R2-4 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "flex_none": [],
+                "flex_none": [
+                  [],
+                ],
                 "text_color": [
-                  "muted",
+                  [
+                    "muted",
+                  ],
                 ],
                 "text_size": [
-                  12,
+                  [
+                    12,
+                  ],
                 ],
                 "w": [
-                  44,
+                  [
+                    44,
+                  ],
                 ],
               },
               "kind": "div",
@@ -2582,19 +3930,29 @@ exports[`golden: ticket.list R2-4 1`] = `
           "arg": undefined,
           "calls": {
             "gap": [
-              4,
+              [
+                4,
+              ],
             ],
             "px": [
-              12,
+              [
+                12,
+              ],
             ],
             "py": [
-              16,
+              [
+                16,
+              ],
             ],
             "text_color": [
-              "muted",
+              [
+                "muted",
+              ],
             ],
             "text_size": [
-              12,
+              [
+                12,
+              ],
             ],
           },
           "kind": "v_flex",
@@ -2611,7 +3969,9 @@ exports[`golden: ticket.list R2-4 1`] = `
               "arg": undefined,
               "calls": {
                 "text_size": [
-                  11,
+                  [
+                    11,
+                  ],
                 ],
               },
               "kind": "div",
@@ -2632,32 +3992,50 @@ exports[`golden: ticket.view R2-3 1`] = `
   "arg": undefined,
   "calls": {
     "bg": [
-      "surface",
+      [
+        "surface",
+      ],
     ],
     "font_family": [
-      "Inter",
+      [
+        "Inter",
+      ],
     ],
     "id": [
-      "ticket",
+      [
+        "ticket",
+      ],
     ],
     "min_h": [
-      0,
+      [
+        0,
+      ],
     ],
     "on_key_down": [
-      "[fn]",
+      [
+        "[fn]",
+      ],
     ],
-    "size_full": [],
+    "size_full": [
+      [],
+    ],
     "text_color": [
-      "foreground",
+      [
+        "foreground",
+      ],
     ],
     "text_size": [
-      13,
+      [
+        13,
+      ],
     ],
     "track_focus": [
-      {
-        "focus": "[fn]",
-        "focused": true,
-      },
+      [
+        {
+          "focus": "[fn]",
+          "focused": true,
+        },
+      ],
     ],
   },
   "kind": "v_flex",
@@ -2665,20 +4043,34 @@ exports[`golden: ticket.view R2-3 1`] = `
     {
       "arg": undefined,
       "calls": {
-        "flex_1": [],
+        "flex_1": [
+          [],
+        ],
         "id": [
-          "doc-scroll",
+          [
+            "doc-scroll",
+          ],
         ],
-        "justify_center": [],
+        "justify_center": [
+          [],
+        ],
         "min_h": [
-          0,
+          [
+            0,
+          ],
         ],
-        "overflow_y_scrollbar": [],
+        "overflow_y_scrollbar": [
+          [],
+        ],
         "px": [
-          24,
+          [
+            24,
+          ],
         ],
         "py": [
-          20,
+          [
+            20,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -2687,29 +4079,45 @@ exports[`golden: ticket.view R2-3 1`] = `
           "arg": undefined,
           "calls": {
             "gap": [
-              16,
+              [
+                16,
+              ],
             ],
             "id": [
-              "doc",
+              [
+                "doc",
+              ],
             ],
             "max_w": [
-              760,
+              [
+                760,
+              ],
             ],
-            "w_full": [],
+            "w_full": [
+              [],
+            ],
           },
           "kind": "v_flex",
           "nodes": [
             {
               "arg": undefined,
               "calls": {
-                "flex_wrap": [],
+                "flex_wrap": [
+                  [],
+                ],
                 "gap": [
-                  8,
+                  [
+                    8,
+                  ],
                 ],
                 "id": [
-                  "doc-header",
+                  [
+                    "doc-header",
+                  ],
                 ],
-                "items_center": [],
+                "items_center": [
+                  [],
+                ],
               },
               "kind": "h_flex",
               "nodes": [
@@ -2717,11 +4125,17 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "font_family": [
-                      "JetBrains Mono",
+                      [
+                        "JetBrains Mono",
+                      ],
                     ],
-                    "font_semibold": [],
+                    "font_semibold": [
+                      [],
+                    ],
                     "text_size": [
-                      12,
+                      [
+                        12,
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -2733,36 +4147,60 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "bg": [
-                      "surface",
+                      [
+                        "surface",
+                      ],
                     ],
                     "border": [
-                      1,
+                      [
+                        1,
+                      ],
                     ],
                     "border_color": [
-                      "border",
+                      [
+                        "border",
+                      ],
                     ],
-                    "cursor_pointer": [],
+                    "cursor_pointer": [
+                      [],
+                    ],
                     "gap": [
-                      4,
+                      [
+                        4,
+                      ],
                     ],
                     "h": [
-                      24,
+                      [
+                        24,
+                      ],
                     ],
                     "id": [
-                      "state-pill",
+                      [
+                        "state-pill",
+                      ],
                     ],
-                    "items_center": [],
+                    "items_center": [
+                      [],
+                    ],
                     "on_click": [
-                      "[fn]",
+                      [
+                        "[fn]",
+                      ],
                     ],
                     "px": [
-                      8,
+                      [
+                        8,
+                      ],
                     ],
                     "rounded": [
-                      12,
+                      [
+                        12,
+                      ],
                     ],
                     "text_size": [
-                      11,
+                      [
+                        11,
+                      ],
                     ],
                   },
                   "kind": "h_flex",
@@ -2772,7 +4210,9 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": "mods/bakers/ui/icons/chevron-down.svg",
                       "calls": {
                         "size": [
-                          10,
+                          [
+                            10,
+                          ],
                         ],
                       },
                       "kind": "svg",
@@ -2784,26 +4224,42 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "border": [
-                      1,
+                      [
+                        1,
+                      ],
                     ],
                     "border_color": [
-                      "foreground",
+                      [
+                        "foreground",
+                      ],
                     ],
                     "gap": [
-                      4,
+                      [
+                        4,
+                      ],
                     ],
                     "h": [
-                      24,
+                      [
+                        24,
+                      ],
                     ],
-                    "items_center": [],
+                    "items_center": [
+                      [],
+                    ],
                     "px": [
-                      8,
+                      [
+                        8,
+                      ],
                     ],
                     "rounded": [
-                      12,
+                      [
+                        12,
+                      ],
                     ],
                     "text_size": [
-                      11,
+                      [
+                        11,
+                      ],
                     ],
                   },
                   "kind": "h_flex",
@@ -2814,19 +4270,31 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "flex_wrap": [],
+                    "flex_wrap": [
+                      [],
+                    ],
                     "gap": [
-                      6,
+                      [
+                        6,
+                      ],
                     ],
                     "id": [
-                      "agent-line",
+                      [
+                        "agent-line",
+                      ],
                     ],
-                    "items_center": [],
+                    "items_center": [
+                      [],
+                    ],
                     "text_color": [
-                      "blocked",
+                      [
+                        "blocked",
+                      ],
                     ],
                     "text_size": [
-                      12,
+                      [
+                        12,
+                      ],
                     ],
                   },
                   "kind": "h_flex",
@@ -2835,14 +4303,22 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "bg": [
-                          "blocked",
+                          [
+                            "blocked",
+                          ],
                         ],
-                        "flex_none": [],
+                        "flex_none": [
+                          [],
+                        ],
                         "rounded": [
-                          4,
+                          [
+                            4,
+                          ],
                         ],
                         "size": [
-                          8,
+                          [
+                            8,
+                          ],
                         ],
                       },
                       "kind": "div",
@@ -2851,7 +4327,9 @@ exports[`golden: ticket.view R2-3 1`] = `
                     {
                       "arg": undefined,
                       "calls": {
-                        "truncate": [],
+                        "truncate": [
+                          [],
+                        ],
                       },
                       "kind": "div",
                       "nodes": [
@@ -2863,7 +4341,9 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "flex_1": [],
+                    "flex_1": [
+                      [],
+                    ],
                   },
                   "kind": "div",
                   "nodes": [],
@@ -2872,40 +4352,68 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "bg": [
-                      "surface",
+                      [
+                        "surface",
+                      ],
                     ],
                     "border": [
-                      1,
+                      [
+                        1,
+                      ],
                     ],
                     "border_color": [
-                      "border",
+                      [
+                        "border",
+                      ],
                     ],
-                    "cursor_pointer": [],
-                    "flex_none": [],
+                    "cursor_pointer": [
+                      [],
+                    ],
+                    "flex_none": [
+                      [],
+                    ],
                     "h": [
-                      24,
+                      [
+                        24,
+                      ],
                     ],
                     "hover": [
-                      "[fn]",
+                      [
+                        "[fn]",
+                      ],
                     ],
                     "id": [
-                      "edit",
+                      [
+                        "edit",
+                      ],
                     ],
-                    "items_center": [],
+                    "items_center": [
+                      [],
+                    ],
                     "on_click": [
-                      "[fn]",
+                      [
+                        "[fn]",
+                      ],
                     ],
                     "px": [
-                      8,
+                      [
+                        8,
+                      ],
                     ],
                     "rounded": [
-                      6,
+                      [
+                        6,
+                      ],
                     ],
                     "text_color": [
-                      "foreground",
+                      [
+                        "foreground",
+                      ],
                     ],
                     "text_size": [
-                      12,
+                      [
+                        12,
+                      ],
                     ],
                   },
                   "kind": "h_flex",
@@ -2917,41 +4425,71 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "bg": [
-                      "surface",
+                      [
+                        "surface",
+                      ],
                     ],
                     "border": [
-                      1,
+                      [
+                        1,
+                      ],
                     ],
                     "border_color": [
-                      "border",
+                      [
+                        "border",
+                      ],
                     ],
-                    "cursor_pointer": [],
-                    "flex_none": [],
+                    "cursor_pointer": [
+                      [],
+                    ],
+                    "flex_none": [
+                      [],
+                    ],
                     "h": [
-                      24,
+                      [
+                        24,
+                      ],
                     ],
                     "hover": [
-                      "[fn]",
+                      [
+                        "[fn]",
+                      ],
                     ],
                     "id": [
-                      "more",
+                      [
+                        "more",
+                      ],
                     ],
-                    "items_center": [],
-                    "justify_center": [],
+                    "items_center": [
+                      [],
+                    ],
+                    "justify_center": [
+                      [],
+                    ],
                     "on_click": [
-                      "[fn]",
+                      [
+                        "[fn]",
+                      ],
                     ],
                     "px": [
-                      0,
+                      [
+                        0,
+                      ],
                     ],
                     "rounded": [
-                      6,
+                      [
+                        6,
+                      ],
                     ],
                     "text_color": [
-                      "foreground",
+                      [
+                        "foreground",
+                      ],
                     ],
                     "w": [
-                      24,
+                      [
+                        24,
+                      ],
                     ],
                   },
                   "kind": "h_flex",
@@ -2964,18 +4502,28 @@ exports[`golden: ticket.view R2-3 1`] = `
             {
               "arg": undefined,
               "calls": {
-                "font_semibold": [],
+                "font_semibold": [
+                  [],
+                ],
                 "id": [
-                  "title",
+                  [
+                    "title",
+                  ],
                 ],
                 "line_height": [
-                  27.5,
+                  [
+                    27.5,
+                  ],
                 ],
                 "on_click": [
-                  "[fn]",
+                  [
+                    "[fn]",
+                  ],
                 ],
                 "text_size": [
-                  22,
+                  [
+                    22,
+                  ],
                 ],
               },
               "kind": "div",
@@ -2987,25 +4535,39 @@ exports[`golden: ticket.view R2-3 1`] = `
               "arg": undefined,
               "calls": {
                 "border": [
-                  1,
+                  [
+                    1,
+                  ],
                 ],
                 "border_color": [
-                  "accent",
+                  [
+                    "accent",
+                  ],
                 ],
                 "gap": [
-                  8,
+                  [
+                    8,
+                  ],
                 ],
                 "id": [
-                  "needs-card",
+                  [
+                    "needs-card",
+                  ],
                 ],
                 "px": [
-                  14,
+                  [
+                    14,
+                  ],
                 ],
                 "py": [
-                  12,
+                  [
+                    12,
+                  ],
                 ],
                 "rounded": [
-                  8,
+                  [
+                    8,
+                  ],
                 ],
               },
               "kind": "v_flex",
@@ -3013,12 +4575,18 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "font_semibold": [],
+                    "font_semibold": [
+                      [],
+                    ],
                     "text_color": [
-                      "accent",
+                      [
+                        "accent",
+                      ],
                     ],
                     "text_size": [
-                      11,
+                      [
+                        11,
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -3029,7 +4597,9 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "font_semibold": [],
+                    "font_semibold": [
+                      [],
+                    ],
                   },
                   "kind": "div",
                   "nodes": [
@@ -3040,7 +4610,9 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "text_size": [
-                      13,
+                      [
+                        13,
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -3051,11 +4623,17 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "flex_wrap": [],
-                    "gap": [
-                      8,
+                    "flex_wrap": [
+                      [],
                     ],
-                    "items_center": [],
+                    "gap": [
+                      [
+                        8,
+                      ],
+                    ],
+                    "items_center": [
+                      [],
+                    ],
                   },
                   "kind": "h_flex",
                   "nodes": [
@@ -3063,32 +4641,56 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "bg": [
-                          "solid",
+                          [
+                            "solid",
+                          ],
                         ],
-                        "cursor_pointer": [],
-                        "flex_none": [],
-                        "font_semibold": [],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "font_semibold": [
+                          [],
+                        ],
                         "h": [
-                          28,
+                          [
+                            28,
+                          ],
                         ],
                         "hover": [
-                          "[fn]",
+                          [
+                            "[fn]",
+                          ],
                         ],
                         "id": [
-                          "answer-below",
+                          [
+                            "answer-below",
+                          ],
                         ],
-                        "items_center": [],
+                        "items_center": [
+                          [],
+                        ],
                         "on_click": [
-                          "[fn]",
+                          [
+                            "[fn]",
+                          ],
                         ],
                         "px": [
-                          12,
+                          [
+                            12,
+                          ],
                         ],
                         "rounded": [
-                          6,
+                          [
+                            6,
+                          ],
                         ],
                         "text_color": [
-                          "solid_foreground",
+                          [
+                            "solid_foreground",
+                          ],
                         ],
                       },
                       "kind": "h_flex",
@@ -3100,37 +4702,63 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "bg": [
-                          "surface",
+                          [
+                            "surface",
+                          ],
                         ],
                         "border": [
-                          1,
+                          [
+                            1,
+                          ],
                         ],
                         "border_color": [
-                          "border",
+                          [
+                            "border",
+                          ],
                         ],
-                        "cursor_pointer": [],
-                        "flex_none": [],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
                         "h": [
-                          28,
+                          [
+                            28,
+                          ],
                         ],
                         "hover": [
-                          "[fn]",
+                          [
+                            "[fn]",
+                          ],
                         ],
                         "id": [
-                          "answer-in-run",
+                          [
+                            "answer-in-run",
+                          ],
                         ],
-                        "items_center": [],
+                        "items_center": [
+                          [],
+                        ],
                         "on_click": [
-                          "[fn]",
+                          [
+                            "[fn]",
+                          ],
                         ],
                         "px": [
-                          10,
+                          [
+                            10,
+                          ],
                         ],
                         "rounded": [
-                          6,
+                          [
+                            6,
+                          ],
                         ],
                         "text_color": [
-                          "foreground",
+                          [
+                            "foreground",
+                          ],
                         ],
                       },
                       "kind": "h_flex",
@@ -3142,10 +4770,14 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "text_color": [
-                          "muted",
+                          [
+                            "muted",
+                          ],
                         ],
                         "text_size": [
-                          11,
+                          [
+                            11,
+                          ],
                         ],
                       },
                       "kind": "div",
@@ -3161,10 +4793,14 @@ exports[`golden: ticket.view R2-3 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  8,
+                  [
+                    8,
+                  ],
                 ],
                 "id": [
-                  "description",
+                  [
+                    "description",
+                  ],
                 ],
               },
               "kind": "v_flex",
@@ -3172,12 +4808,18 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "font_semibold": [],
+                    "font_semibold": [
+                      [],
+                    ],
                     "text_color": [
-                      "muted",
+                      [
+                        "muted",
+                      ],
                     ],
                     "text_size": [
-                      11,
+                      [
+                        11,
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -3188,12 +4830,18 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "cursor_text": [],
+                    "cursor_text": [
+                      [],
+                    ],
                     "id": [
-                      "description-body",
+                      [
+                        "description-body",
+                      ],
                     ],
                     "on_click": [
-                      "[fn]",
+                      [
+                        "[fn]",
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -3220,10 +4868,14 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "text_color": [
-                      "muted",
+                      [
+                        "muted",
+                      ],
                     ],
                     "text_size": [
-                      11,
+                      [
+                        11,
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -3237,10 +4889,14 @@ exports[`golden: ticket.view R2-3 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  10,
+                  [
+                    10,
+                  ],
                 ],
                 "id": [
-                  "comments",
+                  [
+                    "comments",
+                  ],
                 ],
               },
               "kind": "v_flex",
@@ -3248,12 +4904,18 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "font_semibold": [],
+                    "font_semibold": [
+                      [],
+                    ],
                     "text_color": [
-                      "muted",
+                      [
+                        "muted",
+                      ],
                     ],
                     "text_size": [
-                      11,
+                      [
+                        11,
+                      ],
                     ],
                   },
                   "kind": "div",
@@ -3265,10 +4927,14 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "gap": [
-                      3,
+                      [
+                        3,
+                      ],
                     ],
                     "id": [
-                      "comment-c1",
+                      [
+                        "comment-c1",
+                      ],
                     ],
                   },
                   "kind": "v_flex",
@@ -3277,13 +4943,19 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "gap": [
-                          6,
+                          [
+                            6,
+                          ],
                         ],
                         "text_color": [
-                          "muted",
+                          [
+                            "muted",
+                          ],
                         ],
                         "text_size": [
-                          11,
+                          [
+                            11,
+                          ],
                         ],
                       },
                       "kind": "h_flex",
@@ -3291,9 +4963,13 @@ exports[`golden: ticket.view R2-3 1`] = `
                         {
                           "arg": undefined,
                           "calls": {
-                            "font_semibold": [],
+                            "font_semibold": [
+                              [],
+                            ],
                             "text_color": [
-                              "foreground",
+                              [
+                                "foreground",
+                              ],
                             ],
                           },
                           "kind": "div",
@@ -3333,10 +5009,14 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "gap": [
-                      3,
+                      [
+                        3,
+                      ],
                     ],
                     "id": [
-                      "comment-c2",
+                      [
+                        "comment-c2",
+                      ],
                     ],
                   },
                   "kind": "v_flex",
@@ -3345,13 +5025,19 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "gap": [
-                          6,
+                          [
+                            6,
+                          ],
                         ],
                         "text_color": [
-                          "muted",
+                          [
+                            "muted",
+                          ],
                         ],
                         "text_size": [
-                          11,
+                          [
+                            11,
+                          ],
                         ],
                       },
                       "kind": "h_flex",
@@ -3359,9 +5045,13 @@ exports[`golden: ticket.view R2-3 1`] = `
                         {
                           "arg": undefined,
                           "calls": {
-                            "font_semibold": [],
+                            "font_semibold": [
+                              [],
+                            ],
                             "text_color": [
-                              "foreground",
+                              [
+                                "foreground",
+                              ],
                             ],
                           },
                           "kind": "div",
@@ -3401,17 +5091,27 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "border_color": [
-                      "accent",
+                      [
+                        "accent",
+                      ],
                     ],
-                    "border_l_2": [],
+                    "border_l_2": [
+                      [],
+                    ],
                     "gap": [
-                      3,
+                      [
+                        3,
+                      ],
                     ],
                     "id": [
-                      "comment-c3",
+                      [
+                        "comment-c3",
+                      ],
                     ],
                     "pl": [
-                      8,
+                      [
+                        8,
+                      ],
                     ],
                   },
                   "kind": "v_flex",
@@ -3420,13 +5120,19 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "gap": [
-                          6,
+                          [
+                            6,
+                          ],
                         ],
                         "text_color": [
-                          "muted",
+                          [
+                            "muted",
+                          ],
                         ],
                         "text_size": [
-                          11,
+                          [
+                            11,
+                          ],
                         ],
                       },
                       "kind": "h_flex",
@@ -3434,9 +5140,13 @@ exports[`golden: ticket.view R2-3 1`] = `
                         {
                           "arg": undefined,
                           "calls": {
-                            "font_semibold": [],
+                            "font_semibold": [
+                              [],
+                            ],
                             "text_color": [
-                              "foreground",
+                              [
+                                "foreground",
+                              ],
                             ],
                           },
                           "kind": "div",
@@ -3482,21 +5192,35 @@ exports[`golden: ticket.view R2-3 1`] = `
       "arg": undefined,
       "calls": {
         "border_color": [
-          "border",
+          [
+            "border",
+          ],
         ],
         "border_t": [
-          1,
+          [
+            1,
+          ],
         ],
-        "flex_none": [],
+        "flex_none": [
+          [],
+        ],
         "id": [
-          "composer",
+          [
+            "composer",
+          ],
         ],
-        "justify_center": [],
+        "justify_center": [
+          [],
+        ],
         "px": [
-          24,
+          [
+            24,
+          ],
         ],
         "py": [
-          10,
+          [
+            10,
+          ],
         ],
       },
       "kind": "h_flex",
@@ -3505,9 +5229,13 @@ exports[`golden: ticket.view R2-3 1`] = `
           "arg": undefined,
           "calls": {
             "max_w": [
-              760,
+              [
+                760,
+              ],
             ],
-            "w_full": [],
+            "w_full": [
+              [],
+            ],
           },
           "kind": "v_flex",
           "nodes": [
@@ -3515,12 +5243,18 @@ exports[`golden: ticket.view R2-3 1`] = `
               "arg": undefined,
               "calls": {
                 "gap": [
-                  6,
+                  [
+                    6,
+                  ],
                 ],
                 "id": [
-                  "composer-form",
+                  [
+                    "composer-form",
+                  ],
                 ],
-                "w_full": [],
+                "w_full": [
+                  [],
+                ],
               },
               "kind": "v_flex",
               "nodes": [
@@ -3528,7 +5262,9 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "arg": undefined,
                   "calls": {
                     "gap": [
-                      4,
+                      [
+                        4,
+                      ],
                     ],
                   },
                   "kind": "v_flex",
@@ -3537,28 +5273,44 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "bg": [
-                          "surface",
+                          [
+                            "surface",
+                          ],
                         ],
                         "border": [
-                          1,
+                          [
+                            1,
+                          ],
                         ],
                         "border_color": [
-                          "border",
+                          [
+                            "border",
+                          ],
                         ],
                         "id": [
-                          "field-body",
+                          [
+                            "field-body",
+                          ],
                         ],
                         "p": [
-                          8,
+                          [
+                            8,
+                          ],
                         ],
                         "rounded": [
-                          6,
+                          [
+                            6,
+                          ],
                         ],
                         "text_color": [
-                          "foreground",
+                          [
+                            "foreground",
+                          ],
                         ],
                         "text_size": [
-                          12,
+                          [
+                            12,
+                          ],
                         ],
                       },
                       "kind": "div",
@@ -3575,7 +5327,9 @@ exports[`golden: ticket.view R2-3 1`] = `
                             "text": "",
                           },
                           "calls": {
-                            "w_full": [],
+                            "w_full": [
+                              [],
+                            ],
                           },
                           "kind": "Textarea",
                           "nodes": [],
@@ -3587,24 +5341,38 @@ exports[`golden: ticket.view R2-3 1`] = `
                 {
                   "arg": undefined,
                   "calls": {
-                    "flex_wrap": [],
-                    "gap": [
-                      8,
+                    "flex_wrap": [
+                      [],
                     ],
-                    "items_center": [],
+                    "gap": [
+                      [
+                        8,
+                      ],
+                    ],
+                    "items_center": [
+                      [],
+                    ],
                   },
                   "kind": "h_flex",
                   "nodes": [
                     {
                       "arg": undefined,
                       "calls": {
-                        "flex_1": [],
-                        "text_color": [
-                          "muted",
+                        "flex_1": [
+                          [],
                         ],
-                        "text_right": [],
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_right": [
+                          [],
+                        ],
                         "text_size": [
-                          11,
+                          [
+                            11,
+                          ],
                         ],
                       },
                       "kind": "div",
@@ -3616,35 +5384,61 @@ exports[`golden: ticket.view R2-3 1`] = `
                       "arg": undefined,
                       "calls": {
                         "bg": [
-                          "solid",
+                          [
+                            "solid",
+                          ],
                         ],
-                        "cursor_pointer": [],
-                        "flex_none": [],
-                        "font_semibold": [],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "font_semibold": [
+                          [],
+                        ],
                         "h": [
-                          26,
+                          [
+                            26,
+                          ],
                         ],
                         "hover": [
-                          "[fn]",
+                          [
+                            "[fn]",
+                          ],
                         ],
                         "id": [
-                          "send-comment",
+                          [
+                            "send-comment",
+                          ],
                         ],
-                        "items_center": [],
+                        "items_center": [
+                          [],
+                        ],
                         "on_click": [
-                          "[fn]",
+                          [
+                            "[fn]",
+                          ],
                         ],
                         "px": [
-                          12,
+                          [
+                            12,
+                          ],
                         ],
                         "rounded": [
-                          6,
+                          [
+                            6,
+                          ],
                         ],
                         "text_color": [
-                          "solid_foreground",
+                          [
+                            "solid_foreground",
+                          ],
                         ],
                         "text_size": [
-                          12,
+                          [
+                            12,
+                          ],
                         ],
                       },
                       "kind": "h_flex",
