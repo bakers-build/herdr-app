@@ -36,7 +36,9 @@ async function edges() {
   const list: { from: string; to: string }[] = [];
   for (const f of await files(ROOT)) {
     const src = await readFile(f, "utf8");
-    for (const m of src.matchAll(/^import[^;]*?"(\.[^"]+)"/gms))
+    // Every reference form, anywhere in the source: `import … from "x"`, `import "x"`,
+    // `export … from "x"`, `import("x")`; multi-line statements end in `from "x"`.
+    for (const m of src.matchAll(/(?:\bfrom|\bimport)\s*\(?\s*"(\.[^"]+)"/g))
       list.push({ from: f, to: resolve(f, "..", m[1]) });
   }
   return list;
