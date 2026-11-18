@@ -162,8 +162,8 @@ openRoute(route, params = {}, extra = {})
 
 A link is data: `{ route, params }`. `params` join the view's props. `open` (in the route's
 definition) holds the fixed fields of the route; `extra` holds the fields computed per call,
-such as `at`, and wins over `open`. Overlays of other Herdr mods (`menu`, `new-menu`) keep
-their own `openOverlay` call.
+such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu) and the
+`new-menu` mod keep their own `openOverlay` call.
 
 ## The routes
 
@@ -179,6 +179,9 @@ their own `openOverlay` call.
 | `project.sidebar-tool` | `project/view/sidebar-tool.js` | the project button in the Tickets card |
 | `shell.rail`, `shell.sidebar`, `shell.tabs`, `shell.status` | `shell/view/…` | layout blocks (`scripts/layout.js`) |
 | `menu`, `dialog` | `ui/components/menu.js`, `ui/form/dialog.js` | popup menus, form dialogs |
+
+Herdr stores route names in its open tabs and layouts, so a route is never renamed; that is why
+`ticket.view` keeps its name although its view file is `ticket/view/full.js`.
 
 ## How a screen comes about
 
