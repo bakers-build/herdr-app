@@ -1,7 +1,8 @@
 import { beforeEach, expect, test } from "bun:test";
-import { click, env, find, findText, load, mount, reset, runs, texts } from "../harness";
+import { click, env, find, findText, load, mount, reset, runs, texts, walk } from "../harness";
 
 const tabs: any = await import("../../mods/bakers/core/tabs.js");
+const registry: any = await import("../../mods/bakers/core/registry.js");
 
 const tab = (id: string, name: string, index: number, extra: any = {}) => ({
   id,
@@ -88,4 +89,40 @@ test("bakers-tabs selects a tab on mouse up", async () => {
   item.calls["on_mouse_down:left"][1]({ click_count: 1 }, { stop_propagation() {} });
   item.calls["on_mouse_up:left"][1]({}, {});
   expect(runs()).toEqual([["tab.select", { id: "t5" }]]);
+});
+
+test("a tab no kind matches is a plain tab", async () => {
+  const Tabs = await load("bakers/main.js");
+  space(tab("t1", "FOO-1 x", 1, { active: true }));
+  env.panes = [{ id: "p1", tab: "t1", program: { name: "zsh", icon: "mods/x/zsh.svg" } }];
+  const view = mount(Tabs, { view: "shell.tabs" });
+  registry._resetForTests();
+  const root = view.render();
+  const item = find(root, "tab-t1");
+  expect(item.calls.italic).toBeUndefined();
+  expect(item.nodes.some((n: any) => n.kind === "image")).toBe(true);
+  env.calls.length = 0;
+  item.calls["on_mouse_down:left"][1]({ click_count: 2 }, { stop_propagation() {} });
+  expect(runs()).toEqual([["tab.rename", { id: "t1" }]]);
+});
+
+test("panel buttons come from tabs.panel in order and honour enabled", async () => {
+  const Tabs = await load("bakers/main.js");
+  const view = mount(Tabs, { view: "shell.tabs" });
+  registry._resetForTests();
+  registry.define("tabs.panel", "b", { order: 1, label: "Bee", bordered: false });
+  registry.define("tabs.panel", "a", { order: 0, label: "Aye", bordered: true });
+  registry.define("tabs.panel", "c", {
+    order: 2,
+    label: "Cee",
+    bordered: false,
+    enabled: () => false,
+  });
+  space(tab("t0", "plain", 1, { active: true }));
+  const root = view.render();
+  const ids: string[] = [];
+  walk(root, (n: any) => {
+    if (String(n.calls.id?.[0]).startsWith("panel-")) ids.push(n.calls.id[0]);
+  });
+  expect(ids).toEqual(["panel-a", "panel-b"]);
 });

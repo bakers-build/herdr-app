@@ -15,7 +15,19 @@ import state from "./list/state.js";
 import routes from "./routes.js";
 import { setView, showClosed } from "./state.js";
 import { refresh } from "./store.js";
-import { setShared } from "herdr";
+import { setShared, shared } from "herdr";
+
+/**
+ * The ticket tab bar decoration: "Tickets <n>" on the home tab while tickets need you, the
+ * blocked dot on a ticket tab that needs you.
+ * @param {any} _tab @param {{ key: string, home: boolean }} info
+ * @returns {{ label?: string, dot?: string } | null}
+ */
+function decorate(_tab, { key, home }) {
+  const needs = /** @type {any} */ (shared("bakers.needs")) ?? { count: 0, ids: [] };
+  if (home) return needs.count ? { label: `Tickets ${needs.count}` } : null;
+  return needs.ids?.includes(key) ? { dot: "blocked" } : null;
+}
 
 export function register() {
   define("tab", "ticket", {
@@ -28,6 +40,8 @@ export function register() {
   define("rail.item", "ticket", { order: 0, route: "ticket.rail" });
   define("sidebar.section", "ticket", { order: 0, title: "Tickets", route: "ticket.sidebar" });
   define("status.item", "ticket", { order: 0, route: "ticket.status" });
+  define("tabs.panel", "ticket", { order: 2, label: "Ticket", bordered: true });
+  define("tabs.decorate", "ticket", { decorate });
   define("window.task", "ticket.refresh", windowTask());
   define("command", "goto", commands.goto);
   define("command", "tickets", commands.tickets);

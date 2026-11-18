@@ -14,8 +14,7 @@ import "./harness";
 const ROOT = resolve(import.meta.dir, "../mods/bakers");
 const FRAMEWORK = ["core", "form", "list", "ui"];
 const MODULES = ["ticket", "project", "shell"];
-// "tabs.js" is temporary: shell still opens ticket tabs until Tasks 5-7.
-const PUBLIC = ["model.js", "state.js", "store.js", "presenter", "list", "tabs.js"];
+const PUBLIC = ["model.js", "state.js", "store.js", "presenter", "list"];
 
 async function files(dir: string): Promise<string[]> {
   const out: string[] = [];
