@@ -23,6 +23,8 @@ export function register() {
     home: { name: "Tickets", route: "ticket.list", index: 1 },
   });
   for (const [name, C] of Object.entries(routes)) define("route", name, C);
+  define("rail.item", "ticket", { order: 0, route: "ticket.rail" });
+  define("sidebar.section", "ticket", { order: 0, title: "Tickets", route: "ticket.sidebar" });
   for (const list of [needsMe, mine, open, state, closed]) define("list", list.id, list);
   define("form", "create", { build: createForm });
   define("form", "state", { build: stateForm });

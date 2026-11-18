@@ -72,3 +72,38 @@ test("sidebar: with one project the picker shows it; with two it opens the proje
     props: { view: "project.picker" },
   });
 });
+
+test("shell draws registered contributions only", async () => {
+  const Bakers = await load("bakers/main.js");
+  const { define, _resetForTests } = await import("../../mods/bakers/core/registry.js");
+  const { register } = await import("../../mods/bakers/shell/register.js");
+  const { div } = await import("gpui-kit");
+  _resetForTests();
+  register();
+  let inits = 0;
+  class X {
+    init() {
+      inits++;
+    }
+    render() {
+      return [div().child("row")];
+    }
+  }
+  class Y {
+    render() {
+      return div().id("rail-y").child("y");
+    }
+  }
+  define("route", "test.x", X);
+  define("route", "test.y", Y);
+  define("sidebar.section", "x", { order: 0, title: "X", route: "test.x" });
+  define("rail.item", "y", { order: 0, route: "test.y" });
+  const side = mount(Bakers, { view: "shell.sidebar" });
+  await flush();
+  expect(texts(side.render())).toEqual(["X", "row"]);
+  side.render();
+  expect(inits).toBe(1);
+  const rail = mount(Bakers, { view: "shell.rail" }).render();
+  expect(texts(rail)).toContain("y");
+  expect(texts(rail)).not.toContain("Tickets");
+});

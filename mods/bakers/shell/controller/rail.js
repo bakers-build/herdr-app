@@ -1,30 +1,32 @@
-// shell/controller/rail: the rail (R2-4, R2-3), 56 px: Herdr's Spaces button and the bakers button
-// with the needs-you count; bakers opens the Tickets tab on Needs me.
+// shell/controller/rail: the rail (R2-4, R2-3), 56 px: the logo and Herdr's Spaces button, then
+// the buttons modules register as rail.item.
 import { div } from "gpui-kit";
 import { v_flex } from "gpui-base";
-import { layout, run, shared } from "herdr";
+import { layout, run } from "herdr";
 import { findNode } from "../../core/herdr.js";
-import { ensureTicketsTab } from "../../ticket/tabs.js";
+import { all, get } from "../../core/registry.js";
+import { square } from "../../ui/components/square.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
-import { setView } from "../../ticket/state.js";
-import { railLabel } from "../../ticket/presenter/counts.js";
 
 export default class Rail {
-  render() {
+  /** @type {any[]} one controller per rail item, made once */
+  items = [];
+
+  /** @param {import("gpui-shell").Props | undefined} _props @param {import("gpui-kit").AsyncContext} cx */
+  init(_props, cx) {
+    this.items = all("rail.item").map((item) => {
+      const C = get("route", item.route);
+      const c = new C({ view: item.route });
+      c.init?.({ view: item.route }, cx);
+      return c;
+    });
+  }
+
+  /** @param {import("gpui-kit").Context} cx */
+  render(cx) {
     const t = tokens();
-    const label = railLabel(/** @type {any} */ (shared("bakers.needs"))?.count ?? 0);
     const sidebarShown = !findNode(layout(), "sidebar")?.hidden;
-    const square = () =>
-      div()
-        .size(36)
-        .flex()
-        .items_center()
-        .justify_center()
-        .rounded(6)
-        .border(1)
-        .bg(t.surface)
-        .cursor_pointer();
-    return v_flex()
+    const rail = v_flex()
       .id("rail")
       .w(56)
       .h_full()
@@ -45,20 +47,16 @@ export default class Rail {
           .accessibility_label(sidebarShown ? "Spaces, sidebar shown" : "Spaces")
           .on_click(() => run("layout.toggle", { id: "sidebar" }))
           .child("Spaces"),
-      )
-      .child(
-        square()
-          .id("rail-bakers")
-          .border_color(t.accent)
-          .text_size(10)
-          .font_semibold()
-          .text_color(t[label.tone])
-          .accessibility_label(label.aria)
-          .on_click(() => {
-            setView("needs-me");
-            ensureTicketsTab();
-          })
-          .child(label.text),
       );
+    for (const c of this.items) {
+      const out = c.render(cx);
+      rail.children(Array.isArray(out) ? out : [out]);
+    }
+    return rail;
+  }
+
+  /** @param {import("gpui-kit").AsyncContext} cx */
+  async close(cx) {
+    for (const c of this.items) await c.close?.(cx);
   }
 }
