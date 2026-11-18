@@ -149,7 +149,7 @@ test("install copies the mods, writes the bakers layout and merges keys; --dry-r
   expect(keys.global["cmd-shift-t"]).toBe("bakers.panel");
   expect(keys.global["cmd-shift-o"]).toBe("pane.split:right");
   expect(await readFile(join(home, "mods", "bakers", "main.js"), "utf8")).toContain(
-    "export const ROUTES",
+    "export function registerAll",
   );
   expect(
     await readFile(join(home, "mods", "bakers", "shell", "controller", "tabs.js"), "utf8"),

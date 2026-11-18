@@ -1,7 +1,6 @@
 // ticket/commands: every write to a ticket, and the only place that sends one.
 // Forms (ticket/form) chain these as steps; menus reach the at-once ones through
-// the action registry (classify, labels).
-import { register } from "../core/actions.js";
+// the action registry (ticket/register.js).
 import { call } from "../core/cli.js";
 import { refresh } from "./store.js";
 
@@ -36,6 +35,3 @@ export async function labels(ticket, fields) {
   await call("bakers_ticket_update", { ticket, ...fields });
   await refresh();
 }
-
-register("ticket.classify", classify);
-register("ticket.labels", labels);

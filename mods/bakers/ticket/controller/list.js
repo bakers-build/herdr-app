@@ -7,9 +7,8 @@
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
 import { setShared, shared } from "herdr";
-import { register } from "../../core/actions.js";
 import { classify } from "../../core/errors.js";
-import { closeAll, closeFinished, openTicket } from "../../core/tabs.js";
+import { openTicket } from "../../core/tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { pager } from "../../ui/components/pager.js";
@@ -26,9 +25,6 @@ import { emptyText, listFor, menuItems } from "../list/index.js";
 import { toQuery } from "../../list/query.js";
 import { runList } from "../../list/run.js";
 import { currentProject } from "../../project/state.js";
-
-register("tabs.closeFinished", () => closeFinished());
-register("tabs.closeAll", () => closeAll());
 
 const CHECK_MS = 300;
 /** Stands in where a branch only runs with a failure; never shown. */

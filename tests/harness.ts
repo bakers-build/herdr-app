@@ -70,7 +70,11 @@ export type Env = {
 
 export const env: Env = {} as Env;
 
+// Set once the mocks below exist and main.js can load; reset() refills the registry from then on.
+let refill: (() => void) | null = null;
+
 export function reset() {
+  refill?.();
   Object.assign(env, {
     calls: [],
     tasks: [],
@@ -194,6 +198,17 @@ mock.module("herdr", () => ({
   env.calls.push({ fn: "fetch", args: [url, opts?.method ?? "GET"] });
   return env.fetch(url, opts);
 };
+
+// A test that imports a module directly still finds every registration: reset() empties the
+// registry and registers again, as main.js does when Herdr loads a copy of the mod.
+{
+  const registry = await import("../mods/bakers/core/registry.js");
+  const main = await import("../mods/bakers/main.js");
+  refill = () => {
+    registry._resetForTests();
+    main.registerAll();
+  };
+}
 
 /** The requests sent with fetch, as decoded URLs. */
 export function fetched(): string[] {

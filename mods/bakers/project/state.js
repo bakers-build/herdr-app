@@ -2,7 +2,6 @@
 // uuid, else the project named in .bakers/project.config.js of the active space, read
 // through JSON:API (bb_project). Shared state carries only the project uuid.
 import { openOverlay, readTextFile, setShared, shared, spaces } from "herdr";
-import { register } from "../core/actions.js";
 import { listProjects, readProject } from "./repository.js";
 import { asProject } from "./model.js";
 
@@ -92,5 +91,3 @@ export async function ensureProject() {
       });
   return resolving;
 }
-
-register("project.choose", (uuid, name) => chooseProject({ uuid, name }));

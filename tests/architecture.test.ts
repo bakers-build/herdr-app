@@ -28,7 +28,9 @@ async function files(dir: string): Promise<string[]> {
 
 const rel = (p: string) => relative(ROOT, p);
 const parts = (p: string) => rel(p).split("/");
-const isController = (p: string) => parts(p)[1] === "controller" || parts(p)[1] === "routes.js";
+// routes.js and register.js assemble the controllers, so they may import them.
+const isController = (p: string) =>
+  parts(p)[1] === "controller" || parts(p)[1] === "routes.js" || parts(p)[1] === "register.js";
 
 async function edges() {
   const list: { from: string; to: string }[] = [];
@@ -111,12 +113,12 @@ test("reads only in repository.js (JSON:API), writes only in commands.js (bakers
 });
 
 test("every route is named after its module and reaches the router", async () => {
-  const { ROUTES } = await import("../mods/bakers/main.js");
+  const { get } = await import("../mods/bakers/core/registry.js");
   for (const m of MODULES) {
     const routes = (await import(`../mods/bakers/${m}/routes.js`)).default;
     for (const name of Object.keys(routes)) {
       expect(name.startsWith(`${m}.`)).toBe(true);
-      expect(ROUTES[name]).toBe(routes[name]);
+      expect(get("route", name)).toBe(routes[name]);
     }
   }
 });

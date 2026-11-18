@@ -1,5 +1,5 @@
 // ui/form/dialog: the dialog frame (frames 4, R3-2) for any form definition
-// registered under props().form: the title, from and to in pills, the consequence, the
+// registered under props().form (core/registry.js): the title, from and to in pills, the consequence, the
 // fields, the message, then the buttons. The primary names the action and its target,
 // the other names what stays and is the default. Keys follow form/keys (a key never
 // writes in a dialog); sending follows form/submit (steps, partial failures, conflict).
@@ -7,10 +7,9 @@
 import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { closeOverlay, notify, openOverlay, props } from "herdr";
-import { register } from "../../core/actions.js";
+import { get } from "../../core/registry.js";
 import { icons, tokens, UI_FONT } from "../theme.js";
 import { formKey } from "../../form/keys.js";
-import { formBuilder } from "../../form/registry.js";
 import { FormState } from "../../form/state.js";
 import { submit } from "../../form/submit.js";
 import { button } from "../components/button.js";
@@ -28,8 +27,6 @@ export function openForm(form, p = {}) {
   });
 }
 
-register("form.open", (form, p) => openForm(form, p));
-
 export default class Dialog {
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
@@ -39,7 +36,7 @@ export default class Dialog {
     this.error = null;
     cx.spawn(async (cx) => {
       try {
-        const build = formBuilder(props()?.form);
+        const build = get("form", props()?.form)?.build;
         if (!build) throw new Error(`bakers: no form "${props()?.form}"`);
         this.def = await build(props());
         this.state = new FormState(this.def);

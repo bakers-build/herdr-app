@@ -48,3 +48,14 @@ test("a disabled menu item does nothing", async () => {
   });
   expect(find(copy.render(), "pick-0").calls.on_click).toBeUndefined();
 });
+
+test("a menu item whose action is not registered closes the menu and does nothing", async () => {
+  const copy = await open({
+    view: "menu",
+    items: [{ label: "Mystery", action: ["no.such.action", "x"] }],
+  });
+  click(find(copy.render(), "pick-0"));
+  await flush();
+  expect(closed()).toBe(true);
+  expect(env.calls.filter((c) => c.fn !== "closeOverlay")).toEqual([]);
+});

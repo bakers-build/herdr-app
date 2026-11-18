@@ -3,7 +3,8 @@ import "../harness";
 
 const { runList } = await import("../../mods/bakers/list/run.js");
 const { toQuery } = await import("../../mods/bakers/list/query.js");
-const { defineList, getList, lists } = await import("../../mods/bakers/list/registry.js");
+const { all, define } = await import("../../mods/bakers/core/registry.js");
+const { findList } = await import("../../mods/bakers/list/lookup.js");
 
 const records = [
   { id: "A-1", title: "Cart page", state: "plan", why: null, since: 30, closed: false },
@@ -90,14 +91,17 @@ test("a server list leaves filter, sort and paging to the server", () => {
 });
 
 test("the registry finds a list by key, also with an argument", () => {
-  defineList({ id: "t-plain", label: "Plain" });
-  defineList({ id: "t-arg", label: (args: string[]) => `State ${args[0]}` });
-  expect(getList("t-plain")).toMatchObject({ def: { id: "t-plain" }, args: [], label: "Plain" });
-  expect(getList("t-arg:working")).toMatchObject({
+  define("list", "t-plain", { id: "t-plain", label: "Plain" });
+  define("list", "t-arg", {
+    id: "t-arg",
+    label: (args: string[]) => `State ${args[0]}`,
+  });
+  expect(findList("t-plain")).toMatchObject({ def: { id: "t-plain" }, args: [], label: "Plain" });
+  expect(findList("t-arg:working")).toMatchObject({
     def: { id: "t-arg" },
     args: ["working"],
     label: "State working",
   });
-  expect(getList("t-nope")).toBe(null);
-  expect(lists().map((d: any) => d.id)).toEqual(expect.arrayContaining(["t-plain", "t-arg"]));
+  expect(findList("t-nope")).toBe(null);
+  expect(all("list").map((d: any) => d.id)).toEqual(expect.arrayContaining(["t-plain", "t-arg"]));
 });

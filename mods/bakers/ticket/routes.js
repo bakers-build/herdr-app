@@ -6,9 +6,6 @@ import LabelPicker from "./controller/label-picker.js";
 import List from "./controller/list.js";
 import Search from "./controller/search.js";
 import View from "./controller/view.js";
-import "./commands.js";
-import "./form/confirm.js";
-import "./form/create.js";
 
 export default {
   "ticket.list": List, // tab "Tickets"
