@@ -3,9 +3,10 @@
 // checkboxes, the hint and the buttons. Each button sends with its own variant.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { theme } from "herdr";
+
 import { button } from "../components/button.js";
 import { field, message } from "./inputs.js";
+import { tokens } from "../theme.js";
 
 /**
  * @param {string} id
@@ -14,7 +15,7 @@ import { field, message } from "./inputs.js";
  * @param {(variant: string, cx: any) => void} onButton
  */
 export function inlineForm(id, def, inputs, onButton) {
-  const t = theme();
+  const t = tokens();
   const fields = def.fields ?? [];
   const texts = fields.filter((/** @type {any} */ f) => f.type !== "checkbox");
   const boxes = fields.filter((/** @type {any} */ f) => f.type === "checkbox");
@@ -28,7 +29,7 @@ export function inlineForm(id, def, inputs, onButton) {
       el.child(div().text_size(11).font_semibold().text_color(t.accent).child(def.label)),
     )
     .children(texts.map((/** @type {any} */ f) => field(f, inputs)))
-    .when(Boolean(msg), (el) => el.child(msg))
+    .when(Boolean(msg), (el) => el.child(msg ?? ""))
     .when(Boolean(boxes.length || def.hint || buttons.length), (el) =>
       el.child(
         h_flex()

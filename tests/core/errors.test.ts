@@ -16,7 +16,7 @@ test("offline: the CLI is missing or unreachable, retry offered", () => {
 });
 
 test("api: a tool this CLI does not serve", () => {
-  expect(classify(new BakersError("t", 4, "unknown tool 't'", { unknownTool: true })).kind).toBe(
+  expect(classify(new BakersError("t", 4, "unknown tool 't'", { unknownTool: true }))?.kind).toBe(
     "api",
   );
 });
@@ -29,7 +29,7 @@ test("invalid: a validation error, with the field when the CLI names one", () =>
 });
 
 test("denied: the server refuses the change", () => {
-  expect(classify(new BakersError("t", 1, "Transition not allowed by the workflow")).kind).toBe(
+  expect(classify(new BakersError("t", 1, "Transition not allowed by the workflow"))?.kind).toBe(
     "denied",
   );
 });

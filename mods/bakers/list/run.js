@@ -22,7 +22,7 @@ function test(actual, op, want) {
     case "<>":
       return actual !== want;
     case "IN":
-      return [].concat(want).includes(actual);
+      return /** @type {any[]} */ ([]).concat(want).includes(actual);
     case "CONTAINS":
       return String(actual ?? "")
         .toLowerCase()
@@ -76,6 +76,7 @@ export function runList(def, records, o = {}) {
       ),
     );
   if (!o.server && def.sort?.length) rows.sort(comparator(def.sort));
+  /** @type {{ key: string, rows: any[] }[] | null} */
   let groups = null;
   if (def.group) {
     const order = def.group.order ?? [];
@@ -90,7 +91,7 @@ export function runList(def, records, o = {}) {
       const ib = order.indexOf(b);
       return (ia < 0 ? order.length : ia) - (ib < 0 ? order.length : ib);
     });
-    groups = keys.map((k) => ({ key: k, rows: by.get(k) }));
+    groups = keys.map((k) => ({ key: k, rows: by.get(k) ?? [] }));
     rows = groups.flatMap((g) => g.rows);
   }
   const total = rows.length;

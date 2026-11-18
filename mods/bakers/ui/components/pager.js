@@ -1,10 +1,10 @@
 // ui/components/pager: the row below a list that loads the next page.
 import { h_flex } from "gpui-base";
-import { theme } from "herdr";
+import { tokens } from "../theme.js";
 
 /** @param {string} label @param {(e: any, cx: any) => void} onMore */
 export function pager(label, onMore) {
-  const t = theme();
+  const t = tokens();
   return h_flex()
     .id("show-more")
     .px(12)

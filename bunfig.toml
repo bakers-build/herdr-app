@@ -1,0 +1,5 @@
+# bun test --coverage (bun run test) writes coverage/lcov.info for the floor check,
+# scripts/check/coverage.ts. The test helpers and fixtures do not count.
+[test]
+coverageReporter = ["text", "lcov"]
+coveragePathIgnorePatterns = ["tests/**"]

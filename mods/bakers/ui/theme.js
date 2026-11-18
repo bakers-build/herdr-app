@@ -17,6 +17,9 @@ export const icons = {
   arrow: "mods/bakers/ui/icons/arrow-right.svg",
 };
 
+/** Herdr's theme colors. herdr.d.ts types them as plain strings, gpui-kit's style methods
+ *  take its `#rrggbb` Color; Herdr's theme always holds hex colors, so the cast bridges the two.
+ *  @returns {Record<string, import("gpui-kit").Color>} */
 export function tokens() {
-  return theme();
+  return /** @type {Record<string, import("gpui-kit").Color>} */ (theme());
 }

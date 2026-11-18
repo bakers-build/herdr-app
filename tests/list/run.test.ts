@@ -46,7 +46,7 @@ test("filters (with values from the context), derived filters, sort and the expo
 test("grouping follows the given order; unknown groups go last", () => {
   const def = { id: "g", group: { by: "state", order: ["working", "plan"] } };
   const r = runList(def, records, {});
-  expect(r.groups.map((g: any) => [g.key, g.rows.map((x: any) => x.id)])).toEqual([
+  expect(r.groups?.map((g: any) => [g.key, g.rows.map((x: any) => x.id)])).toEqual([
     ["working", ["A-2", "A-3"]],
     ["plan", ["A-1"]],
     ["done", ["A-4"]],

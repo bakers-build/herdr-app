@@ -2,8 +2,9 @@
 // render) and the drawing of each field. Every change goes into the form's state.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, Textarea, TextareaState, v_flex } from "gpui-base";
-import { theme } from "herdr";
+
 import { heading } from "../components/text.js";
+import { tokens } from "../theme.js";
 
 /**
  * A field: { name, type: "input" | "textarea" | "checkbox" | "choice", label?, heading?,
@@ -49,7 +50,7 @@ export class FormInputs {
 
 /** @param {any} f @param {FormInputs} inputs */
 export function field(f, inputs) {
-  const t = theme();
+  const t = tokens();
   const state = inputs.state;
   const error = state.errors[f.name];
   if (f.type === "checkbox") {
@@ -122,7 +123,7 @@ export function field(f, inputs) {
 
 /** The form's message (a failure or the conflict warning). @param {import("../../form/state.js").FormState} state */
 export function message(state) {
-  const t = theme();
+  const t = tokens();
   return state.message
     ? div().id("form-message").text_size(11).text_color(t.blocked).child(state.message.message)
     : null;

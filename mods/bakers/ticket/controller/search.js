@@ -3,10 +3,10 @@
 // opens the ticket as a tab, or selects its tab when it is open; Esc closes.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
-import { closeOverlay, props, theme } from "herdr";
+import { closeOverlay, props } from "herdr";
 import { classify } from "../../core/errors.js";
 import { openTicket } from "../../core/tabs.js";
-import { UI_FONT } from "../../ui/theme.js";
+import { tokens, UI_FONT } from "../../ui/theme.js";
 import { mono } from "../../ui/components/text.js";
 import { getStore, ready } from "../store.js";
 import { searchTickets } from "../repository.js";
@@ -18,13 +18,20 @@ const HINT =
   "Identifier or words of the title. Enter opens it as a tab, or selects its tab if it is open.";
 
 export default class Goto {
+  /** @type {import("gpui-kit").FocusHandle} init sets it before the first render */
+  handle = /** @type {any} */ (null);
+  input = InputState.new({ placeholder: "" });
+  /** @type {any[]} */
+  results = [];
+  at = 0;
+  /** Counts keystrokes; a search answers only if no newer keystroke came. */
+  seq = 0;
+  /** @type {string | null} */
+  error = null;
+
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     this.handle = cx.focus_handle();
-    this.input = InputState.new({ placeholder: "" });
-    this.results = [];
-    this.at = 0;
-    this.seq = 0;
-    this.error = null;
     this.input.on("change", (_e, cx) => {
       const seq = ++this.seq;
       cx.timer.after(DEBOUNCE_MS, (cx) => {
@@ -38,7 +45,7 @@ export default class Goto {
     });
   }
 
-  /** @param {number} seq @param {any} cx */
+  /** @param {number} seq @param {import("gpui-kit").Context} cx */
   search(seq, cx) {
     const query = this.input.value().trim();
     if (!query) {
@@ -69,7 +76,7 @@ export default class Goto {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     return v_flex()
       .id("goto")
       .w(480)
@@ -145,7 +152,12 @@ export default class Goto {
           ),
       )
       .when(Boolean(this.error), (el) =>
-        el.child(div().text_size(11).text_color(t.blocked).child(this.error)),
+        el.child(
+          div()
+            .text_size(11)
+            .text_color(t.blocked)
+            .child(this.error ?? ""),
+        ),
       )
       .child(div().text_size(11).text_color(t.muted).child(HINT));
   }

@@ -1,10 +1,10 @@
 // ui/components/chip: the dashed chip, e.g. "API" for what the bakers API cannot deliver yet.
 import { h_flex } from "gpui-base";
-import { theme } from "herdr";
+import { tokens } from "../theme.js";
 
 /** @param {string} [text] @param {number} [size] */
 export function chip(text = "API", size = 8) {
-  const t = theme();
+  const t = tokens();
   return h_flex()
     .flex_none()
     .h(size === 8 ? 14 : 16)

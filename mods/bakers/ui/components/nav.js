@@ -2,15 +2,16 @@
 // 18 px, the selected row on the selected color in the accent (the sidebar's views).
 import { div } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { theme } from "herdr";
+
 import { chip } from "./chip.js";
+import { tokens } from "../theme.js";
 
 /**
  * @param {{ key: string, label: string, count: number | null, selected: boolean, sub?: boolean, dim?: boolean, api?: boolean, disabled?: boolean }[]} rows
  * @param {(key: string) => void} onChoose
  */
 export function navRows(rows, onChoose) {
-  const t = theme();
+  const t = tokens();
   return rows.map((r) =>
     h_flex()
       .id(`view-${r.key}`)

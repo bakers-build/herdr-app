@@ -6,9 +6,9 @@
 // On success: close, a toast with the definition's text, then its after().
 import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { closeOverlay, notify, openOverlay, props, theme } from "herdr";
+import { closeOverlay, notify, openOverlay, props } from "herdr";
 import { register } from "../../core/actions.js";
-import { icons, UI_FONT } from "../theme.js";
+import { icons, tokens, UI_FONT } from "../theme.js";
 import { formKey } from "../../form/keys.js";
 import { formBuilder } from "../../form/registry.js";
 import { FormState } from "../../form/state.js";
@@ -31,6 +31,7 @@ export function openForm(form, p = {}) {
 register("form.open", (form, p) => openForm(form, p));
 
 export default class Dialog {
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     this.handle = cx.focus_handle();
     this.handle.focus();
@@ -57,8 +58,10 @@ export default class Dialog {
 
   /** @param {any} cx */
   send(cx) {
-    cx.spawn(async (cx) => {
-      const r = await submit(this.def, this.state);
+    const state = this.state;
+    if (!state) return;
+    cx.spawn(async (/** @type {any} */ cx) => {
+      const r = await submit(this.def, state);
       if (r.ok) {
         this.close();
         if (r.success) notify({ title: r.success, level: "success" });
@@ -69,7 +72,7 @@ export default class Dialog {
   }
 
   render() {
-    const t = theme();
+    const t = tokens();
     const root = v_flex()
       .id("confirm")
       .w_full()
@@ -77,7 +80,8 @@ export default class Dialog {
       .font_family(UI_FONT)
       .text_size(13)
       .text_color(t.foreground);
-    if (!this.def)
+    // init sets the handle; def, state and inputs are set together, without an await between.
+    if (!this.def || !this.state || !this.inputs || !this.handle)
       return root.p(20).child(
         div()
           .text_color(this.error ? t.blocked : t.muted)
@@ -97,6 +101,7 @@ export default class Dialog {
       d.keepSolid ? {} : { primary: true, disabled: this.state.busy },
     );
     const msg = message(this.state);
+    const inputs = this.inputs;
     return root
       .p(d.size === 15 ? 16 : 20)
       .gap(12)
@@ -127,8 +132,8 @@ export default class Dialog {
       .when(Boolean(d.text), (el) =>
         el.child(div().text_size(12).text_color(t.muted).child(d.text)),
       )
-      .children((d.fields ?? []).map((/** @type {any} */ f) => field(f, this.inputs)))
-      .when(Boolean(msg), (el) => el.child(msg))
+      .children((d.fields ?? []).map((/** @type {any} */ f) => field(f, inputs)))
+      .when(Boolean(msg), (el) => el.child(msg ?? ""))
       .child(
         h_flex()
           .id("dialog-footer")
