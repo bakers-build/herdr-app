@@ -113,6 +113,10 @@ bun run check   # every check below, as CI runs them; or `just check`
 - `bun run test:contract` (CI job `contract`; needs Docker, not part of `check`): starts the bakers
   server from its release image on SQLite, seeds its e2e test world, and runs
   `tests/contract/*.test.ts`, the mod's JSON:API reads, against it with a real token.
+- `herdr-app check mods/bakers` (local only, not part of `check` or CI): loads the mod in Herdr
+  and renders its eager elements in a hidden window. CI cannot run it: `herdrdev/herdr-app`
+  has tags but no release with a build to install, and the app is a macOS (arm64) bundle that needs a window.
+  Run it before pushing a UI change.
 - `bun run test`: `bun test --coverage`, then a repo-wide floor (lines 92 %, functions 90 %) that
   also fails on a source file no test loads. To run one file, use `bun test <file>`.
 
