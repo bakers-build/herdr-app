@@ -2,7 +2,10 @@
 // Changes panel buttons.
 import { shared } from "herdr";
 import { define } from "../core/registry.js";
-import routes from "./routes.js";
+import Rail from "./controller/rail.js";
+import Sidebar from "./controller/sidebar.js";
+import Status from "./controller/status.js";
+import Tabs from "./controller/tabs.js";
 
 /** @param {string} id */
 const panelOn = (id) => {
@@ -11,7 +14,10 @@ const panelOn = (id) => {
 };
 
 export function register() {
-  for (const [name, C] of Object.entries(routes)) define("route", name, C);
+  define("route", "shell.rail", { view: Rail }); // block bakers-rail, 56 px
+  define("route", "shell.sidebar", { view: Sidebar }); // block bakers-sidebar, below Spaces and Agents
+  define("route", "shell.tabs", { view: Tabs }); // block tabs, 40 px
+  define("route", "shell.status", { view: Status }); // block bakers-status, beside Herdr's status
   define("tabs.panel", "files", {
     order: 0,
     label: "Files",

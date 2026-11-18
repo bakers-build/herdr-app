@@ -111,10 +111,8 @@ test("a status click runs only the first item's click", async () => {
   registry._resetForTests();
   const ran: string[] = [];
   for (const name of ["first", "second"]) {
-    registry.define(
-      "route",
-      `probe.${name}`,
-      class {
+    registry.define("route", `probe.${name}`, {
+      view: class {
         render() {
           return [];
         }
@@ -122,7 +120,7 @@ test("a status click runs only the first item's click", async () => {
           ran.push(name);
         }
       },
-    );
+    });
   }
   registry.define("status.item", "second", { order: 1, route: "probe.second" });
   registry.define("status.item", "first", { order: 0, route: "probe.first" });
@@ -136,19 +134,15 @@ test("a status click skips an item without click() and runs the first one that h
   await load("bakers/main.js");
   registry._resetForTests();
   const ran: string[] = [];
-  registry.define(
-    "route",
-    "probe.plain",
-    class {
+  registry.define("route", "probe.plain", {
+    view: class {
       render() {
         return [];
       }
     },
-  );
-  registry.define(
-    "route",
-    "probe.clicker",
-    class {
+  });
+  registry.define("route", "probe.clicker", {
+    view: class {
       render() {
         return [];
       }
@@ -156,7 +150,7 @@ test("a status click skips an item without click() and runs the first one that h
         ran.push("clicker");
       }
     },
-  );
+  });
   registry.define("status.item", "plain", { order: 0, route: "probe.plain" });
   registry.define("status.item", "clicker", { order: 1, route: "probe.clicker" });
   const view = mount(Status, { view: "shell.status" });
@@ -169,10 +163,8 @@ test("a contribution naming an unregistered route is skipped; the valid one stil
   await load("bakers/main.js");
   registry._resetForTests();
   const ran: string[] = [];
-  registry.define(
-    "route",
-    "probe.ok",
-    class {
+  registry.define("route", "probe.ok", {
+    view: class {
       render() {
         return [];
       }
@@ -180,7 +172,7 @@ test("a contribution naming an unregistered route is skipped; the valid one stil
         ran.push("ok");
       }
     },
-  );
+  });
   registry.define("status.item", "typo", { order: 0, route: "probe.missing" });
   registry.define("status.item", "ok", { order: 1, route: "probe.ok" });
   registry.define("window.task", "t", { every: 1000, run: () => void ran.push("task") });

@@ -12,7 +12,7 @@
 // docs/architecture.md describes the layers; tests/architecture.test.ts keeps them apart.
 import { div, View } from "gpui-kit";
 import { props } from "herdr";
-import { get } from "./core/registry.js";
+import { viewOf } from "./core/router.js";
 import { register as registerProject } from "./project/register.js";
 import { register as registerShell } from "./shell/register.js";
 import { register as registerTicket } from "./ticket/register.js";
@@ -31,7 +31,7 @@ registerAll();
 export default class Bakers extends View {
   /** @param {import("gpui-shell").Props | undefined} p @param {import("gpui-kit").AsyncContext} cx */
   init(p, cx) {
-    const C = get("route", props()?.view);
+    const C = viewOf(props()?.view);
     this.inner = C ? new C(p) : null;
     this.inner?.init?.(p, cx);
   }

@@ -94,8 +94,8 @@ test("shell draws registered contributions only", async () => {
       return div().id("rail-y").child("y");
     }
   }
-  define("route", "test.x", X);
-  define("route", "test.y", Y);
+  define("route", "test.x", { view: X });
+  define("route", "test.y", { view: Y });
   define("sidebar.section", "x", { order: 0, title: "X", route: "test.x" });
   define("rail.item", "y", { order: 0, route: "test.y" });
   const side = mount(Bakers, { view: "shell.sidebar" });

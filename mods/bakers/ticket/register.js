@@ -1,6 +1,15 @@
 // ticket/register: what the ticket module contributes to the registry: its routes, lists,
 // forms and the actions its menus run.
 import { define } from "../core/registry.js";
+import ConductorPicker from "./controller/conductor-picker.js";
+import Context from "./controller/context.js";
+import LabelPicker from "./controller/label-picker.js";
+import List from "./controller/list.js";
+import Rail from "./controller/rail.js";
+import Search from "./controller/search.js";
+import Sidebar from "./controller/sidebar.js";
+import Status from "./controller/status.js";
+import View from "./controller/view.js";
 import * as commands from "./controller/commands.js";
 import { windowTask } from "./window.js";
 import { closeAll, closeFinished } from "./tabs.js";
@@ -12,7 +21,6 @@ import mine from "./list/mine.js";
 import needsMe from "./list/needs-me.js";
 import open from "./list/open.js";
 import state from "./list/state.js";
-import routes from "./routes.js";
 import { setView, showClosed } from "./state.js";
 import { refresh } from "./store.js";
 import { setShared, shared } from "herdr";
@@ -37,7 +45,15 @@ export function register() {
     match: /^([A-Z][A-Z0-9_]*-\d+) (\S+)$/, // group 1 = key, group 2 = the name's state part
     home: { name: "Tickets", route: "ticket.list", index: 1 },
   });
-  for (const [name, C] of Object.entries(routes)) define("route", name, C);
+  define("route", "ticket.list", { view: List }); // tab "Tickets"
+  define("route", "ticket.view", { view: View }); // tab "<ID> <state>", props.ticket
+  define("route", "ticket.context", { view: Context }); // the right panel's child "ticket"
+  define("route", "ticket.rail", { view: Rail }); // the rail button
+  define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar
+  define("route", "ticket.status", { view: Status }); // the status block's item
+  define("route", "ticket.search", { view: Search }); // popup, cmd-shift-O
+  define("route", "ticket.conductor-picker", { view: ConductorPicker }); // popup, props.ticket
+  define("route", "ticket.label-picker", { view: LabelPicker }); // popup, props.ticket
   define("rail.item", "ticket", { order: 0, route: "ticket.rail" });
   define("sidebar.section", "ticket", { order: 0, title: "Tickets", route: "ticket.sidebar" });
   define("status.item", "ticket", { order: 0, route: "ticket.status" });

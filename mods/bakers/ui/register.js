@@ -5,8 +5,8 @@ import Menu from "./components/menu.js";
 import Dialog, { openForm } from "./form/dialog.js";
 
 export function register() {
-  define("route", "menu", Menu);
-  define("route", "dialog", Dialog);
+  define("route", "menu", { view: Menu });
+  define("route", "dialog", { view: Dialog });
   define("action", "form.open", {
     run: (/** @type {string} */ form, /** @type {any} */ p) => openForm(form, p),
   });

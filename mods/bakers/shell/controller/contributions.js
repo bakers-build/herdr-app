@@ -1,7 +1,7 @@
 // shell/controller/contributions: the shell draws what modules contribute by route. Each
 // contribution's controller is made once from its route, started with init, drawn with render
 // (one element or an array of them) and stopped with close.
-import { get } from "../../core/registry.js";
+import { viewOf } from "../../core/router.js";
 
 /**
  * Makes the controller a route names and starts it. `ready` is what its init returned. A route
@@ -10,7 +10,7 @@ import { get } from "../../core/registry.js";
  * @returns {{ c: any, ready: unknown } | null}
  */
 export function launch(route, cx) {
-  const C = get("route", route);
+  const C = viewOf(route);
   if (!C) return null;
   const c = new C({ view: route });
   return { c, ready: c.init?.({ view: route }, cx) };

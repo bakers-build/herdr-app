@@ -28,9 +28,8 @@ async function files(dir: string): Promise<string[]> {
 
 const rel = (p: string) => relative(ROOT, p);
 const parts = (p: string) => rel(p).split("/");
-// routes.js and register.js assemble the controllers, so they may import them.
-const isController = (p: string) =>
-  parts(p)[1] === "controller" || parts(p)[1] === "routes.js" || parts(p)[1] === "register.js";
+// register.js assembles the controllers, so it may import them.
+const isController = (p: string) => parts(p)[1] === "controller" || parts(p)[1] === "register.js";
 
 async function edges() {
   const list: { from: string; to: string }[] = [];
@@ -115,14 +114,24 @@ test("reads only in repository.js (JSON:API), writes only in commands.js (bakers
 });
 
 test("every route is named after its module and reaches the router", async () => {
-  const { get } = await import("../mods/bakers/core/registry.js");
+  const { viewOf } = await import("../mods/bakers/core/router.js");
+  const { registerAll } = await import("../mods/bakers/main.js");
+  registerAll();
+  const bad: string[] = [];
   for (const m of MODULES) {
-    const routes = (await import(`../mods/bakers/${m}/routes.js`)).default;
-    for (const name of Object.keys(routes)) {
-      expect(name.startsWith(`${m}.`)).toBe(true);
-      expect(get("route", name)).toBe(routes[name]);
+    const src = await readFile(join(ROOT, m, "register.js"), "utf8");
+    const names = [...src.matchAll(/define\("route", "([^"]+)"/g)].map((x) => x[1]);
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) {
+      if (!name.startsWith(`${m}.`)) bad.push(`${m}/register.js defines route ${name}`);
+      if (typeof viewOf(name) !== "function") bad.push(`${m}: ${name} has no view`);
     }
   }
+  expect(bad).toEqual([]);
+});
+
+test("no routes.js exists: routes are defined in register.js", async () => {
+  expect((await files(ROOT)).filter((f) => f.endsWith("/routes.js")).map(rel)).toEqual([]);
 });
 
 // The generic part is the framework; every other top-level folder is a domain module.
