@@ -69,7 +69,7 @@ export default class Status {
         cx.notify();
       })
       .on_click(() => {
-        for (const c of this.items) c.click?.();
+        this.items.find((c) => c.click)?.click();
       })
       .children(this.items.flatMap((c) => draw(c, cx)));
   }

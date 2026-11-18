@@ -106,6 +106,32 @@ test("status with no items draws an empty block and a click does nothing", async
   expect(runs()).toEqual([]);
 });
 
+test("a status click runs only the first item's click", async () => {
+  await load("bakers/main.js");
+  registry._resetForTests();
+  const ran: string[] = [];
+  for (const name of ["first", "second"]) {
+    registry.define(
+      "route",
+      `probe.${name}`,
+      class {
+        render() {
+          return [];
+        }
+        click() {
+          ran.push(name);
+        }
+      },
+    );
+  }
+  registry.define("status.item", "second", { order: 1, route: "probe.second" });
+  registry.define("status.item", "first", { order: 0, route: "probe.first" });
+  const view = mount(Status, { view: "shell.status" });
+  await flush();
+  click(view.render());
+  expect(ran).toEqual(["first"]);
+});
+
 test("goto keeps its x with the sidebar shown and hidden", async () => {
   for (const [hidden, x] of [
     [false, 728],
