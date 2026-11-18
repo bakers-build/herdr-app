@@ -83,3 +83,14 @@ test("the test job lints the workflows with actionlint pinned by version and dig
   const image = step.run.match(/rhysd\/actionlint:\S+/)[0];
   expect(pkg.scripts["lint:ci"]).toContain(image);
 });
+
+test("the contract job runs the contract test with read-only rights", () => {
+  const job = ci.jobs.contract;
+  expect(job).toBeDefined();
+  expect(job["runs-on"]).toBe("ubuntu-latest");
+  expect(job["timeout-minutes"]).toBeLessThanOrEqual(20);
+  expect(job.permissions ?? ci.permissions).toEqual({ contents: "read" });
+  expect(runs("contract")).toContain("bun run test:contract");
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  expect(pkg.scripts["test:contract"]).toBe("bun tests/contract/run.ts");
+});

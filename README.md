@@ -110,6 +110,9 @@ bun run check   # every check below, as CI runs them; or `just check`
   `coverage/`, `mods/**/gpui-kit.d.ts`, ...).
 - `bun run herdr-types`: the vendored Herdr types match `types/herdr-version.json`, and so does an
   installed `herdr-app`.
+- `bun run test:contract` (CI job `contract`; needs Docker, not part of `check`): starts the bakers
+  server from its release image on SQLite, seeds its e2e test world, and runs
+  `tests/contract/*.test.ts`, the mod's JSON:API reads, against it with a real token.
 - `bun run test`: `bun test --coverage`, then a repo-wide floor (lines 92 %, functions 90 %) that
   also fails on a source file no test loads. To run one file, use `bun test <file>`.
 

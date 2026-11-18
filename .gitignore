@@ -13,5 +13,8 @@ mods/**/*.d.ts
 # Release packages (bun run release:package)
 dist/
 
+# Run artefacts of agent runs (logs, spikes)
+assets-ai/
+
 # Test coverage reports (bun test --coverage)
 coverage/
