@@ -387,3 +387,92 @@ used below.
   `tests/ticket/tabs.test.ts` (compare with `git diff -M`).
 - [ ] Record for review: a person takes the R2-4 and R2-3 screenshots at 1440 x 900 on `main` and
   on the branch, per `docs/screenshots.md`, and attaches both pairs.
+
+---
+
+## v3 refinement (approved 2026-11-18, ticket spec `f0ece5ad`, plan `03bb59ce`, test `0d584a97`)
+
+Tasks 0 to 10 are done (`b987aa2` → `2818fa4`). The v3 changes: route definitions are
+`{ view, open? }` and live in `register.js` (no `routes.js`); links are built from a route
+through `core/router.js`; `controller/` is renamed `view/`. The Global Constraints above still
+hold, and route names, props, shared keys, key commands and every Herdr call stay the same.
+
+### Task 11: Route definitions in register.js
+
+**Files:**
+- Create: `mods/bakers/core/router.js` (`viewOf(route)`), `tests/core/router.test.ts`
+- Modify: `mods/bakers/main.js` (route through `viewOf`), `mods/bakers/{ticket,project,shell}/register.js`,
+  `mods/bakers/ui/register.js` (`menu`, `dialog` become `{ view }`), `tests/architecture.test.ts`,
+  `tests/main.test.ts` (lookup only), and any test that reads `get("route", …)` as a class
+- Delete: `mods/bakers/{ticket,project,shell}/routes.js`
+
+**Interfaces:**
+- A route definition is `{ view: ViewClass, open?: { kind, width?, height?, modal?, frame?, key?, keep? } }`.
+  `open` is filled in Task 12; in this task every route is `{ view }`.
+- `viewOf(route: string): ViewClass | null` = `get("route", route)?.view ?? null`.
+- The shell's contributions helper creates `new (viewOf(route))(…)`.
+
+- [ ] **Step 1: Failing tests.** `tests/core/router.test.ts`: `viewOf` returns the registered view and
+  null for an unknown route. Rewrite the architecture test "every route is named after its module and
+  reaches the router": for each module folder, read its `register.js` source, collect every
+  `define("route", "<name>"`, expect each name to start with `<module>.`, and expect
+  `viewOf(name)` to be a function after `registerAll()`. Keep the same failure strength. Remove
+  `routes.js` from the assembler list.
+- [ ] **Step 2:** Run `bun test tests/core/router.test.ts tests/architecture.test.ts`. Expected: FAIL.
+- [ ] **Step 3:** Implement. Move each `routes.js` entry into `register.js` as
+  `define("route", "<name>", { view: C }); // <the entry's comment>`, then delete `routes.js`.
+- [ ] **Step 4: Prove RED.** Plant `define("route", "x.y", { view: class {} })` in
+  `project/register.js`; the route test fails naming project; revert.
+- [ ] **Step 5:** `bun run check` green; golden diff against `502e480` empty.
+- [ ] **Step 6: Commit** `refactor: routes are defined in register.js with their view`.
+
+### Task 12: Links from a route
+
+**Files:**
+- Modify: `mods/bakers/core/router.js` (`openRoute`), `tests/core/router.test.ts`, every file that calls
+  `openOverlay({ mod: "bakers", … })` (about ten: ticket commands, context, detail view, project
+  state and sidebar tool, shell tabs, ui menu and dialog), the `register.js` files (`open` fields),
+  `tests/architecture.test.ts`
+
+**Interfaces:**
+- `openRoute(route: string, params?: Record<string, unknown>, extra?: object): string` calls
+  `openOverlay({ mod: "bakers", props: { view: route, ...params }, ...def.open, ...extra })` and
+  returns its id. Unknown route: returns null and opens nothing.
+- Fields that are fixed per route go into `open`; fields computed per call (`at`, a measured
+  `width`) go into `extra`. The resulting `openOverlay` argument must be byte-identical to today
+  (the golden snapshots and the existing tests check it, key order included where a test pins it).
+
+- [ ] **Step 1: Failing tests.** `openRoute` sends the merged spec and returns the id; an unknown
+  route opens nothing. Architecture rule "only core/router.js opens a bakers overlay": no other
+  file contains `openOverlay(` followed by `mod: "bakers"` in the same call.
+- [ ] **Step 2:** Run them. Expected: FAIL.
+- [ ] **Step 3:** Implement and migrate every bakers overlay call. Overlays of other mods
+  (`new-menu`) keep their direct call.
+- [ ] **Step 4: Prove RED.** Plant a direct `openOverlay({ mod: "bakers", props: { view: "x" } })`
+  in a view; the rule fails naming the file; revert.
+- [ ] **Step 5:** `bun run check` green; golden diff empty.
+- [ ] **Step 6: Commit** `feat(core): links are built from a route`.
+
+### Task 13: controller/ is view/
+
+**Files:** every `mods/bakers/*/controller/` folder, its importers, `tests/architecture.test.ts`,
+tests that import from `controller/`, comments.
+
+- [ ] **Step 1:** `git mv mods/bakers/<m>/controller mods/bakers/<m>/view` for ticket, project and
+  shell; `git mv mods/bakers/ticket/view/view.js mods/bakers/ticket/view/detail.js`. Fix imports.
+- [ ] **Step 2:** Rename "controller" to "view" in comments, test names and the layer rules of
+  `tests/architecture.test.ts` (the folder check becomes `view`). Assertions and expected values
+  stay the same.
+- [ ] **Step 3:** `git ls-files 'mods/bakers/*/controller/*'` is empty; `git grep -niw controllers\?
+  -- mods tests` shows nothing left that means these classes.
+- [ ] **Step 4:** `bun run check` green; golden diff empty.
+- [ ] **Step 5: Commit** `refactor: controller/ is view/`.
+
+### Task 14: Docs and final check
+
+- [ ] Update `docs/architecture.md` (route definitions `{ view, open }`, `core/router.js`,
+  `openRoute`, links as `{ route, params }`, `view/`, no `routes.js`, the new rule), `main.js`'s
+  header and the repo spec doc (a short v3 section).
+- [ ] `bun run check` green; `git diff --exit-code 502e480 -- tests/__snapshots__` empty;
+  `git diff -M 2818fa4..HEAD -- tests` shows no deleted test and no changed expected value.
+- [ ] **Commit** `docs: route definitions, links and views`.
