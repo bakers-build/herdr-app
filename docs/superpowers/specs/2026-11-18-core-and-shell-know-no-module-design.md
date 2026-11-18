@@ -189,7 +189,7 @@ contributions:
 
 ### 4. Tests
 
-- **Characterisation first.** Before any change, a new `tests/shell/render-golden.test.ts`
+- **Characterisation first.** Before any change, a new `tests/golden.test.ts`
   renders `shell.rail`, `shell.sidebar`, `shell.status` and `shell.tabs`, plus `ticket.list` and
   `ticket.view` for the frames R2-4 and R2-3, on the shop fixture. The tree is serialised with
   each node's calls and texts, and every function is replaced by `"[fn]"`. Each tree is pinned
