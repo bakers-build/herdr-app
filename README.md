@@ -138,6 +138,9 @@ bun run check   # every check below, as CI runs them; or `just check`
   Herdr (`herdr-app check`), which renders its eager elements in a hidden window. Uses `HERDR_APP`
   or an installed `herdr-app`; otherwise (Linux, as in CI) it downloads the pinned build from
   `releases.herdr.dev` and verifies its checksum (`types/herdr-version.json`).
+- `bun run test:e2e` (CI job `e2e`; needs Docker, the bakers CLI and Herdr, not part of `check`):
+  the real Herdr window with the mod against the seeded server, every home in a temp directory.
+  On macOS it opens a real, isolated Herdr window. `KEEP=1` keeps it all for a look.
 - `bun run test`: `bun test --coverage`, then a repo-wide floor (lines 92 %, functions 90 %) that
   also fails on a source file no test loads. To run one file, use `bun test <file>`.
 

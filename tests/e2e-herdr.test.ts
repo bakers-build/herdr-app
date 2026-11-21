@@ -92,7 +92,12 @@ test("readShared gives {} for a missing or broken shared.json", () => {
 });
 
 test("herdrCli runs the binary and parses its JSON answer", () => {
-  const ok = herdrCli(process.execPath, {}, "-e", "console.log(JSON.stringify({ layout: 'bakers' }))");
+  const ok = herdrCli(
+    process.execPath,
+    {},
+    "-e",
+    "console.log(JSON.stringify({ layout: 'bakers' }))",
+  );
   expect(ok).toEqual({ code: 0, json: { layout: "bakers" }, text: '{"layout":"bakers"}\n' });
   const bad = herdrCli(process.execPath, {}, "-e", "console.log('no json'); process.exit(1)");
   expect(bad.code).toBe(1);
