@@ -80,8 +80,15 @@ describe.skipIf(!HOME)("the bakers mod in the real Herdr window", () => {
       60_000,
       `bakers.selected in shared.json to be one of ${[...open.keys()].join(", ")}`,
     );
-    const needs: any = readShared(HOME)["bakers.needs"];
-    expect(typeof needs?.updated).toBe("number");
+    // The window task publishes it after the same load, possibly a moment later.
+    await waitFor(
+      async () => {
+        const needs: any = readShared(HOME)["bakers.needs"];
+        return typeof needs?.updated === "number" ? true : null;
+      },
+      70_000,
+      "bakers.needs.updated in shared.json",
+    );
   });
 
   test('opens a ticket as "<ID> <state>"', async () => {
