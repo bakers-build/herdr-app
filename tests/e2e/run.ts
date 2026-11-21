@@ -69,13 +69,32 @@ async function herdrBinary(): Promise<string> {
   return process.env.HERDR_APP || Bun.which("herdr-app") || (await download(pin.herdr, pin.builds));
 }
 
-/** What the window showed, for a failed run. */
-function dump(bin: string, env: Record<string, string>) {
-  for (const what of ["status", "ls"])
-    process.stderr.write(`e2e: herdr-app ${what}:\n${herdrCli(bin, env, what).text}\n`);
-  process.stderr.write(
-    `e2e: shared.json:\n${JSON.stringify(readShared(env.HERDR_APP_HOME), null, 2)}\n`,
+/** herdr-core's binary: on PATH or beside herdr-app, as `hc` or `herdr-core`; null when none. */
+function coreBinary(bin: string, env: Record<string, string>): string | null {
+  return (
+    ["hc", "herdr-core"]
+      .flatMap((n) => [Bun.which(n, { PATH: env.PATH }), bin && join(dirname(bin), n)])
+      .find((p): p is string => Boolean(p && existsSync(p))) ?? null
   );
+}
+
+const tail = (path: string, bytes = 3000) =>
+  existsSync(path) ? readFileSync(path, "utf8").slice(-bytes) : "(none)";
+
+/** What the window showed and why it may not have, for a failed run. */
+function dump(bin: string, env: Record<string, string>, tmp: string, app: Bun.Subprocess) {
+  const say = (title: string, body: string) => process.stderr.write(`e2e: ${title}:\n${body}\n`);
+  say("Herdr process", app.exitCode === null ? "running" : `exited with ${app.exitCode}`);
+  for (const what of ["status", "ls"]) say(`herdr-app ${what}`, herdrCli(bin, env, what).text);
+  say("shared.json", JSON.stringify(readShared(env.HERDR_APP_HOME), null, 2));
+  say("Herdr stdout (tail)", tail(join(tmp, "herdr.log")));
+  say("Herdr stderr (tail)", tail(join(tmp, "herdr.err")));
+  say("herdr-core binary", coreBinary(bin, env) ?? "none on PATH or beside herdr-app");
+  const sh = (cmd: string) =>
+    Bun.spawnSync(["sh", "-c", cmd], { env, stderr: "pipe" }).stdout.toString();
+  say("beside herdr-app", sh(`ls -la "${dirname(bin)}"`));
+  say("temp tree", sh(`find "${tmp}" -maxdepth 6 -not -path "*/mods/bakers/*" | head -120`));
+  say("logs in the temp HOME", sh(`find "${env.HOME}" -name "*.log" -exec tail -n 40 {} +`));
 }
 
 if (import.meta.main) {
@@ -103,8 +122,10 @@ if (import.meta.main) {
       stdout: Bun.file(join(tmp, "herdr.log")),
       stderr: Bun.file(join(tmp, "herdr.err")),
     });
+    const started = app;
     await waitFor(
       async () => {
+        if (started.exitCode !== null) return { exited: started.exitCode };
         const s = herdrCli(bin, env, "status");
         if (s.code !== 0) throw new Error(s.text.trim() || `exit ${s.code}`);
         return s.json;
@@ -112,6 +133,7 @@ if (import.meta.main) {
       60_000,
       "the Herdr window to answer",
     );
+    if (started.exitCode !== null) throw new Error(`Herdr exited with ${started.exitCode}`);
     step(`Herdr answers (${bin})`);
     await waitFor(
       async () => (existsSync(join(env.HERDR_APP_HOME, "layouts", "main.json")) ? true : null),
@@ -130,10 +152,10 @@ if (import.meta.main) {
     step("mod installed, bakers layout shown");
 
     const r = Bun.spawnSync(["bun", "test", "--timeout", "120000", import.meta.dir], {
+      // The isolated environment, so the tests talk to the run's window and core only.
       env: {
-        ...process.env,
+        ...env,
         HERDR_APP: bin,
-        HERDR_APP_HOME: env.HERDR_APP_HOME,
         BAKERS_E2E_HOME: env.HERDR_APP_HOME,
         BAKERS_E2E_URL: server.url,
         BAKERS_E2E_KEY: server.key,
@@ -147,23 +169,17 @@ if (import.meta.main) {
   } catch (e) {
     process.stderr.write(`e2e: ${(e as Error).message}\n`);
   } finally {
-    if (code !== 0 && app) {
-      dump(bin, env);
-      const err = join(tmp, "herdr.err");
-      if (existsSync(err))
-        process.stderr.write(
-          `e2e: Herdr stderr (tail):\n${readFileSync(err, "utf8").slice(-3000)}\n`,
-        );
-    }
+    if (code !== 0 && app) dump(bin, env, tmp, app);
     if (!process.env.KEEP) {
       app?.kill();
       await app?.exited;
       // The window's own herdr-core (HOME is the temp one): stop it, never another.
-      const hc = ["hc", "herdr-core"]
-        .flatMap((n) => [Bun.which(n, { PATH: env.PATH }), bin && join(dirname(bin), n)])
-        .find((p): p is string => Boolean(p && existsSync(p)));
+      const hc = bin ? coreBinary(bin, env) : null;
       if (hc) Bun.spawnSync([hc, "server", "stop"], { env, stdout: "ignore", stderr: "ignore" });
-      server?.stop();
+      else if (bin) step("no herdr-core binary found to stop");
+      // By name, also when startServer failed half way (server still null).
+      if (server) server.stop();
+      else Bun.spawnSync(["docker", "rm", "-f", E2E_SERVER.name]);
       rmSync(tmp, { recursive: true, force: true });
     } else step(`kept: ${tmp}, container ${E2E_SERVER.name}`);
   }
