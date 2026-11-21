@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   e2eEnv,
+  herdrCli,
   layoutName,
   readShared,
   statusErrors,
@@ -88,4 +89,17 @@ test("readShared gives {} for a missing or broken shared.json", () => {
   expect(readShared(home)).toEqual({});
   writeFileSync(join(home, "shared.json"), '{"bakers.selected":"BB-1"}');
   expect(readShared(home)).toEqual({ "bakers.selected": "BB-1" });
+});
+
+test("herdrCli runs the binary and parses its JSON answer", () => {
+  const ok = herdrCli(process.execPath, {}, "-e", "console.log(JSON.stringify({ layout: 'bakers' }))");
+  expect(ok).toEqual({ code: 0, json: { layout: "bakers" }, text: '{"layout":"bakers"}\n' });
+  const bad = herdrCli(process.execPath, {}, "-e", "console.log('no json'); process.exit(1)");
+  expect(bad.code).toBe(1);
+  expect(bad.json).toBeNull();
+});
+
+test("bun run test:e2e starts the E2E runner", () => {
+  const pkg = JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf8"));
+  expect(pkg.scripts["test:e2e"]).toBe("bun tests/e2e/run.ts");
 });

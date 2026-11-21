@@ -80,3 +80,20 @@ export function readShared(home: string): Record<string, unknown> {
     return {};
   }
 }
+
+/** Runs `herdr-app <args>` (or any binary) and parses its JSON answer; json is null when none. */
+export function herdrCli(
+  bin: string,
+  env: Record<string, string | undefined>,
+  ...args: string[]
+): { code: number; json: any; text: string } {
+  const r = Bun.spawnSync([bin, ...args], { env, stderr: "pipe" });
+  const text = r.stdout.toString();
+  let json: any = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    // not JSON
+  }
+  return { code: r.exitCode ?? 1, json, text };
+}
