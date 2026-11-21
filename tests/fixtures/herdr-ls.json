@@ -1,0 +1,37 @@
+{
+  "spaces": [
+    {
+      "id": "sp061a922dd1e0e35f4141b8276165f761",
+      "name": "e2e",
+      "folder": "/tmp/he2e-XXXXXX",
+      "machine": null,
+      "active": true,
+      "tabs": [
+        {
+          "id": "tb464e92a7eca50db99c0b872b91af774c",
+          "name": "1",
+          "active": false,
+          "settled": false,
+          "terminals": [
+            {
+              "terminal": "t1",
+              "pane": "peea22ce31be4460f7d82b8ed9cb49a2d",
+              "status": null,
+              "app": null,
+              "name": null,
+              "sub_agents": []
+            }
+          ]
+        },
+        {
+          "id": "tb242a99f1af5e78779b1f9abff578206f",
+          "name": "Tickets",
+          "active": true,
+          "settled": false,
+          "terminals": []
+        }
+      ]
+    }
+  ],
+  "recent": []
+}
