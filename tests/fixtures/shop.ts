@@ -270,6 +270,15 @@ export function activeSpace(folder = "/work/acme-shop") {
     "export default {\n  schema_version: 1,\n  project: { name: 'acme-shop' },\n};\n";
 }
 
+/** A live run terminal, as herdr-core labels the conductor's: local `t7` or remote `vps/t7`. */
+export const live = (address: string, id = "SHOP-41", extra: any = {}) => ({
+  address,
+  state: "live",
+  labels: { "bakers.ticket": id, "bakers.run": "3" },
+  program: { name: "Claude Code" },
+  ...extra,
+});
+
 /** A ticket tab on the given ticket, loaded. */
 export async function ticketTab(id = "SHOP-41", extra: Record<string, unknown> = {}) {
   activeSpace();

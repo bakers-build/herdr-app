@@ -6,7 +6,7 @@
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { notify, props, run } from "herdr";
-import { NO_TERMINAL, runTerminal } from "../terminal.js";
+import { runReason, runTerminal } from "../terminal.js";
 import { pinTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
@@ -100,6 +100,10 @@ export default class TicketTab {
 
   terminal() {
     return runTerminal(this.id, this.detail?.ticket?.id);
+  }
+
+  runInfo() {
+    return { runs: this.detail?.runs ?? [], claim_machine: this.detail?.ticket?.claim_machine };
   }
 
   showAgent() {
@@ -206,7 +210,7 @@ export default class TicketTab {
   /** @param {any} card */
   card(card) {
     if (!card) return null;
-    const term = this.terminal();
+    const why = runReason(this.runInfo(), this.terminal());
     const buttons =
       card.kind === "question"
         ? [
@@ -222,8 +226,8 @@ export default class TicketTab {
             button(
               "answer-in-run",
               "Answer in the run",
-              term ? () => this.showAgent() : null,
-              term ? {} : { disabled: true, reason: NO_TERMINAL },
+              why ? null : () => this.showAgent(),
+              why ? { disabled: true, reason: why } : {},
             ),
           ]
         : card.kind === "plan"

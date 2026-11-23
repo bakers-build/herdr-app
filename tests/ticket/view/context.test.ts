@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, resetMod } from "../../fixtures/shop";
+import { activeSpace, backend, list, live, resetMod } from "../../fixtures/shop";
 import {
   click,
   env,
@@ -53,7 +53,7 @@ test("nothing selected says so", async () => {
 });
 
 test("Agent and conductor: the line, three actions and the key hint", async () => {
-  env.terminals = [{ address: "t7", labels: { "bakers.ticket": "SHOP-41" } }];
+  env.terminals = [live("t7")];
   const root = (await panel()).render();
   const s = find(root, "agent-section");
   expect(texts(s)).toEqual([
@@ -72,6 +72,19 @@ test("Agent and conductor: the line, three actions and the key hint", async () =
   env.calls.length = 0;
   click(find(s, "show-agent"));
   expect(runs()).toEqual([["agent.focus", { terminal: "t7" }]]);
+});
+
+test("without a live run Show agent is disabled and says where the run is", async () => {
+  const tickets = list.map((t) => (t.id === "u41" ? { ...t, claim_machine: "studio-mac" } : t));
+  const away = find((await panel(true, { jsonapi: { tickets } })).render(), "show-agent");
+  expect(away.calls.disabled).toEqual([true]);
+  expect(away.calls.tooltip).toEqual(["The run is on studio-mac, which Herdr is not connected to"]);
+  reset();
+  resetMod();
+  env.terminals = [live("t7", "SHOP-41", { state: "exited" })];
+  const ended = find((await panel()).render(), "show-agent");
+  expect(ended.calls.disabled).toEqual([true]);
+  expect(ended.calls.tooltip).toEqual(["No live run terminal"]);
 });
 
 test("Properties as drawn; assignee and reviewers come from JSON:API", async () => {

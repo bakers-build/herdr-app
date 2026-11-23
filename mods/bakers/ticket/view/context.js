@@ -8,7 +8,7 @@ import { exec, run, shared, window } from "herdr";
 import { perform } from "../../core/actions.js";
 import { openRoute } from "../../core/router.js";
 import { classify } from "../../core/errors.js";
-import { runTerminal } from "../terminal.js";
+import { runReason, runTerminal } from "../terminal.js";
 import { focusedTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
@@ -374,8 +374,13 @@ export default class Panel {
       return root.child(
         this.failure ? failureView(this.failure, null) : loading(`Loading ${this.id}...`),
       );
+    const terminal = runTerminal(this.id, this.detail.ticket.id);
     const vm = context(this.detail, {
-      terminal: runTerminal(this.id, this.detail.ticket.id),
+      terminal,
+      reason: runReason(
+        { runs: this.detail.runs, claim_machine: this.detail.ticket.claim_machine },
+        terminal,
+      ),
       now: Date.now(),
       activity: this.activity,
       activityServed: this.activityServed,

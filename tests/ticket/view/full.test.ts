@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { ticketTab, resetMod } from "../../fixtures/shop";
+import { list, live, ticketTab, resetMod } from "../../fixtures/shop";
 import { click, closest, env, find, findText, key, reset, runs, texts, walk } from "../../harness";
 
 beforeEach(() => {
@@ -8,7 +8,7 @@ beforeEach(() => {
 });
 
 test("header: identifier, state pill, Frozen, agent line, Edit and ...", async () => {
-  env.terminals = [{ address: "studio-mac/t7", labels: { "bakers.ticket": "SHOP-41" } }];
+  env.terminals = [live("studio-mac/t7")];
   const root = (await ticketTab()).render();
   const head = find(root, "doc-header");
   expect(texts(head)).toEqual([
@@ -34,7 +34,7 @@ test("header: identifier, state pill, Frozen, agent line, Edit and ...", async (
 });
 
 test("the agent line says this computer for a local run terminal", async () => {
-  env.terminals = [{ address: "t7", labels: { "bakers.ticket": "SHOP-41" } }];
+  env.terminals = [live("t7")];
   const root = (await ticketTab()).render();
   expect(texts(find(root, "agent-line"))).toEqual(["Claude Code needs you on this computer, 35m"]);
 });
@@ -139,7 +139,7 @@ test("A with a question puts the composer in answer mode and focuses it", async 
 });
 
 test("Answer in the run and G focus the run's terminal", async () => {
-  env.terminals = [{ address: "t7", labels: { "bakers.ticket": "SHOP-41" } }];
+  env.terminals = [live("t7")];
   const copy = await ticketTab();
   env.calls.length = 0;
   click(find(copy.render(), "answer-in-run"));
@@ -150,12 +150,21 @@ test("Answer in the run and G focus the run's terminal", async () => {
   ]);
 });
 
-test("without a local terminal Answer in the run is disabled and says why", async () => {
-  const copy = await ticketTab();
-  const b = find(copy.render(), "answer-in-run");
-  expect(b.calls.disabled).toEqual([true]);
-  expect(b.calls.tooltip).toEqual(["The run's terminal is not on this computer"]);
-  expect(b.calls.on_click).toBeUndefined();
+test("without a live run Answer in the run is disabled and says where the run is", async () => {
+  const tickets = list.map((t) => (t.id === "u41" ? { ...t, claim_machine: "studio-mac" } : t));
+  const away = find(
+    (await ticketTab("SHOP-41", { jsonapi: { tickets } })).render(),
+    "answer-in-run",
+  );
+  expect(away.calls.disabled).toEqual([true]);
+  expect(away.calls.tooltip).toEqual(["The run is on studio-mac, which Herdr is not connected to"]);
+  expect(away.calls.on_click).toBeUndefined();
+  reset();
+  resetMod();
+  env.terminals = [live("t7", "SHOP-41", { state: "exited" })];
+  const ended = find((await ticketTab()).render(), "answer-in-run");
+  expect(ended.calls.disabled).toEqual([true]);
+  expect(ended.calls.tooltip).toEqual(["No live run terminal"]);
 });
 
 test("the state pill opens the state menu", async () => {
