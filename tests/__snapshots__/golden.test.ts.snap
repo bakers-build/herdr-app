@@ -5576,7 +5576,8 @@ exports[`golden calls: goto with the sidebar shown 1`] = `
     "openOverlay",
     {
       "height": 490,
-      "kind": "dialog",
+      "key": "bakers.actions",
+      "kind": "window",
       "mod": "bakers",
       "props": {
         "page": "tickets",
@@ -5595,7 +5596,8 @@ exports[`golden calls: goto with the sidebar hidden 1`] = `
     "openOverlay",
     {
       "height": 490,
-      "kind": "dialog",
+      "key": "bakers.actions",
+      "kind": "window",
       "mod": "bakers",
       "props": {
         "page": "tickets",

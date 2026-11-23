@@ -26,12 +26,13 @@ async function command(c: string, focused: any, shared: Record<string, unknown> 
   return env.calls.filter((x) => x.fn === "openOverlay").map((x) => x.args[0] as any);
 }
 
-test("actions on a ticket tab opens the palette for that ticket, centred by Herdr as a dialog", async () => {
+test("actions on a ticket tab opens the palette for that ticket, centred by Herdr as one window", async () => {
   expect(await command("actions", { tab: "t5" })).toEqual([
     {
       mod: "bakers",
       props: { view: "ticket.actions", ticket: "SHOP-41" },
-      kind: "dialog",
+      kind: "window",
+      key: "bakers.actions",
       width: 480,
       height: 490,
     },
@@ -62,7 +63,8 @@ test("goto opens the palette on its tickets page, with a text when given", async
   expect(o).toEqual({
     mod: "bakers",
     props: { view: "ticket.actions", ticket: "SHOP-41", page: "tickets", query: "deliv" },
-    kind: "dialog",
+    kind: "window",
+    key: "bakers.actions",
     width: 480,
     height: 490,
   });

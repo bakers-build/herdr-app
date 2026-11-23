@@ -178,7 +178,7 @@ such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu
 | `ticket.view` | `ticket/view/full.js` | a tab "SHOP-41 working", `props.ticket` |
 | `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket` |
 | `ticket.run` | `ticket/view/run.js` | the header block `run-header` of the run column `run`, right of `main` (written by `ticket/terminal.js`, not by the installer) |
-| `ticket.actions` | `ticket/view/actions.js` | a dialog Herdr centres: cmd-K, cmd-shift-O (`page: "tickets"`), Move to (`page: "move"`) |
+| `ticket.actions` | `ticket/view/actions.js` | a window Herdr centres (Esc reaches the mod): cmd-K, cmd-shift-O (`page: "tickets"`), Move to (`page: "move"`) |
 | `ticket.rail`, `ticket.sidebar`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail, sidebar and status |
 | `ticket.label-picker` | `ticket/view/label-picker.js` | a popup |
 | `project.picker` | `project/view/picker.js` | a popup from the sidebar |

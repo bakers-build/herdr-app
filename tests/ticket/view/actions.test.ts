@@ -4,6 +4,7 @@ import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, list, live, resetMod } from "../../fixtures/shop";
 import {
   click,
+  cx,
   env,
   find,
   fetched,
@@ -377,4 +378,11 @@ test("the highlight lands on the first action once the ticket has loaded", async
   const root = copy.render();
   expect(row(root, "action-agent").calls.bg).toBeDefined();
   expect(texts(root)).toContain("↵ Run · Esc Close");
+});
+
+test("a press on the palette does not drag the window", async () => {
+  const root = (await palette()).render();
+  const c = cx();
+  find(root, "actions").calls["on_mouse_down:left"][1]({}, c);
+  expect(c.stopped).toBe(true);
 });

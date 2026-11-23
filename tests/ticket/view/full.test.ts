@@ -204,7 +204,8 @@ test("R starts Move to... on the palette's conductors page", async () => {
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toEqual({
     mod: "bakers",
     props: { view: "ticket.actions", ticket: "SHOP-41", page: "move" },
-    kind: "dialog",
+    kind: "window",
+    key: "bakers.actions",
     width: 480,
     height: 490,
   });

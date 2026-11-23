@@ -1,4 +1,4 @@
-// ticket/view/actions: the actions palette (cmd-K, route ticket.actions, a dialog Herdr centres),
+// ticket/view/actions: the actions palette (cmd-K, route ticket.actions, a window Herdr centres),
 // navigated like Raycast: a stack of pages, each with its own field. The first page lists the
 // target's actions (props.ticket, from frontTicket), the commands that carry a label and, with
 // text typed, the matching tickets. Change state, Move to, Go to ticket and a ticket's actions are
@@ -482,74 +482,78 @@ export default class Actions {
     const rows = sections.flatMap((s) => s.rows);
     this.hot = this.pick(rows);
     const hot = rows.find((r) => r.key === this.hot);
-    return v_flex()
-      .id("actions")
-      .w(480)
-      .h_full()
-      .p(10)
-      .gap(6)
-      .bg(t.popover)
-      .font_family(UI_FONT)
-      .track_focus(this.handle)
-      .on_key_down((e, cx) => {
-        if (e.key === "escape") {
-          if (!this.pop()) this.close();
-        } else if (e.key === "down") this.move(1);
-        else if (e.key === "up") this.move(-1);
-        else if (e.key === "enter") this.choose(cx);
-        else if (e.key === "tab" || e.key === "right") {
-          const r = this.hotRow();
-          if (!r?.ticket) return;
-          this.push({ page: "ticket", id: r.ticket.id }, cx);
-        } else if (e.key === "backspace" && !this.input.value() && this.pop()) {
-          // went back a page
-        } else return;
-        cx.stop_propagation();
-        cx.notify();
-      })
-      .child(this.header(t))
-      .child(
-        h_flex()
-          .id("actions-field")
-          .h(32)
-          .px(8)
-          .items_center()
-          .rounded(6)
-          .border(2)
-          .border_color(t.accent)
-          .bg(t.surface)
-          .text_size(14)
-          .text_color(t.foreground)
-          .child(Input.new(this.input).w_full()),
-      )
-      .child(
-        v_flex()
-          .id("actions-rows")
-          .flex_1()
-          .min_h(0)
-          .overflow_y_scrollbar()
-          .text_size(12)
-          .text_color(t.foreground)
-          .children(
-            sections.flatMap((s) => [
-              ...(s.title
-                ? [
-                    div()
-                      .id(`actions-section-${s.title}`)
-                      .px(8)
-                      .pt(6)
-                      .text_size(10)
-                      .text_color(t.muted)
-                      .child(s.title),
-                  ]
-                : []),
-              ...s.rows.map((r) => this.row(t, r)),
-            ]),
-          ),
-      )
-      .when(this.top().page === "state", (el) =>
-        el.child(div().text_size(11).text_color(t.muted).child(STATE_MENU_FOOTER)),
-      )
-      .child(div().text_size(11).text_color(t.muted).child(this.footer(hot)));
+    return (
+      v_flex()
+        .id("actions")
+        .w(480)
+        .h_full()
+        .p(10)
+        .gap(6)
+        .bg(t.popover)
+        .font_family(UI_FONT)
+        .track_focus(this.handle)
+        // A press Herdr's window gets would drag it.
+        .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+        .on_key_down((e, cx) => {
+          if (e.key === "escape") {
+            if (!this.pop()) this.close();
+          } else if (e.key === "down") this.move(1);
+          else if (e.key === "up") this.move(-1);
+          else if (e.key === "enter") this.choose(cx);
+          else if (e.key === "tab" || e.key === "right") {
+            const r = this.hotRow();
+            if (!r?.ticket) return;
+            this.push({ page: "ticket", id: r.ticket.id }, cx);
+          } else if (e.key === "backspace" && !this.input.value() && this.pop()) {
+            // went back a page
+          } else return;
+          cx.stop_propagation();
+          cx.notify();
+        })
+        .child(this.header(t))
+        .child(
+          h_flex()
+            .id("actions-field")
+            .h(32)
+            .px(8)
+            .items_center()
+            .rounded(6)
+            .border(2)
+            .border_color(t.accent)
+            .bg(t.surface)
+            .text_size(14)
+            .text_color(t.foreground)
+            .child(Input.new(this.input).w_full()),
+        )
+        .child(
+          v_flex()
+            .id("actions-rows")
+            .flex_1()
+            .min_h(0)
+            .overflow_y_scrollbar()
+            .text_size(12)
+            .text_color(t.foreground)
+            .children(
+              sections.flatMap((s) => [
+                ...(s.title
+                  ? [
+                      div()
+                        .id(`actions-section-${s.title}`)
+                        .px(8)
+                        .pt(6)
+                        .text_size(10)
+                        .text_color(t.muted)
+                        .child(s.title),
+                    ]
+                  : []),
+                ...s.rows.map((r) => this.row(t, r)),
+              ]),
+            ),
+        )
+        .when(this.top().page === "state", (el) =>
+          el.child(div().text_size(11).text_color(t.muted).child(STATE_MENU_FOOTER)),
+        )
+        .child(div().text_size(11).text_color(t.muted).child(this.footer(hot)))
+    );
   }
 }

@@ -207,7 +207,8 @@ test("Unfreeze..., Move to... and Cancel run... ask first and send nothing", asy
   expect(env.calls.filter((c) => c.fn === "openOverlay")[2].args[0]).toEqual({
     mod: "bakers",
     props: { view: "ticket.actions", ticket: "SHOP-41", page: "move" },
-    kind: "dialog",
+    kind: "window",
+    key: "bakers.actions",
     width: 480,
     height: 490,
   });

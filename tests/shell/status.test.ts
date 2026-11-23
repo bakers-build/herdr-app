@@ -58,7 +58,7 @@ test("status: global keys open Go to ticket, the Tickets tab and the ticket pane
   expect(overlay).toMatchObject({
     mod: "bakers",
     props: { view: "ticket.actions", page: "tickets" },
-    kind: "dialog",
+    kind: "window",
     width: 480,
   });
   expect(runs()).toContainEqual(["tab.select", { id: "t0" }]);
