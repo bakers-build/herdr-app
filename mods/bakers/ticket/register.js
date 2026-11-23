@@ -13,7 +13,8 @@ import Full from "./view/full.js";
 import RunHeader from "./view/run.js";
 import * as commands from "./view/commands.js";
 import { windowTask } from "./window.js";
-import { syncRun } from "./terminal.js";
+import { showAgent, syncRun } from "./terminal.js";
+import { openRoute } from "../core/router.js";
 import { closeAll, closeFinished } from "./tabs.js";
 import { classify, labels } from "./commands.js";
 import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./form/confirm.js";
@@ -85,6 +86,10 @@ export function register() {
   define("action", "ticket.classify", { run: classify });
   define("action", "ticket.labels", { run: labels });
   define("action", "ticket.refresh", { run: () => refresh() });
+  define("action", "ticket.showAgent", { run: (/** @type {string} */ id) => showAgent(id) });
+  define("action", "ticket.move", {
+    run: (/** @type {string} */ id) => openRoute("ticket.conductor-picker", { ticket: id }),
+  });
   define("action", "ticket.view", { run: (/** @type {string} */ view) => setView(view) });
   define("action", "ticket.toggleClosed", {
     run: () => setShared("bakers.showClosed", !showClosed()),

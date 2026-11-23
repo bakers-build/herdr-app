@@ -7,7 +7,8 @@ import { layout, machines, run, setShared, shared, terminals } from "herdr";
 import { findNode, withNode } from "../core/herdr.js";
 import { activeRun } from "./rules.js";
 import { getStore } from "./store.js";
-import { focusedTicket } from "./tabs.js";
+import { focusedTicket, openTicket } from "./tabs.js";
+import { tabName } from "./presenter/tab.js";
 
 // The layout ids, stored in layout files: never rename them.
 const BODY = "work-body";
@@ -137,4 +138,12 @@ export function showRun(id) {
   setShared("bakers.runHidden", false);
   setShared("bakers.runFocus", { id, at: Date.now() });
   syncRun();
+}
+
+/** Show agent from anywhere: on the Tickets tab the row's ticket opens first; its run is focused
+ *  once it is in front. @param {string} id */
+export function showAgent(id) {
+  const row = focusedTicket() ? null : getStore().byId(id);
+  if (row) openTicket(id, tabName(row));
+  showRun(id);
 }

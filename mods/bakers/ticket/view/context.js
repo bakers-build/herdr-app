@@ -8,9 +8,8 @@ import { exec, shared, window } from "herdr";
 import { perform } from "../../core/actions.js";
 import { openRoute } from "../../core/router.js";
 import { classify } from "../../core/errors.js";
-import { runReason, runTerminal, showRun } from "../terminal.js";
-import { focusedTicket, openTicket } from "../tabs.js";
-import { tabName } from "../presenter/tab.js";
+import { runReason, runTerminal, showAgent } from "../terminal.js";
+import { focusedTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { chip } from "../../ui/components/chip.js";
@@ -98,14 +97,6 @@ export default class Panel {
     }
   }
 
-  /** On the Tickets tab the row's ticket opens first; its run is focused once it is in front. */
-  /** @param {string} id */
-  showAgent(id) {
-    const row = focusedTicket() ? null : getStore().byId(id);
-    if (row) openTicket(id, tabName(row));
-    showRun(id);
-  }
-
   /** @param {any} vm */
   agentSection(vm) {
     const t = tokens();
@@ -132,7 +123,7 @@ export default class Panel {
             button(
               "show-agent",
               "Show agent",
-              term ? () => this.showAgent(vm.id) : null,
+              term ? () => showAgent(vm.id) : null,
               vm.agent.show ? { ...small, disabled: true, reason: vm.agent.show } : small,
             ),
           )

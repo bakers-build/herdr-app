@@ -8,6 +8,8 @@ import { h_flex, v_flex } from "gpui-base";
 import { notify, props } from "herdr";
 import { runReason, runTerminal, showRun } from "../terminal.js";
 import { pinTicket } from "../tabs.js";
+import { ticketActions } from "../operations/actions.js";
+import { perform } from "../../core/actions.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
@@ -25,7 +27,6 @@ import { failureView, loading } from "../../ui/components/state.js";
 import { statusLine } from "../../ui/components/status-line.js";
 import { heading, mono } from "../../ui/components/text.js";
 import { classify } from "../../core/errors.js";
-import { openRoute } from "../../core/router.js";
 import { getStore, ready } from "../store.js";
 import { commentForm } from "../form/comment.js";
 import { editForm } from "../form/edit.js";
@@ -110,6 +111,13 @@ export default class TicketTab {
     if (this.terminal()) showRun(this.id);
   }
 
+  /** The ticket action a single key (G, R) runs, from the one list of actions. @param {string} k */
+  keyAction(k) {
+    if (!this.detail) return null;
+    const reason = runReason(this.runInfo(), this.terminal());
+    return ticketActions(this.detail, reason).find((a) => a.keys?.toLowerCase() === k) ?? null;
+  }
+
   answer() {
     if (this.composer.mode !== "answer")
       this.composer = this.makeComposer("answer", this.composer.state.values.body);
@@ -164,9 +172,11 @@ export default class TicketTab {
       } else return;
     } else if (k === "a") this.act();
     else if (k === "e") this.edit();
-    else if (k === "g") this.showAgent();
-    else if (k === "r") openRoute("ticket.conductor-picker", { ticket: this.id });
-    else return;
+    else {
+      const op = this.keyAction(k);
+      if (!op) return;
+      if (!op.reason && op.action) void perform(op.action, cx);
+    }
     cx.stop_propagation();
     cx.notify();
   }

@@ -273,3 +273,54 @@ test("notification, tab name, search result, state menu", () => {
     { ticket: "SHOP-56", from: "plan", to: "working" },
   ]);
 });
+
+const { ticketActions } = await import("../../mods/bakers/ticket/operations/actions.js");
+const { moreItems } = await import("../../mods/bakers/ticket/operations/more.js");
+const withRuns = (o: any = {}) => ({
+  ticket: { identifier: "SHOP-41", frozen: false, ...o },
+  runs: o.runs ?? [],
+});
+
+test("ticketActions: the six actions with keys, reasons and actions", () => {
+  const a = ticketActions(withRuns({ runs: [{ closed: false }] }), null);
+  expect(a.map((x: any) => x.label)).toEqual([
+    "Show agent",
+    "Change state...",
+    "Move to...",
+    "Freeze...",
+    "Cancel run...",
+    "Copy identifier",
+  ]);
+  expect(a.map((x: any) => x.keys ?? null)).toEqual(["G", null, "R", null, null, null]);
+  expect(a[0].action).toEqual(["ticket.showAgent", "SHOP-41"]);
+  expect(a[1]).toMatchObject({ key: "state", step: "state" });
+  expect(a[2].action).toEqual(["ticket.move", "SHOP-41"]);
+  expect(a[3].action).toEqual(["form.open", "freeze", { ticket: "SHOP-41" }]);
+  expect(a[4]).toMatchObject({
+    reason: null,
+    action: ["form.open", "cancel", { ticket: "SHOP-41" }],
+  });
+  expect(a[5].action).toEqual(["copy", "SHOP-41"]);
+});
+
+test("ticketActions: frozen gives Unfreeze; no active run and no terminal give reasons", () => {
+  const a = ticketActions(
+    withRuns({ frozen: true, runs: [{ closed: true }] }),
+    "No live run terminal",
+  );
+  expect(a[3]).toMatchObject({
+    label: "Unfreeze...",
+    action: ["form.open", "unfreeze", { ticket: "SHOP-41" }],
+  });
+  expect(a[0].reason).toBe("No live run terminal");
+  expect(a[4].reason).toBe("No active run");
+});
+
+test("moreItems keeps its menu: Freeze, Cancel run (disabled without a run), Copy identifier", () => {
+  const m = moreItems(withRuns());
+  expect(m.map((i: any) => i.label)).toEqual(["Freeze...", "Cancel run...", "Copy identifier"]);
+  expect(m[0].disabled).toBeFalsy();
+  expect(m[1].disabled).toBe(true);
+  expect(m[2]).toMatchObject({ separator: true, action: ["copy", "SHOP-41"] });
+  expect(moreItems(withRuns({ runs: [{ closed: false }] }))[1].disabled).toBeFalsy();
+});
