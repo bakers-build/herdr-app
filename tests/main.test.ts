@@ -19,6 +19,7 @@ test("bakers routes each placement to its view by props().view", async () => {
     "shell.sidebar",
     "shell.status",
     "shell.tabs",
+    "ticket.actions",
     "ticket.conductor-picker",
     "ticket.context",
     "ticket.label-picker",

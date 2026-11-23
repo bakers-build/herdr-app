@@ -40,6 +40,11 @@ export default class Goto {
     });
     this.input.on("submit", () => this.choose());
     this.input.focus();
+    const query = /** @type {any} */ (props())?.query;
+    if (query) {
+      this.input.set_value(query);
+      this.search(++this.seq, /** @type {any} */ (cx));
+    }
     cx.spawn(async () => {
       await ready();
     });

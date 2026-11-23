@@ -1,26 +1,43 @@
 // ticket/view/commands: the key commands the ticket module answers (keys.json:
-// bakers.goto, .tickets, .panel, .new, .open:<id>). They open overlays and tabs, so they
-// live with the views.
+// bakers.goto, .tickets, .panel, .new, .open:<id>, .actions). They open overlays and tabs, so they
+// live with the views. A command with a label is listed in the actions palette.
 import { layout, run } from "herdr";
 import { findNode } from "../../core/herdr.js";
 import { openRoute } from "../../core/router.js";
 import { openForm } from "../../ui/form/dialog.js";
 import { tabName } from "../presenter/tab.js";
 import { getStore, ready } from "../store.js";
-import { ensureTicketsTab, openTicket } from "../tabs.js";
+import { ensureTicketsTab, frontTicket, openTicket } from "../tabs.js";
 
-/** Go to ticket, 480 px wide, 120 px from the top, centred (Herdr gives mods no window size). */
+/**
+ * A 480 px popup 120 px from the top, centred over the status bar (Herdr gives mods no window size).
+ * @param {{ width: number, left: number }} where
+ */
+export function atTop({ width, left }) {
+  return { x: Math.max(0, Math.round(left + width / 2 - 240)), y: 120 };
+}
+
+/** Go to ticket; a text (goto:<text>, from the palette) fills its field. */
 export const goto = {
-  /** @param {string} _arg @param {{ width: number, left: number }} where */
-  run(_arg, { width, left }) {
-    const x = Math.max(0, Math.round(left + width / 2 - 240));
-    openRoute("ticket.search", {}, { at: { x, y: 120 } });
+  label: "Go to ticket...",
+  /** @param {string} arg @param {{ width: number, left: number }} where */
+  run(arg, where) {
+    openRoute("ticket.search", arg ? { query: arg } : {}, { at: atTop(where) });
   },
 };
 
-export const tickets = { run: () => ensureTicketsTab() };
+/** cmd-K: the palette of the ticket in front (frontTicket), placed like Go to ticket. */
+export const actions = {
+  /** @param {string} _arg @param {{ width: number, left: number }} where */
+  run(_arg, where) {
+    openRoute("ticket.actions", { ticket: frontTicket(), where }, { at: atTop(where) });
+  },
+};
+
+export const tickets = { label: "Tickets", run: () => ensureTicketsTab() };
 
 export const panel = {
+  label: "Ticket panel",
   run() {
     const root = layout();
     const p = findNode(root, "panel");
@@ -33,7 +50,7 @@ export const panel = {
   },
 };
 
-export const create = { run: () => openForm("create") };
+export const create = { label: "New ticket", run: () => openForm("create") };
 
 /** Opens a ticket's tab, pinned (a toast click, open:<id>). */
 export const open = {

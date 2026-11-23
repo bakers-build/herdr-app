@@ -1,6 +1,16 @@
 // ticket/tabs: the ticket vocabulary over core/tabs, for the kind "ticket" (registered in
 // ticket/register.js).
-import { closeWhere, focusedKey, keyedTabs, open, openHome, pin, syncNames } from "../core/tabs.js";
+import { focused, shared } from "herdr";
+import {
+  closeWhere,
+  focusedKey,
+  homeTab,
+  keyedTabs,
+  open,
+  openHome,
+  pin,
+  syncNames,
+} from "../core/tabs.js";
 
 const KIND = "ticket";
 
@@ -25,6 +35,16 @@ export function ensureTicketsTab() {
 /** The identifier of the focused ticket tab, or null. */
 export function focusedTicket() {
   return focusedKey(KIND);
+}
+
+/** The ticket the window is on: the focused ticket tab (also while its run block has the focus),
+ *  on the Tickets tab its selected row, else null. @returns {string | null} */
+export function frontTicket() {
+  const id = focusedTicket();
+  if (id) return id;
+  const home = homeTab(KIND);
+  if (!home || home.id !== focused()?.tab) return null;
+  return /** @type {string | null} */ (shared("bakers.selected")) ?? null;
 }
 
 /** @returns {string[]} */

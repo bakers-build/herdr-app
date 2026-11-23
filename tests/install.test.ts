@@ -120,6 +120,8 @@ test("mergeKeys adds the bakers keys and never overwrites", () => {
   expect(keys.global["cmd-b"]).toBe("layout.toggle:sidebar");
   expect(conflicts).toEqual(["cmd-shift-o is pane.split:right, not bakers.goto"]);
   expect(BAKERS_KEYS["cmd-shift-o"]).toBe("bakers.goto");
+  expect(BAKERS_KEYS["cmd-k"]).toBe("bakers.actions");
+  expect(keys.global["cmd-k"]).toBe("bakers.actions");
   expect(mergeKeys(keys).keys).toEqual(keys);
 });
 

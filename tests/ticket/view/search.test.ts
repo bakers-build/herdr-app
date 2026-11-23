@@ -34,12 +34,12 @@ beforeEach(() => {
   resetMod();
 });
 
-async function goto() {
+async function goto(query?: string) {
   activeSpace();
   env.shared["bakers.project"] = "p1";
   backend({ jsonapi: { tickets } });
   const Bakers = await load("bakers/main.js");
-  const copy = mount(Bakers, { view: "ticket.search", overlay: "overlay-9" });
+  const copy = mount(Bakers, { view: "ticket.search", overlay: "overlay-9", query });
   await flush();
   return copy;
 }
@@ -134,4 +134,16 @@ test("Esc closes and writes nothing", async () => {
   env.calls.length = 0;
   key(copy.render(), "escape");
   expect(env.calls.map((c) => c.fn)).toEqual(["closeOverlay"]);
+});
+
+test("a text from the actions palette fills the field and searches at once", async () => {
+  const copy = await goto("deliv");
+  expect(copy.inner.input.value()).toBe("deliv");
+  // The store's own reads also run at mount; count only the searches for the text.
+  const searches = fetched().filter((u) => /value\]=(deliv|DELIV)/.test(u));
+  expect(searches.length).toBe(2);
+  expect(searches[1]).toContain(
+    "[path]=title&filter[f1][condition][operator]=CONTAINS&filter[f1][condition][value]=deliv",
+  );
+  expect(texts(copy.render())).toContain("Show delivery date on the product page");
 });
