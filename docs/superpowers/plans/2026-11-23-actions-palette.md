@@ -246,3 +246,20 @@ git commit -m "feat(ticket): an Actions button and the key hint name cmd-K"
   - Show agent, Change state (stop at the dialog with Cancel), Move to (Esc) and Copy identifier work.
   Record what was seen, and that the dialogs were cancelled.
 - [ ] **Step 3:** Push the branch, open the PR against `feat/herdrapp-8-run-terminal-b`, titled `feat(ticket): actions of the front ticket on cmd-K`, with CI green.
+
+## Scope change, 2026-11-24
+
+Pascal asked for fuzzy search over everything and a centered palette. AC3 is revised and AC10 added; see the ticket's revised `spec`, `plan` and `test` comments.
+
+### Task 6: Fuzzy search, tickets in the palette
+
+**Files:** Create `mods/bakers/core/fuzzy.js` (`fuzzyScore(query: string, text: string): number | null`), Modify `mods/bakers/ticket/view/actions.js`, Test `tests/core/fuzzy.test.ts`, `tests/ticket/view/actions.test.ts`.
+
+- [ ] Tests first: fuzzy unit tests (in-order letters or null, case and spaces ignored, `can` ranks Cancel run above Change state, an exact prefix scores highest), and palette tests (`chst`, sorting, Tickets section local at once and server after 200 ms without duplicates, exact identifier first, Enter opens pinned, empty field shows no tickets). Run them: FAIL.
+- [ ] Implement. Run `bun test`: PASS. Commit.
+
+### Task 7: Centered
+
+**Files:** Modify `mods/bakers/ticket/register.js` (route `ticket.actions` opens `{ kind: "dialog", width: 480, height: 420 }`), `mods/bakers/ticket/view/commands.js` (`actions` passes no `at`), `mods/bakers/ticket/view/actions.js` (rows scroll in the fixed height), Test `tests/ticket/commands.test.ts`.
+
+- [ ] Test first: the overlay spec of `actions`. FAIL. Implement. `bun run check`, `herdr-check`, live check. Commit, push.

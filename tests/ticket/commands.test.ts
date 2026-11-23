@@ -26,18 +26,18 @@ async function command(c: string, focused: any, shared: Record<string, unknown> 
   return env.calls.filter((x) => x.fn === "openOverlay").map((x) => x.args[0] as any);
 }
 
-// The status bar is 1440 - 56 px wide and starts at x 56 (no sidebar): centred, 480 px wide.
+// Go to ticket: the status bar is 1440 - 56 px wide and starts at x 56 (no sidebar).
 const AT = { x: 508, y: 120 };
 const WHERE = { width: 1384, left: 56 };
 
-test("actions on a ticket tab opens the palette for that ticket, placed like Go to ticket", async () => {
+test("actions on a ticket tab opens the palette for that ticket, centred by Herdr as a dialog", async () => {
   expect(await command("actions", { tab: "t5" })).toEqual([
     {
       mod: "bakers",
       props: { view: "ticket.actions", ticket: "SHOP-41", where: WHERE },
-      kind: "popup",
+      kind: "dialog",
       width: 480,
-      at: AT,
+      height: 420,
     },
   ]);
 });

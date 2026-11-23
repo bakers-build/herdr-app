@@ -26,11 +26,12 @@ export const goto = {
   },
 };
 
-/** cmd-K: the palette of the ticket in front (frontTicket), placed like Go to ticket. */
+/** cmd-K: the palette of the ticket in front (frontTicket), centred by Herdr (route ticket.actions);
+ *  `where` goes along for the commands it runs, such as Go to ticket. */
 export const actions = {
   /** @param {string} _arg @param {{ width: number, left: number }} where */
   run(_arg, where) {
-    openRoute("ticket.actions", { ticket: frontTicket(), where }, { at: atTop(where) });
+    openRoute("ticket.actions", { ticket: frontTicket(), where });
   },
 };
 

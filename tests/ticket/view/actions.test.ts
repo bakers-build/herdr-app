@@ -2,19 +2,46 @@
 // typing, run with Enter or a click; Change state as a second step.
 import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, list, live, resetMod } from "../../fixtures/shop";
-import { click, env, find, flush, key, load, mount, reset, runs, texts, walk } from "../../harness";
+import {
+  click,
+  env,
+  find,
+  fireTimers,
+  flush,
+  key,
+  load,
+  mount,
+  reset,
+  runs,
+  texts,
+  walk,
+} from "../../harness";
 
 const WHERE = { width: 1384, left: 56 };
 const TITLE = list.find((t) => t.id === "u41")?.title as string;
+// SHOP-38 is closed: only the server search finds it, as in search.test.ts.
+const withClosed = [
+  ...list,
+  {
+    id: "u38",
+    identifier: "SHOP-38",
+    title: "Delivery slots for the cart",
+    state: "done",
+    labels: [],
+    frozen: false,
+    closed: true,
+  },
+];
 
 beforeEach(() => {
   reset();
   resetMod();
 });
 
-async function palette(ticket: string | null = "SHOP-41", settle = true) {
+async function palette(ticket: string | null = "SHOP-41", settle = true, data: any = {}) {
   activeSpace();
-  backend();
+  env.shared["bakers.project"] = "p1";
+  backend(data);
   env.keys = [
     { section: "global", keys: "cmd-shift-o", action: "bakers.goto" },
     { section: "global", keys: "cmd-shift-b", action: "bakers.tickets" },
@@ -35,7 +62,7 @@ function rows(root: any): string[] {
   const out: string[] = [];
   walk(root, (n) => {
     const id = n.calls.id?.[0];
-    if (typeof id === "string" && /^(action|cmd|state)-|^goto-text$/.test(id)) out.push(id);
+    if (typeof id === "string" && /^(action|cmd|state|ticket)-/.test(id)) out.push(id);
   });
   return out;
 }
@@ -132,28 +159,47 @@ test("Copy identifier copies", async () => {
   expect(env.calls.filter((c) => c.fn === "clipboard").map((c) => c.args)).toEqual([["SHOP-41"]]);
 });
 
-test("typing keeps the entries with every word, then Go to ticket with the text", async () => {
+test("typing matches fuzzily and sorts by the best match", async () => {
   const copy = await palette();
-  copy.inner.input.type("run");
-  const root = copy.render();
-  expect(rows(root)).toEqual(["action-cancel", "goto-text"]);
-  expect(texts(row(root, "goto-text"))).toEqual(['Go to ticket "run"...']);
-  copy.inner.input.type("CANCEL run");
-  expect(rows(copy.render())).toEqual(["action-cancel", "goto-text"]);
+  copy.inner.input.type("chst");
+  expect(rows(copy.render()).filter((r) => !r.startsWith("ticket-"))).toEqual(["action-state"]);
+  copy.inner.input.type("can");
+  const actions = rows(copy.render()).filter((r) => r.startsWith("action-"));
+  expect(actions.slice(0, 2)).toEqual(["action-cancel", "action-state"]);
 });
 
-test("nothing matches: Go to ticket with the text is chosen and opens the search", async () => {
+test("with text typed, matching tickets follow: the store's at once, the server's after 200 ms", async () => {
+  const copy = await palette("SHOP-41", true, { jsonapi: { tickets: withClosed } });
+  copy.inner.input.type("deliv");
+  let ids = rows(copy.render()).filter((r) => r.startsWith("ticket-"));
+  expect(ids).toContain("ticket-SHOP-56");
+  expect(ids).not.toContain("ticket-SHOP-38");
+  fireTimers(200);
+  await flush();
+  ids = rows(copy.render()).filter((r) => r.startsWith("ticket-"));
+  expect(ids).toContain("ticket-SHOP-38");
+  expect(ids.filter((r) => r === "ticket-SHOP-56")).toHaveLength(1);
+  expect(texts(row(copy.render(), "ticket-SHOP-56"))).toEqual([
+    "SHOP-56",
+    "Show delivery date on the product page",
+    "plan",
+  ]);
+});
+
+test("an exact identifier comes first and Enter opens its tab, pinned", async () => {
   const copy = await palette();
-  copy.inner.input.type("zzz");
+  copy.inner.input.type("shop-56");
   const root = copy.render();
-  expect(rows(root)).toEqual(["goto-text"]);
+  expect(rows(root).find((r) => r.startsWith("ticket-"))).toBe("ticket-SHOP-56");
   env.calls.length = 0;
   key(root, "enter");
   expect(closed()).toEqual(["overlay-9"]);
-  expect(opened()[0]).toMatchObject({
-    props: { view: "ticket.search", query: "zzz" },
-    at: { x: 508, y: 120 },
-  });
+  expect(runs().some(([c, a]: any) => c === "tab.new" && a.name === "SHOP-56 plan")).toBe(true);
+});
+
+test("an empty field lists no tickets", async () => {
+  const root = (await palette()).render();
+  expect(rows(root).some((r) => r.startsWith("ticket-"))).toBe(false);
 });
 
 test("Change state lists every state, the current one marked, and opens the state dialog", async () => {

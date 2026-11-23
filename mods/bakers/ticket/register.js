@@ -57,7 +57,11 @@ export function register() {
   define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar
   define("route", "ticket.status", { view: Status }); // the status block's item
   define("route", "ticket.search", { view: Search, open: { kind: "popup", width: 480 } }); // popup, cmd-shift-O
-  define("route", "ticket.actions", { view: Actions, open: { kind: "popup", width: 480 } }); // popup, cmd-K
+  // dialog, cmd-K: Herdr centres a dialog; a mod gets no window size to place a popup itself
+  define("route", "ticket.actions", {
+    view: Actions,
+    open: { kind: "dialog", width: 480, height: 420 },
+  });
   define("route", "ticket.conductor-picker", {
     view: ConductorPicker,
     open: { kind: "popup", width: 220 },

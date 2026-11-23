@@ -1,37 +1,48 @@
 // ticket/view/actions: the actions palette (cmd-K, route ticket.actions, a 480 px popup placed like
 // Go to ticket). props.ticket is the target the actions command resolved (frontTicket), or null.
 // It lists the ticket's actions from ticket/operations, then every command that carries a label,
-// with its key; typing filters by the words of the label. An action that cannot run stays listed
+// with its key. Typing matches fuzzily (core/fuzzy.js), best first, and adds the matching tickets:
+// the store's at once, the server search's after 200 ms. An action that cannot run stays listed
 // with its reason and is skipped. Change state is a second step over the state menu's items.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
 import { closeOverlay, keys, props } from "herdr";
 import { perform } from "../../core/actions.js";
 import { classify } from "../../core/errors.js";
+import { fuzzyScore } from "../../core/fuzzy.js";
 import { all, get } from "../../core/registry.js";
 import { ticketActions } from "../operations/actions.js";
 import { STATE_MENU_FOOTER, stateItems } from "../operations/state.js";
+import { search } from "../presenter/search.js";
+import { tabName } from "../presenter/tab.js";
+import { searchTickets } from "../repository.js";
 import { getStore, ready } from "../store.js";
+import { openTicket } from "../tabs.js";
 import { runReason, runTerminal } from "../terminal.js";
 import { pill } from "../../ui/components/pill.js";
 import { mono } from "../../ui/components/text.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 
 const HINT = "Up and down choose, Enter runs, Esc closes.";
+const DEBOUNCE_MS = 200;
+const MAX_TICKETS = 8;
 const WHERE = { width: 1440 - 56, left: 56 };
 
 /**
  * @typedef {{ key: string, label: string, keys?: string, reason?: string | null, current?: boolean,
- *   run?: (cx: any) => void }} Row
+ *   ticket?: { id: string, title: string, state: string }, run?: (cx: any) => void }} Row
  */
 
 /** @param {Row} r */
 const usable = (r) => Boolean(r.run) && !r.reason && !r.current;
 
-/** Every typed word is in the label, ignoring case. @param {Row[]} rows @param {string} q */
+/** The rows whose label matches fuzzily, best first; ties keep their order. @param {Row[]} rows @param {string} q */
 function filter(rows, q) {
-  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-  return rows.filter((r) => words.every((w) => r.label.toLowerCase().includes(w)));
+  return rows
+    .map((r) => ({ r, s: fuzzyScore(q, r.label) }))
+    .filter((x) => x.s !== null)
+    .sort((a, b) => (b.s ?? 0) - (a.s ?? 0))
+    .map((x) => x.r);
 }
 
 /** keys.json's spelling with the last letter upper case: cmd-shift-o reads cmd-shift-O. @param {string} k */
@@ -49,21 +60,29 @@ export default class Actions {
   detail = null;
   /** @type {string | null} */
   failure = null;
+  /** The server search's tickets for the current text. @type {any[]} */
+  remote = [];
+  /** Counts keystrokes; a server search answers only if no newer keystroke came. */
+  seq = 0;
 
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
     this.handle = cx.focus_handle();
     this.input.on("change", (_e, cx) => {
       this.hot = null;
+      const seq = ++this.seq;
+      cx.timer.after(DEBOUNCE_MS, (cx) => {
+        if (seq === this.seq) this.searchRemote(seq, cx);
+      });
       cx.notify();
     });
     this.input.focus();
     const id = this.id();
-    if (!id) return;
-    this.detail = getStore().cached(id);
+    this.detail = id ? getStore().cached(id) : null;
     cx.spawn(async (cx) => {
       try {
         await ready();
+        if (!id) return;
         const d = await getStore().ticket(id);
         if (!d?.ticket) throw new Error(`${id} was not found`);
         this.detail = d;
@@ -72,6 +91,52 @@ export default class Actions {
       }
       cx.notify();
     });
+  }
+
+  /** The server search for the text, after a pause in typing. @param {number} seq @param {any} cx */
+  searchRemote(seq, cx) {
+    const q = this.input.value().trim();
+    if (!q || this.step !== "actions") return;
+    cx.spawn(async (/** @type {any} */ cx) => {
+      try {
+        const p = await ready();
+        const found = (await searchTickets(q, p?.uuid ?? getStore().project)).map(search);
+        if (seq !== this.seq) return;
+        this.remote = found;
+        cx.notify();
+      } catch {
+        // The store's matches stay; the server search only adds closed and older tickets.
+      }
+    });
+  }
+
+  /** The matching tickets: the store's and the server's, an exact identifier first. @param {string} q @returns {Row[]} */
+  matchingTickets(q) {
+    if (!q) return [];
+    const byId = new Map();
+    for (const t of [...getStore().records(), ...this.remote])
+      if (!byId.has(t.id)) byId.set(t.id, t);
+    const exact = q.toLowerCase();
+    return [...byId.values()]
+      .map((t) => ({
+        t,
+        s:
+          t.id.toLowerCase() === exact
+            ? Number.POSITIVE_INFINITY
+            : fuzzyScore(q, `${t.id} ${t.title ?? ""}`),
+      }))
+      .filter((x) => x.s !== null)
+      .sort((a, b) => (b.s ?? 0) - (a.s ?? 0))
+      .slice(0, MAX_TICKETS)
+      .map(({ t }) => ({
+        key: `ticket-${t.id}`,
+        label: `${t.id} ${t.title ?? ""}`,
+        ticket: { id: t.id, title: t.title ?? "", state: t.state ?? "" },
+        run: () => {
+          this.close();
+          openTicket(t.id, tabName(t), { pin: true });
+        },
+      }));
   }
 
   /** @returns {string | null} */
@@ -152,14 +217,8 @@ export default class Actions {
           run: () => this.command(c.id, ""),
         };
       });
-    const rows = filter(commands, q);
-    if (q)
-      rows.push({
-        key: "goto-text",
-        label: `Go to ticket "${q}"...`,
-        run: () => this.command("goto", q),
-      });
-    out.push({ title: "Bakers", rows });
+    out.push({ title: "Bakers", rows: filter(commands, q) });
+    out.push({ title: "Tickets", rows: this.matchingTickets(q) });
     return out.filter((s) => s.rows.length);
   }
 
@@ -217,7 +276,8 @@ export default class Actions {
   /** @param {Record<string, import("gpui-kit").Color>} t @param {Row} r */
   row(t, r) {
     const ok = usable(r);
-    return h_flex()
+    const tk = r.ticket;
+    const el = h_flex()
       .id(r.key)
       .gap(8)
       .px(8)
@@ -235,7 +295,13 @@ export default class Actions {
             this.choose(cx);
             cx.notify();
           }),
-      )
+      );
+    if (tk)
+      return el
+        .child(mono(tk.id, 11))
+        .child(div().flex_1().min_w(0).truncate().child(tk.title))
+        .child(div().text_size(11).text_color(t.muted).child(tk.state));
+    return el
       .child(div().child(r.label))
       .child(
         div()
@@ -256,6 +322,7 @@ export default class Actions {
     return v_flex()
       .id("actions")
       .w(480)
+      .h_full()
       .p(10)
       .gap(6)
       .bg(t.popover)
@@ -290,6 +357,10 @@ export default class Actions {
       )
       .child(
         v_flex()
+          .id("actions-rows")
+          .flex_1()
+          .min_h(0)
+          .overflow_y_scrollbar()
           .text_size(12)
           .text_color(t.foreground)
           .children(
