@@ -5,7 +5,7 @@
 // the run; cmd-Enter and Esc belong to the edit form or the composer while they are used.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { notify, props } from "herdr";
+import { notify, props, run } from "herdr";
 import { runReason, runTerminal, showRun } from "../terminal.js";
 import { pinTicket } from "../tabs.js";
 import { ticketActions } from "../operations/actions.js";
@@ -209,6 +209,7 @@ export default class TicketTab {
       )
       .child(div().flex_1())
       .child(button("edit", "Edit", () => this.edit(), { h: 24, size: 12 }))
+      .child(button("actions", "Actions", () => run("bakers.actions"), { h: 24, size: 12 }))
       .child(
         button("more", "...", () => openMenu(moreItems(this.detail)), { h: 24, px: 0 })
           .w(24)

@@ -3976,7 +3976,7 @@ exports[`golden: ticket.list R2-4 1`] = `
               },
               "kind": "div",
               "nodes": [
-                "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes. Up and down move the selection; the Ticket panel, when shown, follows it.",
+                "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the Ticket panel, when shown, follows it.",
               ],
             },
           ],
@@ -4419,6 +4419,79 @@ exports[`golden: ticket.view R2-3 1`] = `
                   "kind": "h_flex",
                   "nodes": [
                     "Edit",
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "bg": [
+                      [
+                        "surface",
+                      ],
+                    ],
+                    "border": [
+                      [
+                        1,
+                      ],
+                    ],
+                    "border_color": [
+                      [
+                        "border",
+                      ],
+                    ],
+                    "cursor_pointer": [
+                      [],
+                    ],
+                    "flex_none": [
+                      [],
+                    ],
+                    "h": [
+                      [
+                        24,
+                      ],
+                    ],
+                    "hover": [
+                      [
+                        "[fn]",
+                      ],
+                    ],
+                    "id": [
+                      [
+                        "actions",
+                      ],
+                    ],
+                    "items_center": [
+                      [],
+                    ],
+                    "on_click": [
+                      [
+                        "[fn]",
+                      ],
+                    ],
+                    "px": [
+                      [
+                        8,
+                      ],
+                    ],
+                    "rounded": [
+                      [
+                        6,
+                      ],
+                    ],
+                    "text_color": [
+                      [
+                        "foreground",
+                      ],
+                    ],
+                    "text_size": [
+                      [
+                        12,
+                      ],
+                    ],
+                  },
+                  "kind": "h_flex",
+                  "nodes": [
+                    "Actions",
                   ],
                 },
                 {

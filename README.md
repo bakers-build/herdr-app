@@ -64,6 +64,7 @@ It never overwrites a key you already use; it prints the ones it kept.
 | cmd-shift-O | Go to ticket |
 | cmd-shift-B | Tickets tab |
 | cmd-shift-N | New ticket |
+| cmd-K | Actions of the ticket in front, or of the selected row on the Tickets tab, and the bakers commands |
 | Tickets tab | Up/Down select, Enter preview tab, cmd-Enter pinned tab, `/` filter, N new ticket, R refresh |
 | Ticket tab | A acts on the Needs-you card, E edits, G shows the agent, R moves the run; cmd-Enter sends or saves, Esc cancels |
 

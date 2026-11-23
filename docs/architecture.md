@@ -53,7 +53,8 @@ mods/bakers/
     register.js                   what the module puts in the registry (see below), among it
                                   the routes ticket.list, ticket.view, ticket.context,
                                   ticket.run, ticket.rail, ticket.sidebar, ticket.status,
-                                  ticket.search, ticket.conductor-picker, ticket.label-picker
+                                  ticket.search, ticket.actions, ticket.conductor-picker,
+                                  ticket.label-picker
     model.js                      the Ticket, Run, Comment shapes (JSDoc) and the mapping from
                                   JSON:API entities
     rules.js                      what a ticket means: who needs you, since when, closed
@@ -73,10 +74,12 @@ mods/bakers/
                                   index (navigation order, counts, view menu, empty text)
     form/                         form definitions: comment, edit, confirm (state, freeze,
                                   unfreeze, move, cancel), create
-    operations/                   what one can do with a ticket: the state menu, the "..." menu
+    operations/                   what one can do with a ticket: its actions (one list for the
+                                  "..." menu, the keys G and R and the actions palette), the
+                                  state menu, the "..." menu
     view/                         list, full (the full view of one ticket), context, run (the
                                   run column's header), rail, sidebar, status, search,
-                                  conductor-picker, label-picker;
+                                  actions (the cmd-K palette), conductor-picker, label-picker;
                                   commands (key commands)
   project/   module             register.js (routes project.picker, project.sidebar-tool),
                                   model, repository, state (the window's project),
@@ -112,7 +115,7 @@ A type is any string. The registry knows none of them. The types the mod uses:
 | `sidebar.tool` | e.g. `project.picker` | `{ section, order, route }`: a button in the section's card | `project` |
 | `status.item` | e.g. `ticket` | `{ order, route }` | `ticket` |
 | `window.task` | `ticket.refresh`, `ticket.run` | `{ every, run() }` | `ticket` |
-| `command` | a key command's name (`goto`, `tickets`, `panel`, `new`, `open`) | `{ run(arg, ctx) }`: `arg` is the text after the name, `ctx = { width, left }` (the status bar width, the x of its left edge) | `ticket` |
+| `command` | a key command's name (`goto`, `new`, `tickets`, `panel`, `open`, `actions`) | `{ label?, run(arg, ctx) }`: `arg` is the text after the name, `ctx = { width, left }` (the status bar width, the x of its left edge); a command with a `label` is listed in the actions palette, in registry order | `ticket` |
 | `tabs.decorate` | e.g. `ticket` | `{ decorate(tab, info) → { label?, dot? } \| null }`: `info = { kind, key, rest, home }` (`kind`, `key` and `rest` are null on a plain tab); `dot` is a theme token | `ticket` |
 | `tabs.panel` | panel child id (`files`, `changes`, `ticket`) | `{ order, label, bordered, enabled?() }` | `shell` (Files, Changes), `ticket` (Ticket) |
 
@@ -213,7 +216,7 @@ A ticket tab goes the same way:
   request with `include`).
 - It maps the ticket with the view mode `presenter/full.js` and draws it.
 - It holds two inline forms, `form/comment.js` (the composer) and `form/edit.js`.
-- Its menus come from `operations/`.
+- Its menus and its keys G and R come from `operations/`.
 
 ## A list definition
 

@@ -10,7 +10,7 @@ beforeEach(() => {
   resetMod();
 });
 
-test("header: identifier, state pill, Frozen, agent line, Edit and ...", async () => {
+test("header: identifier, state pill, Frozen, agent line, Edit, Actions and ...", async () => {
   env.terminals = [live("studio-mac/t7")];
   const root = (await ticketTab()).render();
   const head = find(root, "doc-header");
@@ -20,6 +20,7 @@ test("header: identifier, state pill, Frozen, agent line, Edit and ...", async (
     "Frozen",
     "Claude Code needs you on studio-mac, 35m",
     "Edit",
+    "Actions",
     "...",
   ]);
   const id = findText(head, "SHOP-41");
@@ -206,4 +207,11 @@ test("R starts Move to... with the conductor picker", async () => {
     kind: "popup",
     width: 220,
   });
+});
+
+test("the Actions button opens the actions palette as cmd-K does", async () => {
+  const copy = await ticketTab();
+  env.calls.length = 0;
+  click(find(copy.render(), "actions"));
+  expect(runs()).toEqual([["bakers.actions"]]);
 });
