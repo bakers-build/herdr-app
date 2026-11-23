@@ -2,12 +2,10 @@
 // forms and the actions its menus run.
 import { define } from "../core/registry.js";
 import Actions from "./view/actions.js";
-import ConductorPicker from "./view/conductor-picker.js";
 import Context from "./view/context.js";
 import LabelPicker from "./view/label-picker.js";
 import List from "./view/list.js";
 import Rail from "./view/rail.js";
-import Search from "./view/search.js";
 import Sidebar from "./view/sidebar.js";
 import Status from "./view/status.js";
 import Full from "./view/full.js";
@@ -56,16 +54,11 @@ export function register() {
   define("route", "ticket.rail", { view: Rail }); // the rail button
   define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar
   define("route", "ticket.status", { view: Status }); // the status block's item
-  define("route", "ticket.search", { view: Search, open: { kind: "popup", width: 480 } }); // popup, cmd-shift-O
   // dialog, cmd-K: Herdr centres a dialog; a mod gets no window size to place a popup itself
   define("route", "ticket.actions", {
     view: Actions,
     open: { kind: "dialog", width: 480, height: 490 },
   });
-  define("route", "ticket.conductor-picker", {
-    view: ConductorPicker,
-    open: { kind: "popup", width: 220 },
-  }); // popup, props.ticket
   define("route", "ticket.label-picker", {
     view: LabelPicker,
     open: { kind: "popup", width: 220 },
@@ -96,7 +89,7 @@ export function register() {
   define("action", "ticket.refresh", { run: () => refresh() });
   define("action", "ticket.showAgent", { run: (/** @type {string} */ id) => showAgent(id) });
   define("action", "ticket.move", {
-    run: (/** @type {string} */ id) => openRoute("ticket.conductor-picker", { ticket: id }),
+    run: (/** @type {string} */ id) => openRoute("ticket.actions", { ticket: id, page: "move" }),
   });
   define("action", "ticket.view", { run: (/** @type {string} */ view) => setView(view) });
   define("action", "ticket.toggleClosed", {

@@ -127,14 +127,7 @@ export default class Panel {
               vm.agent.show ? { ...small, disabled: true, reason: vm.agent.show } : small,
             ),
           )
-          .child(
-            button(
-              "move-to",
-              "Move to...",
-              () => openRoute("ticket.conductor-picker", { ticket: vm.id }),
-              small,
-            ),
-          )
+          .child(button("move-to", "Move to...", () => void perform(["ticket.move", vm.id]), small))
           .child(
             button(
               "cancel-run",

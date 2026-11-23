@@ -9,29 +9,23 @@ import { tabName } from "../presenter/tab.js";
 import { getStore, ready } from "../store.js";
 import { ensureTicketsTab, frontTicket, openTicket } from "../tabs.js";
 
-/**
- * A 480 px popup 120 px from the top, centred over the status bar (Herdr gives mods no window size).
- * @param {{ width: number, left: number }} where
- */
-export function atTop({ width, left }) {
-  return { x: Math.max(0, Math.round(left + width / 2 - 240)), y: 120 };
-}
-
-/** Go to ticket; a text (goto:<text>, from the palette) fills its field. */
+/** cmd-shift-O: the actions palette on its tickets page; a text (goto:<text>) fills its field. */
 export const goto = {
   label: "Go to ticket...",
-  /** @param {string} arg @param {{ width: number, left: number }} where */
-  run(arg, where) {
-    openRoute("ticket.search", arg ? { query: arg } : {}, { at: atTop(where) });
+  /** @param {string} arg */
+  run(arg) {
+    openRoute("ticket.actions", {
+      ticket: frontTicket(),
+      page: "tickets",
+      ...(arg ? { query: arg } : {}),
+    });
   },
 };
 
-/** cmd-K: the palette of the ticket in front (frontTicket), centred by Herdr (route ticket.actions);
- *  `where` goes along for the commands it runs, such as Go to ticket. */
+/** cmd-K: the actions palette of the ticket in front (frontTicket); Herdr centres it. */
 export const actions = {
-  /** @param {string} _arg @param {{ width: number, left: number }} where */
-  run(_arg, where) {
-    openRoute("ticket.actions", { ticket: frontTicket(), where });
+  run() {
+    openRoute("ticket.actions", { ticket: frontTicket() });
   },
 };
 

@@ -26,15 +26,11 @@ async function command(c: string, focused: any, shared: Record<string, unknown> 
   return env.calls.filter((x) => x.fn === "openOverlay").map((x) => x.args[0] as any);
 }
 
-// Go to ticket: the status bar is 1440 - 56 px wide and starts at x 56 (no sidebar).
-const AT = { x: 508, y: 120 };
-const WHERE = { width: 1384, left: 56 };
-
 test("actions on a ticket tab opens the palette for that ticket, centred by Herdr as a dialog", async () => {
   expect(await command("actions", { tab: "t5" })).toEqual([
     {
       mod: "bakers",
-      props: { view: "ticket.actions", ticket: "SHOP-41", where: WHERE },
+      props: { view: "ticket.actions", ticket: "SHOP-41" },
       kind: "dialog",
       width: 480,
       height: 490,
@@ -61,11 +57,17 @@ test("actions on any other tab targets no ticket", async () => {
   expect(o.props.ticket).toBeNull();
 });
 
-test("goto with a text opens Go to ticket with that text", async () => {
-  const [o] = await command("goto:deliv", { tab: "t0" });
-  expect(o).toMatchObject({ props: { view: "ticket.search", query: "deliv" }, at: AT });
+test("goto opens the palette on its tickets page, with a text when given", async () => {
+  const [o] = await command("goto:deliv", { tab: "t5" });
+  expect(o).toEqual({
+    mod: "bakers",
+    props: { view: "ticket.actions", ticket: "SHOP-41", page: "tickets", query: "deliv" },
+    kind: "dialog",
+    width: 480,
+    height: 490,
+  });
   reset();
   resetMod();
   const [plain] = await command("goto", { tab: "t0" });
-  expect(plain.props).toEqual({ view: "ticket.search" });
+  expect(plain.props).toEqual({ view: "ticket.actions", ticket: null, page: "tickets" });
 });

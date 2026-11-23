@@ -263,3 +263,7 @@ Pascal asked for fuzzy search over everything and a centered palette. AC3 is rev
 **Files:** Modify `mods/bakers/ticket/register.js` (route `ticket.actions` opens `{ kind: "dialog", width: 480, height: 420 }`), `mods/bakers/ticket/view/commands.js` (`actions` passes no `at`), `mods/bakers/ticket/view/actions.js` (rows scroll in the fixed height), Test `tests/ticket/commands.test.ts`.
 
 - [ ] Test first: the overlay spec of `actions`. FAIL. Implement. `bun run check`, `herdr-check`, live check. Commit, push.
+
+### Task 8: Navigation like Raycast (scope change, 2026-11-24)
+
+Pages inside the palette for Change state, Move to (conductors), Go to ticket (tickets) and a ticket's actions; Esc and Backspace go back; Tab or Right on a ticket opens its actions; the footer names Enter. cmd-shift-O, R and the panel's Move to open the palette on their page; the views `ticket.search` and `ticket.conductor-picker` go, their tests move to `actions.test.ts`. See the ticket's third `spec` and `test` comments.

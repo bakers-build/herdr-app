@@ -5575,14 +5575,13 @@ exports[`golden calls: goto with the sidebar shown 1`] = `
   [
     "openOverlay",
     {
-      "at": {
-        "x": 728,
-        "y": 120,
-      },
-      "kind": "popup",
+      "height": 490,
+      "kind": "dialog",
       "mod": "bakers",
       "props": {
-        "view": "ticket.search",
+        "page": "tickets",
+        "ticket": null,
+        "view": "ticket.actions",
       },
       "width": 480,
     },
@@ -5595,14 +5594,13 @@ exports[`golden calls: goto with the sidebar hidden 1`] = `
   [
     "openOverlay",
     {
-      "at": {
-        "x": 508,
-        "y": 120,
-      },
-      "kind": "popup",
+      "height": 490,
+      "kind": "dialog",
       "mod": "bakers",
       "props": {
-        "view": "ticket.search",
+        "page": "tickets",
+        "ticket": null,
+        "view": "ticket.actions",
       },
       "width": 480,
     },

@@ -53,8 +53,7 @@ mods/bakers/
     register.js                   what the module puts in the registry (see below), among it
                                   the routes ticket.list, ticket.view, ticket.context,
                                   ticket.run, ticket.rail, ticket.sidebar, ticket.status,
-                                  ticket.search, ticket.actions, ticket.conductor-picker,
-                                  ticket.label-picker
+                                  ticket.actions, ticket.label-picker
     model.js                      the Ticket, Run, Comment shapes (JSDoc) and the mapping from
                                   JSON:API entities
     rules.js                      what a ticket means: who needs you, since when, closed
@@ -78,8 +77,9 @@ mods/bakers/
                                   "..." menu, the keys G and R and the actions palette), the
                                   state menu, the "..." menu
     view/                         list, full (the full view of one ticket), context, run (the
-                                  run column's header), rail, sidebar, status, search,
-                                  actions (the cmd-K palette), conductor-picker, label-picker;
+                                  run column's header), rail, sidebar, status,
+                                  actions (the cmd-K palette, also cmd-shift-O and Move to),
+                                  label-picker;
                                   commands (key commands)
   project/   module             register.js (routes project.picker, project.sidebar-tool),
                                   model, repository, state (the window's project),
@@ -142,7 +142,7 @@ line, each with a comment saying where Herdr shows it:
 
 ```js
 define("route", "ticket.list", { view: List }); // tab "Tickets"
-define("route", "ticket.search", { view: Search, open: { kind: "popup", width: 480 } }); // popup, cmd-shift-O
+define("route", "ticket.label-picker", { view: LabelPicker, open: { kind: "popup", width: 220 } }); // popup, props.ticket
 ```
 
 `view` is the view class (gpui-kit's `View` contract: `init`, `render`, `close`). `open` is
@@ -178,9 +178,9 @@ such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu
 | `ticket.view` | `ticket/view/full.js` | a tab "SHOP-41 working", `props.ticket` |
 | `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket` |
 | `ticket.run` | `ticket/view/run.js` | the header block `run-header` of the run column `run`, right of `main` (written by `ticket/terminal.js`, not by the installer) |
-| `ticket.search` | `ticket/view/search.js` | a popup (cmd-shift-O) |
+| `ticket.actions` | `ticket/view/actions.js` | a dialog Herdr centres: cmd-K, cmd-shift-O (`page: "tickets"`), Move to (`page: "move"`) |
 | `ticket.rail`, `ticket.sidebar`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail, sidebar and status |
-| `ticket.conductor-picker`, `ticket.label-picker` | `ticket/view/…` | popups |
+| `ticket.label-picker` | `ticket/view/label-picker.js` | a popup |
 | `project.picker` | `project/view/picker.js` | a popup from the sidebar |
 | `project.sidebar-tool` | `project/view/sidebar-tool.js` | the project button in the Tickets card |
 | `shell.rail`, `shell.sidebar`, `shell.tabs`, `shell.status` | `shell/view/…` | layout blocks (`scripts/layout.js`) |

@@ -6,6 +6,7 @@ import {
   click,
   env,
   find,
+  fetched,
   fireTimers,
   flush,
   key,
@@ -17,7 +18,6 @@ import {
   walk,
 } from "../../harness";
 
-const WHERE = { width: 1384, left: 56 };
 const TITLE = list.find((t) => t.id === "u41")?.title as string;
 // SHOP-38 is closed: only the server search finds it, as in search.test.ts.
 const withClosed = [
@@ -38,7 +38,12 @@ beforeEach(() => {
   resetMod();
 });
 
-async function palette(ticket: string | null = "SHOP-41", settle = true, data: any = {}) {
+async function palette(
+  ticket: string | null = "SHOP-41",
+  settle = true,
+  data: any = {},
+  extra: Record<string, unknown> = {},
+) {
   activeSpace();
   env.shared["bakers.project"] = "p1";
   backend(data);
@@ -47,12 +52,7 @@ async function palette(ticket: string | null = "SHOP-41", settle = true, data: a
     { section: "global", keys: "cmd-shift-b", action: "bakers.tickets" },
   ];
   const Bakers = await load("bakers/main.js");
-  const copy = mount(Bakers, {
-    view: "ticket.actions",
-    ticket,
-    where: WHERE,
-    overlay: "overlay-9",
-  });
+  const copy = mount(Bakers, { view: "ticket.actions", ticket, overlay: "overlay-9", ...extra });
   if (settle) await flush();
   return copy;
 }
@@ -62,7 +62,7 @@ function rows(root: any): string[] {
   const out: string[] = [];
   walk(root, (n) => {
     const id = n.calls.id?.[0];
-    if (typeof id === "string" && /^(action|cmd|state|ticket)-/.test(id)) out.push(id);
+    if (typeof id === "string" && /^(action|cmd|state|ticket|conductor)-/.test(id)) out.push(id);
   });
   return out;
 }
@@ -132,13 +132,101 @@ test("a run that ends before Enter: nothing runs, and the reason shows", async (
   expect(texts(row(copy.render(), "action-agent"))).toContain("No live run terminal");
 });
 
-test("Move to... opens the conductor picker", async () => {
-  const copy = await palette();
+const ciBox = {
+  jsonapi: { conductors: [{ id: "k2", label: "ci-box", machine: "build-vps", status: "online" }] },
+};
+
+test("Move to opens the conductors page; choosing one asks in the move dialog", async () => {
+  const copy = await palette("SHOP-41", true, ciBox);
   key(copy.render(), "down");
   env.calls.length = 0;
   key(copy.render(), "enter");
+  await flush();
+  const root = copy.render();
+  expect(closed()).toEqual([]);
+  expect(texts(find(root, "actions-target")).join(" ")).toContain("Move to");
+  expect(texts(row(root, "conductor-k2"))).toEqual(["ci-box", "build-vps"]);
+  expect(texts(root)).toContain("↵ Move · Esc Back");
+  key(root, "enter");
   expect(closed()).toEqual(["overlay-9"]);
-  expect(opened()[0].props).toEqual({ view: "ticket.conductor-picker", ticket: "SHOP-41" });
+  expect(opened()[0].props).toEqual({
+    view: "dialog",
+    form: "move",
+    ticket: "SHOP-41",
+    conductor: "k2",
+    name: "ci-box",
+  });
+});
+
+test("the conductors page of a project without conductors says so", async () => {
+  const copy = await palette("SHOP-41", true, { jsonapi: { conductors: [] } }, { page: "move" });
+  expect(texts(copy.render())).toContain("No conductor in this project.");
+});
+
+test("Esc goes back a page and restores its text; Esc on the first page closes", async () => {
+  const copy = await palette();
+  copy.inner.input.type("mov");
+  key(copy.render(), "enter");
+  expect(copy.inner.input.value()).toBe("");
+  key(copy.render(), "escape");
+  expect(copy.inner.input.value()).toBe("mov");
+  expect(rows(copy.render())[0]).toBe("action-move");
+  expect(closed()).toEqual([]);
+  key(copy.render(), "escape");
+  expect(closed()).toEqual(["overlay-9"]);
+});
+
+test("Tab on a ticket opens its actions page; Backspace in the empty field goes back", async () => {
+  const copy = await palette();
+  copy.inner.input.type("shop-56");
+  expect(texts(copy.render())).toContain("↵ Open ticket · Tab Actions · Esc Close");
+  key(copy.render(), "tab");
+  await flush();
+  const root = copy.render();
+  expect(texts(find(root, "actions-target"))).toContain("SHOP-56");
+  expect(rows(root)).toEqual([
+    "action-agent",
+    "action-state",
+    "action-move",
+    "action-freeze",
+    "action-cancel",
+    "action-copy",
+  ]);
+  key(root, "backspace");
+  expect(copy.inner.input.value()).toBe("shop-56");
+});
+
+test("the footer says what Enter does", async () => {
+  expect(texts((await palette()).render())).toContain("↵ Open · Esc Close");
+});
+
+test("Go to ticket in the palette opens the tickets page", async () => {
+  const copy = await palette();
+  env.calls.length = 0;
+  click(row(copy.render(), "cmd-goto"));
+  const root = copy.render();
+  expect(closed()).toEqual([]);
+  expect(texts(find(root, "actions-target")).join(" ")).toContain("Go to ticket");
+  expect(rows(root).every((r) => r.startsWith("ticket-"))).toBe(true);
+});
+
+test("the tickets page searches the server once after 200 ms of quiet", async () => {
+  const copy = await palette("SHOP-41", true, {}, { page: "tickets" });
+  env.calls.length = 0;
+  copy.inner.input.type("de");
+  copy.inner.input.type("deliv");
+  expect(fetched()).toEqual([]);
+  fireTimers(200);
+  await flush();
+  const searches = fetched();
+  expect(searches.length).toBe(2);
+  expect(searches[0]).toContain(
+    "[path]=identifier&filter[f1][condition][operator]=STARTS_WITH&filter[f1][condition][value]=DELIV",
+  );
+  expect(searches[1]).toContain(
+    "[path]=title&filter[f1][condition][operator]=CONTAINS&filter[f1][condition][value]=deliv",
+  );
+  expect(rows(copy.render()).every((r) => r.startsWith("ticket-"))).toBe(true);
 });
 
 test("Unfreeze... and Cancel run... open their dialogs", async () => {
@@ -264,7 +352,6 @@ test("while the ticket loads, and when it fails, the bakers commands still work"
   const copy = mount(Bakers, {
     view: "ticket.actions",
     ticket: "SHOP-41",
-    where: WHERE,
     overlay: "o",
   });
   await flush();

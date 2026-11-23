@@ -194,18 +194,19 @@ test("the state pill opens the state menu", async () => {
   expect(spec.props.items[2]).toMatchObject({ current: true, disabled: true });
 });
 
-test("R starts Move to... with the conductor picker", async () => {
+test("R starts Move to... on the palette's conductors page", async () => {
   const copy = await ticketTab();
   env.calls.length = 0;
   key(copy.render(), "r");
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
-    props: { view: "ticket.conductor-picker", ticket: "SHOP-41" },
+    props: { view: "ticket.actions", ticket: "SHOP-41", page: "move" },
   });
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toEqual({
     mod: "bakers",
-    props: { view: "ticket.conductor-picker", ticket: "SHOP-41" },
-    kind: "popup",
-    width: 220,
+    props: { view: "ticket.actions", ticket: "SHOP-41", page: "move" },
+    kind: "dialog",
+    width: 480,
+    height: 490,
   });
 });
 
