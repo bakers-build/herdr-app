@@ -360,3 +360,11 @@ test("while the ticket loads, and when it fails, the bakers commands still work"
   expect(rows(root)).toEqual(["action-failure", "cmd-goto", "cmd-new", "cmd-tickets", "cmd-panel"]);
   expect(row(root, "cmd-goto").calls.on_click).toBeDefined();
 });
+
+test("each page has its own field and placeholder", async () => {
+  const copy = await palette();
+  expect(copy.inner.input.placeholder).toBe("Search actions and tickets...");
+  click(row(copy.render(), "cmd-goto"));
+  expect(copy.inner.input.placeholder).toBe("Search tickets...");
+  expect(copy.inner.input.focused).toBe(true);
+});

@@ -29,9 +29,17 @@ const DEBOUNCE_MS = 200;
 const MAX_TICKETS = 8;
 const MAX_PAGE_TICKETS = 50;
 const TITLES = { state: "Change state", move: "Move to", tickets: "Go to ticket" };
+const PLACEHOLDERS = {
+  root: "Search actions and tickets...",
+  state: "Search states...",
+  move: "Search conductors...",
+  tickets: "Search tickets...",
+  ticket: "Search actions...",
+};
 
 /**
- * @typedef {{ page: "root" | "state" | "move" | "tickets" | "ticket", id: string | null, q?: string }} Page
+ * @typedef {{ page: "root" | "state" | "move" | "tickets" | "ticket", id: string | null,
+ *   input?: any }} Page
  * @typedef {{ key: string, label: string, keys?: string, note?: string, reason?: string | null,
  *   current?: boolean, enter?: string, ticket?: { id: string, title: string, state: string },
  *   run?: (cx: any) => void }} Row
@@ -55,8 +63,7 @@ const keyLabel = (k) => k.replace(/-([a-z])$/, (_m, c) => `-${c.toUpperCase()}`)
 export default class Actions {
   /** @type {import("gpui-kit").FocusHandle} init sets it before the first render */
   handle = /** @type {any} */ (null);
-  input = InputState.new({ placeholder: "Type an action..." });
-  /** @type {Page[]} */
+  /** @type {Page[]} each page with its own field */
   stack = [{ page: "root", id: null }];
   /** The highlighted row's key; render keeps it on a usable row. @type {string | null} */
   hot = null;
@@ -77,13 +84,9 @@ export default class Actions {
     this.handle = cx.focus_handle();
     const p = /** @type {any} */ (props()) ?? {};
     const id = p.ticket ?? null;
-    this.stack = [{ page: "root", id }];
-    if (p.page === "tickets" || (p.page === "move" && id)) this.stack.push({ page: p.page, id });
-    this.input.on("change", (_e, cx) => {
-      this.hot = null;
-      this.schedule(cx);
-      cx.notify();
-    });
+    this.stack = [{ page: "root", id, input: this.field("root") }];
+    if (p.page === "tickets" || (p.page === "move" && id))
+      this.stack.push({ page: p.page, id, input: this.field(p.page) });
     this.input.focus();
     if (p.query) {
       this.input.set_value(p.query);
@@ -95,6 +98,23 @@ export default class Actions {
       await ready().catch(() => null);
       cx.notify();
     });
+  }
+
+  /** A page's field: typing re-filters and, after a pause, searches the server.
+   *  @param {Page["page"]} page */
+  field(page) {
+    const input = InputState.new({ placeholder: PLACEHOLDERS[page] });
+    input.on("change", (_e, cx) => {
+      this.hot = null;
+      this.schedule(cx);
+      cx.notify();
+    });
+    return input;
+  }
+
+  /** The field of the page in front. */
+  get input() {
+    return this.top().input;
   }
 
   /** @returns {Page} */
@@ -161,11 +181,11 @@ export default class Actions {
     });
   }
 
-  /** Opens a page over this one; this page keeps its text for the way back. @param {Page} page @param {any} cx */
+  /** Opens a page over this one, with its own field; this page keeps its text for the way back.
+   *  @param {Page} page @param {any} cx */
   push(page, cx) {
-    this.top().q = this.input.value();
-    this.stack.push(page);
-    this.input.set_value("");
+    this.stack.push({ ...page, input: this.field(page.page) });
+    this.input.focus();
     this.hot = null;
     this.remote = [];
     if (page.page === "ticket" && page.id) this.load(page.id, cx);
@@ -176,7 +196,7 @@ export default class Actions {
   pop() {
     if (this.stack.length < 2) return false;
     this.stack.pop();
-    this.input.set_value(this.top().q ?? "");
+    this.input.focus();
     this.hot = null;
     this.remote = [];
     return true;
