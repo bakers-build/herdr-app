@@ -60,15 +60,18 @@ function frontRun() {
   return id ? (runTerminal(id, getStore().byId(id)?.uuid) ?? null) : null;
 }
 
-/** The run column showing `address`: a new one, or `col` with only hidden and its terminal changed. */
-/** @param {any} col @param {string} address */
+/**
+ * The run column showing `address`: a new one (in place of a `run` that is no column, at its
+ * size), or `col` with only hidden and its terminal changed.
+ * @param {any} col @param {string} address
+ */
 function column(col, address) {
   const term = { id: TERMINAL, type: "block", content: { terminal: address } };
-  if (!col)
+  if (col?.type !== "column")
     return {
       id: RUN,
       type: "column",
-      size: { weight: 1 },
+      size: col?.size ?? { weight: 1 },
       children: [
         {
           id: HEADER,

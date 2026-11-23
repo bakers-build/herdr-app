@@ -157,6 +157,23 @@ test("another ticket tab shows its run and keeps the column's size", () => {
   expect(findNode(tree, "run-terminal").content).toEqual({ terminal: "t9" });
 });
 
+test("a run block that is no column becomes the column, keeping its size", () => {
+  const body = findNode(env.layout, "work-body");
+  body.children.splice(1, 0, {
+    id: "run",
+    type: "block",
+    size: { weight: 2 },
+    content: { terminal: "t7" },
+  });
+  front("SHOP-41");
+  env.terminals = [live("t7")];
+  terminal.syncRun();
+  const { children, ...column } = findNode(sets()[0][1].layout, "run");
+  expect(column).toEqual({ id: "run", type: "column", size: { weight: 2 } });
+  expect(children.map((c: any) => c.id)).toEqual(["run-header", "run-terminal"]);
+  expect(children[1].content).toEqual({ terminal: "t7" });
+});
+
 test("the Tickets tab, a plain tab and a ticket without a run hide the column once", () => {
   for (const away of [() => front(null), () => front(null, true), () => front("SHOP-56")]) {
     shown();
