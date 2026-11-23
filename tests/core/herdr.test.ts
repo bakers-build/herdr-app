@@ -42,3 +42,15 @@ test("withNode leaves its input unchanged", () => {
   out.children[0].children[1].children.push({ id: "y" });
   expect(node).toEqual({ id: "run", children: [{ id: "x" }] });
 });
+
+test("withNode runs without structuredClone, as in Herdr's mod runtime", () => {
+  const keep = globalThis.structuredClone;
+  // @ts-expect-error Herdr's runtime has none
+  globalThis.structuredClone = undefined;
+  try {
+    const out = herdr.withNode(tree(), { id: "run" }, "body", "main");
+    expect(out.children[0].children.map((c: any) => c.id)).toEqual(["main", "run", "side"]);
+  } finally {
+    globalThis.structuredClone = keep;
+  }
+});

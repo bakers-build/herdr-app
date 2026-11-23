@@ -33,8 +33,9 @@ function parentOf(node, id) {
  * @param {any} root @param {any} node @param {string} parent @param {string} after @returns {any}
  */
 export function withNode(root, node, parent, after) {
-  const copy = structuredClone(root);
-  const add = structuredClone(node);
+  // Herdr's mod runtime has no structuredClone; a layout tree is plain JSON.
+  const copy = JSON.parse(JSON.stringify(root));
+  const add = JSON.parse(JSON.stringify(node));
   const at = parentOf(copy, node.id);
   if (at) {
     at.children[at.children.findIndex((/** @type {any} */ c) => c.id === node.id)] = add;
