@@ -52,8 +52,8 @@ mods/bakers/
   ticket/    module
     register.js                   what the module puts in the registry (see below), among it
                                   the routes ticket.list, ticket.view, ticket.context,
-                                  ticket.rail, ticket.sidebar, ticket.status, ticket.search,
-                                  ticket.conductor-picker, ticket.label-picker
+                                  ticket.run, ticket.rail, ticket.sidebar, ticket.status,
+                                  ticket.search, ticket.conductor-picker, ticket.label-picker
     model.js                      the Ticket, Run, Comment shapes (JSDoc) and the mapping from
                                   JSON:API entities
     rules.js                      what a ticket means: who needs you, since when, closed
@@ -74,8 +74,9 @@ mods/bakers/
     form/                         form definitions: comment, edit, confirm (state, freeze,
                                   unfreeze, move, cancel), create
     operations/                   what one can do with a ticket: the state menu, the "..." menu
-    view/                         list, full (the full view of one ticket), context, rail,
-                                  sidebar, status, search, conductor-picker, label-picker;
+    view/                         list, full (the full view of one ticket), context, run (the
+                                  run column's header), rail, sidebar, status, search,
+                                  conductor-picker, label-picker;
                                   commands (key commands)
   project/   module             register.js (routes project.picker, project.sidebar-tool),
                                   model, repository, state (the window's project),
@@ -173,6 +174,7 @@ such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu
 | `ticket.list` | `ticket/view/list.js` | the tab "Tickets" |
 | `ticket.view` | `ticket/view/full.js` | a tab "SHOP-41 working", `props.ticket` |
 | `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket` |
+| `ticket.run` | `ticket/view/run.js` | the header block `run-header` of the run column `run`, right of `main` (written by `ticket/terminal.js`, not by the installer) |
 | `ticket.search` | `ticket/view/search.js` | a popup (cmd-shift-O) |
 | `ticket.rail`, `ticket.sidebar`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail, sidebar and status |
 | `ticket.conductor-picker`, `ticket.label-picker` | `ticket/view/…` | popups |

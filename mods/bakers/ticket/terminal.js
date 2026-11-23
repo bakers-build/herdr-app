@@ -122,6 +122,12 @@ function settleFocus(want, now) {
   setShared("bakers.runFocus", null);
 }
 
+/** The header's Hide: the column stays hidden until showRun; the run is untouched. */
+export function hideRun() {
+  setShared("bakers.runHidden", true);
+  run("layout.hide", { id: RUN });
+}
+
 /** "Show agent" and "Answer in the run": show the column, even after Hide, and focus the run. */
 /** @param {string} id */
 export function showRun(id) {
