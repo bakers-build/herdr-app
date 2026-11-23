@@ -67,6 +67,8 @@ export default class Actions {
   stack = [{ page: "root", id: null }];
   /** The highlighted row's key; render keeps it on a usable row. @type {string | null} */
   hot = null;
+  /** True once the arrows moved the highlight; until then it follows the first usable row. */
+  moved = false;
   /** Loaded tickets by identifier, as a ticket tab loads them. @type {Map<string, any>} */
   details = new Map();
   /** Why a ticket did not load, by identifier. @type {Map<string, string>} */
@@ -106,6 +108,7 @@ export default class Actions {
     const input = InputState.new({ placeholder: PLACEHOLDERS[page] });
     input.on("change", (_e, cx) => {
       this.hot = null;
+      this.moved = false;
       this.schedule(cx);
       cx.notify();
     });
@@ -187,6 +190,7 @@ export default class Actions {
     this.stack.push({ ...page, input: this.field(page.page) });
     this.input.focus();
     this.hot = null;
+    this.moved = false;
     this.remote = [];
     if (page.page === "ticket" && page.id) this.load(page.id, cx);
     if (page.page === "move") this.loadConductors(cx);
@@ -198,6 +202,7 @@ export default class Actions {
     this.stack.pop();
     this.input.focus();
     this.hot = null;
+    this.moved = false;
     this.remote = [];
     return true;
   }
@@ -343,9 +348,10 @@ export default class Actions {
     return out.filter((s) => s.rows.length);
   }
 
-  /** The highlight: kept while its row is usable, else the first usable row. @param {Row[]} rows */
+  /** The highlight: the first usable row, or the one the arrows chose while it stays usable.
+   *  @param {Row[]} rows */
   pick(rows) {
-    const kept = rows.find((r) => r.key === this.hot);
+    const kept = this.moved ? rows.find((r) => r.key === this.hot) : null;
     return kept && usable(kept) ? kept.key : (rows.find(usable)?.key ?? null);
   }
 
@@ -358,6 +364,7 @@ export default class Actions {
     if (!n) return;
     const i = rows.findIndex((r) => r.key === this.hot);
     this.hot = rows[i < 0 ? (dir > 0 ? 0 : n - 1) : (i + dir + n) % n].key;
+    this.moved = true;
   }
 
   /** @returns {Row | undefined} the highlighted row, built afresh */

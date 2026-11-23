@@ -368,3 +368,13 @@ test("each page has its own field and placeholder", async () => {
   expect(copy.inner.input.placeholder).toBe("Search tickets...");
   expect(copy.inner.input.focused).toBe(true);
 });
+
+test("the highlight lands on the first action once the ticket has loaded", async () => {
+  env.terminals = [live("t7")];
+  const copy = await palette("SHOP-41", false);
+  copy.render();
+  await flush();
+  const root = copy.render();
+  expect(row(root, "action-agent").calls.bg).toBeDefined();
+  expect(texts(root)).toContain("↵ Run · Esc Close");
+});
