@@ -37,7 +37,7 @@ test("actions on a ticket tab opens the palette for that ticket, centred by Herd
       props: { view: "ticket.actions", ticket: "SHOP-41", where: WHERE },
       kind: "dialog",
       width: 480,
-      height: 420,
+      height: 490,
     },
   ]);
 });

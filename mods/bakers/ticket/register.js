@@ -60,7 +60,7 @@ export function register() {
   // dialog, cmd-K: Herdr centres a dialog; a mod gets no window size to place a popup itself
   define("route", "ticket.actions", {
     view: Actions,
-    open: { kind: "dialog", width: 480, height: 420 },
+    open: { kind: "dialog", width: 480, height: 490 },
   });
   define("route", "ticket.conductor-picker", {
     view: ConductorPicker,
