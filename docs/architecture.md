@@ -34,7 +34,8 @@ mods/bakers/
                                   a route names, and a route opened as an overlay
     registry.js                   the one registry: define(type, id, def), get, all (by order)
     tabs.js                       keyed tabs of registered kinds: by name, preview and pin
-    herdr.js, actions.js, format.js
+    herdr.js                      a terminal's machine, the layout tree (find a node, put a node)
+    actions.js, format.js
   form/      framework logic    form handling, once for every form: state, submit (validate,
                                   conflict warning, steps with partial failures), keys
   list/      framework logic    list engine (like Views): run (filters, derived filters, exposed
@@ -63,7 +64,7 @@ mods/bakers/
     store.js                      the window's open tickets in memory, refresh, derived facts
     state.js                      shared UI state: the chosen list, Show closed
     tabs.js                       the ticket vocabulary over core/tabs: open, pin, close, names
-    terminal.js                   a ticket's run terminal
+    terminal.js                   a ticket's live run terminal and the run column beside the tabs
     needs.js                      the toast for a ticket that newly asks a question
     window.js                     the window task: refresh, needs count, tab names, toasts
     presenter/                    view modes, one ticket → props: full, teaser, context,
@@ -109,7 +110,7 @@ A type is any string. The registry knows none of them. The types the mod uses:
 | `sidebar.section` | e.g. `ticket` | `{ order, title, route }` | `ticket` |
 | `sidebar.tool` | e.g. `project.picker` | `{ section, order, route }`: a button in the section's card | `project` |
 | `status.item` | e.g. `ticket` | `{ order, route }` | `ticket` |
-| `window.task` | e.g. `ticket.refresh` | `{ every, run() }` | `ticket` |
+| `window.task` | `ticket.refresh`, `ticket.run` | `{ every, run() }` | `ticket` |
 | `command` | a key command's name (`goto`, `tickets`, `panel`, `new`, `open`) | `{ run(arg, ctx) }`: `arg` is the text after the name, `ctx = { width, left }` (the status bar width, the x of its left edge) | `ticket` |
 | `tabs.decorate` | e.g. `ticket` | `{ decorate(tab, info) → { label?, dot? } \| null }`: `info = { kind, key, rest, home }` (`kind`, `key` and `rest` are null on a plain tab); `dot` is a theme token | `ticket` |
 | `tabs.panel` | panel child id (`files`, `changes`, `ticket`) | `{ order, label, bordered, enabled?() }` | `shell` (Files, Changes), `ticket` (Ticket) |

@@ -12,6 +12,7 @@ import Status from "./view/status.js";
 import Full from "./view/full.js";
 import * as commands from "./view/commands.js";
 import { windowTask } from "./window.js";
+import { syncRun } from "./terminal.js";
 import { closeAll, closeFinished } from "./tabs.js";
 import { classify, labels } from "./commands.js";
 import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./form/confirm.js";
@@ -66,6 +67,7 @@ export function register() {
   define("tabs.panel", "ticket", { order: 2, label: "Ticket", bordered: true });
   define("tabs.decorate", "ticket", { decorate });
   define("window.task", "ticket.refresh", windowTask());
+  define("window.task", "ticket.run", { every: 1000, run: () => syncRun() }); // the run column follows the front ticket tab
   define("command", "goto", commands.goto);
   define("command", "tickets", commands.tickets);
   define("command", "panel", commands.panel);

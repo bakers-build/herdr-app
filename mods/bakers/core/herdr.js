@@ -1,4 +1,4 @@
-// core/herdr: reading Herdr's live data: a terminal's machine, the layout tree.
+// core/herdr: reading Herdr's live data: a terminal's machine, the layout tree (find a node, put a node).
 
 /** "this computer" for a bare address, else the machine before the slash. @param {any} terminal */
 export function machineOf(terminal) {
@@ -15,4 +15,34 @@ export function findNode(node, id) {
     if (found) return found;
   }
   return null;
+}
+
+/** @param {any} node @param {string} id @returns {any} the node whose child has the id */
+function parentOf(node, id) {
+  for (const child of node?.children ?? []) {
+    if (child.id === id) return node;
+    const found = parentOf(child, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * A copy of a layout tree with `node` in place of the node of its id, or, when there is none,
+ * inserted into `parent`'s children right after the child `after`; null when it cannot go in.
+ * @param {any} root @param {any} node @param {string} parent @param {string} after @returns {any}
+ */
+export function withNode(root, node, parent, after) {
+  const copy = structuredClone(root);
+  const add = structuredClone(node);
+  const at = parentOf(copy, node.id);
+  if (at) {
+    at.children[at.children.findIndex((/** @type {any} */ c) => c.id === node.id)] = add;
+    return copy;
+  }
+  const p = findNode(copy, parent);
+  const i = (p?.children ?? []).findIndex((/** @type {any} */ c) => c.id === after);
+  if (i < 0) return null;
+  p.children.splice(i + 1, 0, add);
+  return copy;
 }

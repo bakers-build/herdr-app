@@ -294,6 +294,7 @@ const projectData: any = await import("../../mods/bakers/project/state.js");
 const ticketData: any = await import("../../mods/bakers/ticket/store.js");
 const tabsModel: any = await import("../../mods/bakers/core/tabs.js");
 const api: any = await import("../../mods/bakers/core/api.js");
+const runColumn: any = await import("../../mods/bakers/ticket/terminal.js");
 
 /** Forgets the window's project, store, pending tabs and API session between tests. */
 export function resetMod() {
@@ -301,4 +302,5 @@ export function resetMod() {
   projectData._resetForTests();
   ticketData._resetForTests();
   tabsModel._resetForTests();
+  runColumn._resetForTests();
 }
