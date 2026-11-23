@@ -3,7 +3,7 @@
 // case-sensitively, by identifier or UUID. Only a live terminal counts, on this computer (t12) or
 // on a machine Herdr is connected to (vps/t7). The column shows the terminal as a layout block, so
 // Herdr never takes it over and no tab close ends the run.
-import { layout, machines, run, shared, terminals } from "herdr";
+import { layout, machines, run, setShared, shared, terminals } from "herdr";
 import { findNode, withNode } from "../core/herdr.js";
 import { activeRun } from "./rules.js";
 import { getStore } from "./store.js";
@@ -105,4 +105,27 @@ export function syncRun(now = Date.now()) {
       if (next) write("layout.set", { layout: next }, now);
     } else if (col.hidden) write("layout.show", { id: RUN }, now);
   } else if (col && !col.hidden) write("layout.hide", { id: RUN }, now);
+  settleFocus(want, now);
+}
+
+/**
+ * A focus request from showRun, settled once a ticket tab is in front: its run is focused when
+ * the request names that ticket. It waits on any other tab, and is dropped after 5 s.
+ * @param {any} want @param {number} now
+ */
+function settleFocus(want, now) {
+  const ask = /** @type {{ id: string, at: number } | null} */ (shared("bakers.runFocus"));
+  if (!ask) return;
+  const id = focusedTicket();
+  if (now - ask.at <= 5000 && !id) return;
+  if (now - ask.at <= 5000 && want && ask.id === id) run("pane.focus", { terminal: want.address });
+  setShared("bakers.runFocus", null);
+}
+
+/** "Show agent" and "Answer in the run": show the column, even after Hide, and focus the run. */
+/** @param {string} id */
+export function showRun(id) {
+  setShared("bakers.runHidden", false);
+  setShared("bakers.runFocus", { id, at: Date.now() });
+  syncRun();
 }

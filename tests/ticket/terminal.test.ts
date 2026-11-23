@@ -261,3 +261,47 @@ test("the task is registered synchronous, every second", () => {
   expect(task.every).toBe(1000);
   expect(task.run()).toBeUndefined();
 });
+
+// Show agent and Answer in the run: a focus request, settled once a ticket tab is in front.
+
+test("showRun shows the front ticket's run and focuses it", () => {
+  front("SHOP-41");
+  env.terminals = [live("t7")];
+  env.shared["bakers.runHidden"] = true;
+  terminal.showRun("SHOP-41");
+  expect(runs().map(([c]) => c)).toEqual(["layout.set", "pane.focus"]);
+  expect(runs()[1]).toEqual(["pane.focus", { terminal: "t7" }]);
+  expect(env.shared["bakers.runHidden"]).toBe(false);
+  expect(env.shared["bakers.runFocus"]).toBe(null);
+});
+
+test("a focus request waits on the Tickets tab", () => {
+  front(null);
+  env.terminals = [live("t9", "SHOP-56")];
+  terminal.showRun("SHOP-56");
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([]);
+  expect(env.shared["bakers.runFocus"]).toMatchObject({ id: "SHOP-56" });
+  front("SHOP-56");
+  terminal.syncRun();
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([["pane.focus", { terminal: "t9" }]]);
+  expect(env.shared["bakers.runFocus"]).toBe(null);
+});
+
+test("a focus request older than 5 s is dropped", () => {
+  const now = Date.now();
+  front("SHOP-41");
+  env.terminals = [live("t7")];
+  env.shared["bakers.runFocus"] = { id: "SHOP-41", at: now - 6000 };
+  terminal.syncRun(now);
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([]);
+  expect(env.shared["bakers.runFocus"]).toBe(null);
+});
+
+test("another ticket tab in front drops the request without focusing", () => {
+  front("SHOP-41");
+  env.terminals = [live("t7"), live("t9", "SHOP-56")];
+  env.shared["bakers.runFocus"] = { id: "SHOP-56", at: Date.now() };
+  terminal.syncRun();
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([]);
+  expect(env.shared["bakers.runFocus"]).toBe(null);
+});

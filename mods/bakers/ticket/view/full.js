@@ -5,8 +5,8 @@
 // the run; cmd-Enter and Esc belong to the edit form or the composer while they are used.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { notify, props, run } from "herdr";
-import { runReason, runTerminal } from "../terminal.js";
+import { notify, props } from "herdr";
+import { runReason, runTerminal, showRun } from "../terminal.js";
 import { pinTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
@@ -107,8 +107,7 @@ export default class TicketTab {
   }
 
   showAgent() {
-    const t = this.terminal();
-    if (t) run("agent.focus", { terminal: t.address });
+    if (this.terminal()) showRun(this.id);
   }
 
   answer() {

@@ -1,6 +1,9 @@
 import { beforeEach, expect, test } from "bun:test";
 import { list, live, ticketTab, resetMod } from "../../fixtures/shop";
+import { bakersLayout } from "../../../scripts/layout.js";
 import { click, closest, env, find, findText, key, reset, runs, texts, walk } from "../../harness";
+
+const main = await Bun.file(new URL("../../fixtures/herdr-main.json", import.meta.url)).json();
 
 beforeEach(() => {
   reset();
@@ -138,16 +141,22 @@ test("A with a question puts the composer in answer mode and focuses it", async 
   expect(copy.inner.composer.inputs.input("body").focused).toBe(true);
 });
 
-test("Answer in the run and G focus the run's terminal", async () => {
+test("Answer in the run and G show and focus the run", async () => {
   env.terminals = [live("t7")];
   const copy = await ticketTab();
+  env.layout = bakersLayout(main);
+  env.focused = { space: "s1", tab: "t5", pane: "p1" };
+  env.shared["bakers.runHidden"] = true;
   env.calls.length = 0;
   click(find(copy.render(), "answer-in-run"));
   key(copy.render(), "g");
-  expect(runs()).toEqual([
-    ["agent.focus", { terminal: "t7" }],
-    ["agent.focus", { terminal: "t7" }],
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([
+    ["pane.focus", { terminal: "t7" }],
+    ["pane.focus", { terminal: "t7" }],
   ]);
+  expect(runs().filter(([c]) => c === "layout.set")).toHaveLength(1);
+  expect(runs().filter(([c]) => c === "agent.focus")).toEqual([]);
+  expect(env.shared["bakers.runHidden"]).toBe(false);
 });
 
 test("without a live run Answer in the run is disabled and says where the run is", async () => {
