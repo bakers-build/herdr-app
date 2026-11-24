@@ -55,8 +55,9 @@ export function register() {
   define("route", "ticket.rail", { view: Rail }); // the rail button
   define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar
   define("route", "ticket.status", { view: Status }); // the status block's item
-  // window, cmd-K: centred by Herdr (mods get no window size), and Esc reaches the palette, which
-  // goes back a page (Herdr closes a dialog or popup on Esc itself); the key keeps it one window
+  // window, cmd-K: centred by Herdr (mods get no window size). A window does not take the
+  // keyboard, so Esc reaches the palette only once it has focused itself after mounting; it goes
+  // back a page (Herdr closes a dialog or popup on Esc itself); the key keeps it one window
   define("route", "ticket.actions", {
     view: Actions,
     open: { kind: "window", key: "bakers.actions", width: 480, height: 490 },
