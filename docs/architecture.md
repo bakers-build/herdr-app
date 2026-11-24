@@ -34,7 +34,8 @@ mods/bakers/
                                   a route names, and a route opened as an overlay
     registry.js                   the one registry: define(type, id, def), get, all (by order)
     tabs.js                       keyed tabs of registered kinds: by name, preview and pin
-    herdr.js, actions.js, format.js
+    herdr.js                      a terminal's machine, the layout tree (find a node, put a node)
+    actions.js, format.js
   form/      framework logic    form handling, once for every form: state, submit (validate,
                                   conflict warning, steps with partial failures), keys
   list/      framework logic    list engine (like Views): run (filters, derived filters, exposed
@@ -51,8 +52,8 @@ mods/bakers/
   ticket/    module
     register.js                   what the module puts in the registry (see below), among it
                                   the routes ticket.list, ticket.view, ticket.context,
-                                  ticket.rail, ticket.sidebar, ticket.status, ticket.search,
-                                  ticket.conductor-picker, ticket.label-picker
+                                  ticket.run, ticket.rail, ticket.sidebar, ticket.status,
+                                  ticket.search, ticket.conductor-picker, ticket.label-picker
     model.js                      the Ticket, Run, Comment shapes (JSDoc) and the mapping from
                                   JSON:API entities
     rules.js                      what a ticket means: who needs you, since when, closed
@@ -63,7 +64,7 @@ mods/bakers/
     store.js                      the window's open tickets in memory, refresh, derived facts
     state.js                      shared UI state: the chosen list, Show closed
     tabs.js                       the ticket vocabulary over core/tabs: open, pin, close, names
-    terminal.js                   a ticket's run terminal
+    terminal.js                   a ticket's live run terminal and the run column beside the tabs
     needs.js                      the toast for a ticket that newly asks a question
     window.js                     the window task: refresh, needs count, tab names, toasts
     presenter/                    view modes, one ticket → props: full, teaser, context,
@@ -73,8 +74,9 @@ mods/bakers/
     form/                         form definitions: comment, edit, confirm (state, freeze,
                                   unfreeze, move, cancel), create
     operations/                   what one can do with a ticket: the state menu, the "..." menu
-    view/                         list, full (the full view of one ticket), context, rail,
-                                  sidebar, status, search, conductor-picker, label-picker;
+    view/                         list, full (the full view of one ticket), context, run (the
+                                  run column's header), rail, sidebar, status, search,
+                                  conductor-picker, label-picker;
                                   commands (key commands)
   project/   module             register.js (routes project.picker, project.sidebar-tool),
                                   model, repository, state (the window's project),
@@ -109,7 +111,7 @@ A type is any string. The registry knows none of them. The types the mod uses:
 | `sidebar.section` | e.g. `ticket` | `{ order, title, route }` | `ticket` |
 | `sidebar.tool` | e.g. `project.picker` | `{ section, order, route }`: a button in the section's card | `project` |
 | `status.item` | e.g. `ticket` | `{ order, route }` | `ticket` |
-| `window.task` | e.g. `ticket.refresh` | `{ every, run() }` | `ticket` |
+| `window.task` | `ticket.refresh`, `ticket.run` | `{ every, run() }` | `ticket` |
 | `command` | a key command's name (`goto`, `tickets`, `panel`, `new`, `open`) | `{ run(arg, ctx) }`: `arg` is the text after the name, `ctx = { width, left }` (the status bar width, the x of its left edge) | `ticket` |
 | `tabs.decorate` | e.g. `ticket` | `{ decorate(tab, info) → { label?, dot? } \| null }`: `info = { kind, key, rest, home }` (`kind`, `key` and `rest` are null on a plain tab); `dot` is a theme token | `ticket` |
 | `tabs.panel` | panel child id (`files`, `changes`, `ticket`) | `{ order, label, bordered, enabled?() }` | `shell` (Files, Changes), `ticket` (Ticket) |
@@ -172,6 +174,7 @@ such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu
 | `ticket.list` | `ticket/view/list.js` | the tab "Tickets" |
 | `ticket.view` | `ticket/view/full.js` | a tab "SHOP-41 working", `props.ticket` |
 | `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket` |
+| `ticket.run` | `ticket/view/run.js` | the header block `run-header` of the run column `run`, right of `main` (written by `ticket/terminal.js`, not by the installer) |
 | `ticket.search` | `ticket/view/search.js` | a popup (cmd-shift-O) |
 | `ticket.rail`, `ticket.sidebar`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail, sidebar and status |
 | `ticket.conductor-picker`, `ticket.label-picker` | `ticket/view/…` | popups |

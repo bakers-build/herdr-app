@@ -270,6 +270,15 @@ export function activeSpace(folder = "/work/acme-shop") {
     "export default {\n  schema_version: 1,\n  project: { name: 'acme-shop' },\n};\n";
 }
 
+/** A live run terminal, as herdr-core labels the conductor's: local `t7` or remote `vps/t7`. */
+export const live = (address: string, id = "SHOP-41", extra: any = {}) => ({
+  address,
+  state: "live",
+  labels: { "bakers.ticket": id, "bakers.run": "3" },
+  program: { name: "Claude Code" },
+  ...extra,
+});
+
 /** A ticket tab on the given ticket, loaded. */
 export async function ticketTab(id = "SHOP-41", extra: Record<string, unknown> = {}) {
   activeSpace();
@@ -285,6 +294,7 @@ const projectData: any = await import("../../mods/bakers/project/state.js");
 const ticketData: any = await import("../../mods/bakers/ticket/store.js");
 const tabsModel: any = await import("../../mods/bakers/core/tabs.js");
 const api: any = await import("../../mods/bakers/core/api.js");
+const runColumn: any = await import("../../mods/bakers/ticket/terminal.js");
 
 /** Forgets the window's project, store, pending tabs and API session between tests. */
 export function resetMod() {
@@ -292,4 +302,5 @@ export function resetMod() {
   projectData._resetForTests();
   ticketData._resetForTests();
   tabsModel._resetForTests();
+  runColumn._resetForTests();
 }

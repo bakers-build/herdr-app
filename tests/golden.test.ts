@@ -139,7 +139,9 @@ test("golden: ticket.list R2-4", async () => {
 });
 
 test("golden: ticket.view R2-3", async () => {
-  env.terminals = [{ address: "studio-mac/t7", labels: { "bakers.ticket": "SHOP-41" } }];
+  env.terminals = [
+    { address: "studio-mac/t7", state: "live", labels: { "bakers.ticket": "SHOP-41" } },
+  ];
   expect(serialise((await ticketTab()).render())).toMatchSnapshot();
 });
 

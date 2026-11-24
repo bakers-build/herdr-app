@@ -5,8 +5,8 @@
 // the run; cmd-Enter and Esc belong to the edit form or the composer while they are used.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { notify, props, run } from "herdr";
-import { NO_TERMINAL, runTerminal } from "../terminal.js";
+import { notify, props } from "herdr";
+import { runReason, runTerminal, showRun } from "../terminal.js";
 import { pinTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
@@ -102,9 +102,12 @@ export default class TicketTab {
     return runTerminal(this.id, this.detail?.ticket?.id);
   }
 
+  runInfo() {
+    return { runs: this.detail?.runs ?? [], claim_machine: this.detail?.ticket?.claim_machine };
+  }
+
   showAgent() {
-    const t = this.terminal();
-    if (t) run("agent.focus", { terminal: t.address });
+    if (this.terminal()) showRun(this.id);
   }
 
   answer() {
@@ -206,7 +209,7 @@ export default class TicketTab {
   /** @param {any} card */
   card(card) {
     if (!card) return null;
-    const term = this.terminal();
+    const why = runReason(this.runInfo(), this.terminal());
     const buttons =
       card.kind === "question"
         ? [
@@ -222,8 +225,8 @@ export default class TicketTab {
             button(
               "answer-in-run",
               "Answer in the run",
-              term ? () => this.showAgent() : null,
-              term ? {} : { disabled: true, reason: NO_TERMINAL },
+              why ? null : () => this.showAgent(),
+              why ? { disabled: true, reason: why } : {},
             ),
           ]
         : card.kind === "plan"

@@ -4,12 +4,13 @@
 // Runs. Nothing here repeats the document; the panel never takes the focus.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { exec, run, shared, window } from "herdr";
+import { exec, shared, window } from "herdr";
 import { perform } from "../../core/actions.js";
 import { openRoute } from "../../core/router.js";
 import { classify } from "../../core/errors.js";
-import { runTerminal } from "../terminal.js";
-import { focusedTicket } from "../tabs.js";
+import { runReason, runTerminal, showRun } from "../terminal.js";
+import { focusedTicket, openTicket } from "../tabs.js";
+import { tabName } from "../presenter/tab.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { chip } from "../../ui/components/chip.js";
@@ -97,6 +98,14 @@ export default class Panel {
     }
   }
 
+  /** On the Tickets tab the row's ticket opens first; its run is focused once it is in front. */
+  /** @param {string} id */
+  showAgent(id) {
+    const row = focusedTicket() ? null : getStore().byId(id);
+    if (row) openTicket(id, tabName(row));
+    showRun(id);
+  }
+
   /** @param {any} vm */
   agentSection(vm) {
     const t = tokens();
@@ -123,7 +132,7 @@ export default class Panel {
             button(
               "show-agent",
               "Show agent",
-              term ? () => run("agent.focus", { terminal: term.address }) : null,
+              term ? () => this.showAgent(vm.id) : null,
               vm.agent.show ? { ...small, disabled: true, reason: vm.agent.show } : small,
             ),
           )
@@ -374,8 +383,13 @@ export default class Panel {
       return root.child(
         this.failure ? failureView(this.failure, null) : loading(`Loading ${this.id}...`),
       );
+    const terminal = runTerminal(this.id, this.detail.ticket.id);
     const vm = context(this.detail, {
-      terminal: runTerminal(this.id, this.detail.ticket.id),
+      terminal,
+      reason: runReason(
+        { runs: this.detail.runs, claim_machine: this.detail.ticket.claim_machine },
+        terminal,
+      ),
       now: Date.now(),
       activity: this.activity,
       activityServed: this.activityServed,

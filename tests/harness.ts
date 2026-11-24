@@ -58,6 +58,7 @@ export type Env = {
   spaces: any[];
   panes: any[];
   terminals: any[];
+  machines: any[];
   focused: any;
   shared: Record<string, unknown>;
   props: any;
@@ -86,6 +87,7 @@ export function reset() {
     spaces: [],
     panes: [],
     terminals: [],
+    machines: [],
     focused: null,
     shared: {},
     props: {},
@@ -181,6 +183,7 @@ mock.module("herdr", () => ({
   spaces: () => env.spaces,
   panes: () => env.panes,
   terminals: () => env.terminals,
+  machines: () => env.machines,
   focused: () => env.focused,
   layout: () => env.layout,
   keys: () => env.keys,

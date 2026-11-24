@@ -1,5 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, resetMod } from "../../fixtures/shop";
+import { bakersLayout } from "../../../scripts/layout.js";
+import { activeSpace, backend, list, live, resetMod } from "../../fixtures/shop";
 import {
   click,
   env,
@@ -15,6 +16,9 @@ import {
 } from "../../harness";
 
 const actions: any = await import("../../../mods/bakers/core/actions.js");
+const terminal: any = await import("../../../mods/bakers/ticket/terminal.js");
+const { findNode }: any = await import("../../../mods/bakers/core/herdr.js");
+const main = await Bun.file(new URL("../../fixtures/herdr-main.json", import.meta.url)).json();
 
 const writes = () => tools().filter(([t]) => !/_(read|list|search)$/.test(t));
 
@@ -53,7 +57,7 @@ test("nothing selected says so", async () => {
 });
 
 test("Agent and conductor: the line, three actions and the key hint", async () => {
-  env.terminals = [{ address: "t7", labels: { "bakers.ticket": "SHOP-41" } }];
+  env.terminals = [live("t7")];
   const root = (await panel()).render();
   const s = find(root, "agent-section");
   expect(texts(s)).toEqual([
@@ -69,9 +73,56 @@ test("Agent and conductor: the line, three actions and the key hint", async () =
     expect(find(s, id).calls.h).toEqual([24]);
     expect(find(s, id).calls.text_size).toEqual([11]);
   }
+  env.layout = bakersLayout(main);
   env.calls.length = 0;
   click(find(s, "show-agent"));
-  expect(runs()).toEqual([["agent.focus", { terminal: "t7" }]]);
+  expect(runs().map(([c]) => c)).toEqual(["layout.set", "pane.focus"]);
+  expect(runs()[1]).toEqual(["pane.focus", { terminal: "t7" }]);
+});
+
+test("on the Tickets tab Show agent opens the ticket, then focuses its run once the tab is in front", async () => {
+  env.shared["bakers.selected"] = "SHOP-56";
+  env.terminals = [live("t9", "SHOP-56")];
+  const copy = await panel(false);
+  env.layout = bakersLayout(main);
+  env.calls.length = 0;
+  click(find(copy.render(), "show-agent"));
+  expect(runs().map(([c]) => c)).toEqual(["tab.new"]);
+  expect((runs()[0][1] as any).props).toMatchObject({ view: "ticket.view", ticket: "SHOP-56" });
+  env.spaces[0].tabs.push({ id: "t6", name: "SHOP-56 plan", index: 3, active: true });
+  env.focused = { space: "s1", tab: "t6", pane: "p1" };
+  terminal.syncRun();
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([["pane.focus", { terminal: "t9" }]]);
+  expect(env.shared["bakers.runFocus"]).toBe(null);
+});
+
+test("Show agent after Hide shows the column again", async () => {
+  env.terminals = [live("t7")];
+  const copy = await panel();
+  env.layout = bakersLayout(main);
+  terminal.syncRun();
+  env.layout = (runs()[0][1] as any).layout;
+  findNode(env.layout, "run").hidden = true;
+  env.shared["bakers.runHidden"] = true;
+  env.calls.length = 0;
+  click(find(copy.render(), "show-agent"));
+  expect(runs()).toEqual([
+    ["layout.show", { id: "run" }],
+    ["pane.focus", { terminal: "t7" }],
+  ]);
+});
+
+test("without a live run Show agent is disabled and says where the run is", async () => {
+  const tickets = list.map((t) => (t.id === "u41" ? { ...t, claim_machine: "studio-mac" } : t));
+  const away = find((await panel(true, { jsonapi: { tickets } })).render(), "show-agent");
+  expect(away.calls.disabled).toEqual([true]);
+  expect(away.calls.tooltip).toEqual(["The run is on studio-mac, which Herdr is not connected to"]);
+  reset();
+  resetMod();
+  env.terminals = [live("t7", "SHOP-41", { state: "exited" })];
+  const ended = find((await panel()).render(), "show-agent");
+  expect(ended.calls.disabled).toEqual([true]);
+  expect(ended.calls.tooltip).toEqual(["No live run terminal"]);
 });
 
 test("Properties as drawn; assignee and reviewers come from JSON:API", async () => {

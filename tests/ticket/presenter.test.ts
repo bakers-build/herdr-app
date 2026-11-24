@@ -165,12 +165,18 @@ test("full: header, card and comments", () => {
 });
 
 test("context: the panel's sections", () => {
-  const vm = context(detail, { terminal: null, now: NOW, activity: null, activityServed: false });
+  const vm = context(detail, {
+    terminal: null,
+    reason: "No live run terminal",
+    now: NOW,
+    activity: null,
+    activityServed: false,
+  });
   expect(vm.sub).toBe("working, frozen");
   expect(vm.agent).toMatchObject({
     text: "Claude Code needs you",
     rest: "35m",
-    show: "The run's terminal is not on this computer",
+    show: "No live run terminal",
     cancel: null,
     hint: "R moves, G shows the agent.",
   });

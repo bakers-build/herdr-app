@@ -1,7 +1,6 @@
 // ticket/presenter/context: a ticket as the right panel shows it (R2-3): the header, Agent and
 // conductor, Properties, Activity and Runs. Nothing here repeats the full view.
 import { age, agentName, toMs } from "../../core/format.js";
-import { NO_TERMINAL } from "../terminal.js";
 import { activeRun } from "../rules.js";
 import { agentLine } from "./field/agent-line.js";
 
@@ -19,7 +18,7 @@ export function activityText(a) {
 
 /**
  * @param {any} detail
- * @param {{ terminal: any, now: number, activity: any[] | null, activityServed: boolean }} o
+ * @param {{ terminal: any, reason: string | null, now: number, activity: any[] | null, activityServed: boolean }} o
  */
 export function context(detail, o) {
   const tk = detail.ticket;
@@ -36,7 +35,7 @@ export function context(detail, o) {
     sub: tk.frozen ? `${tk.state}, frozen` : tk.state,
     agent: {
       ...agent,
-      show: o.terminal ? null : NO_TERMINAL,
+      show: o.reason,
       cancel: run ? null : "No run is active",
       hint: "R moves, G shows the agent.",
     },
