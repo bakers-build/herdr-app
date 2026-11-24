@@ -1,11 +1,10 @@
 // ticket/form/create: New ticket (N, cmd-shift-N, the header button), a minimal dialog: title,
 // type and description. bakers_ticket_create takes the project and the workflow of an
-// existing ticket; the new ticket then opens as a pinned tab. Frame 5 is not a pixel target.
-import { openTicket } from "../tabs.js";
+// existing ticket; the new ticket then shows in the panel. Frame 5 is not a pixel target.
+import { selectTicket } from "../tabs.js";
 import * as actions from "../commands.js";
 import { getStore, ready, refresh } from "../store.js";
 import { readTicket } from "../repository.js";
-import { tabName } from "../presenter/tab.js";
 
 /** The workflow of an existing ticket of the project. */
 async function workflow() {
@@ -49,10 +48,7 @@ export const createForm = () => ({
   ],
   after: async (/** @type {any[]} */ results) => {
     const created = results[0];
-    if (created?.identifier) {
-      const t = { id: created.identifier, state: created.state ?? "qualification" };
-      openTicket(t.id, tabName(t), { pin: true });
-    }
+    if (created?.identifier) selectTicket(created.identifier);
     await refresh();
   },
 });

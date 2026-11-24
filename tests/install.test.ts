@@ -90,6 +90,46 @@ test("the panel stack gains the ticket child; the panel stays 368 px and hidden"
   expect(find(l, "panel").hidden).toBe(true);
 });
 
+const RUN_HEADER = {
+  id: "run-header",
+  type: "block",
+  size: { px: 32 },
+  resizable: false,
+  content: { mod: "bakers", props: { view: "ticket.run" } },
+};
+
+test("the panel holds the hidden run column below panel-body, 1:1; work-body has none", () => {
+  const l = bakersLayout(main);
+  const panel = find(l, "panel");
+  expect(panel.children.map((c: any) => c.id)).toEqual(["panel-body", "run"]);
+  expect(find(l, "panel-body").size).toEqual({ weight: 1 });
+  expect(find(l, "run")).toEqual({
+    id: "run",
+    type: "column",
+    size: { weight: 1 },
+    hidden: true,
+    children: [RUN_HEADER],
+  });
+  expect(find(l, "work-body").children.map((c: any) => c.id)).toEqual(["main", "panel"]);
+  expect(bakersLayout(l)).toEqual(l);
+});
+
+test("a run column left in work-body by an older version moves into the panel", () => {
+  const old = structuredClone(main);
+  const body = find(old, "work-body");
+  body.children.splice(1, 0, {
+    id: "run",
+    type: "column",
+    size: { weight: 1 },
+    children: [RUN_HEADER, { id: "run-terminal", type: "block", content: { terminal: "t7" } }],
+  });
+  const l = bakersLayout(old);
+  expect(find(l, "work-body").children.map((c: any) => c.id)).toEqual(["main", "panel"]);
+  expect(find(l, "panel").children.map((c: any) => c.id)).toEqual(["panel-body", "run"]);
+  expect(find(l, "run").hidden).toBe(true);
+  expect(find(l, "run").children).toEqual([RUN_HEADER]);
+});
+
 test("the status row holds Herdr's status and the bakers status item", () => {
   const l = bakersLayout(main);
   const row = find(l, "status-row");

@@ -66,7 +66,7 @@ test("watchNeeds posts one toast per newly asking ticket, never on start or twic
   expect(env.calls.filter((c) => c.fn === "notify").length).toBe(1);
 });
 
-test("a toast click opens its own ticket's tab, not the newest toast's, and never moves focus", async () => {
+test("a toast click shows its own ticket in the panel, not the newest toast's, and never moves focus", async () => {
   activeSpace();
   backend();
   let asked = watchNeeds(null, storeWith([]));
@@ -79,10 +79,9 @@ test("a toast click opens its own ticket's tab, not the newest toast's, and neve
   const Bakers = await load("bakers/main.js");
   mount(Bakers, { view: "shell.status" });
   await flush();
-  expect(runs()).toContainEqual([
-    "tab.new",
-    { mod: "bakers", props: { view: "ticket.view", ticket: "SHOP-41" }, name: "SHOP-41 working" },
-  ]);
+  expect(env.shared["bakers.selected"]).toBe("SHOP-41");
+  expect(runs()).toContainEqual(["layout.show", { id: "panel" }]);
+  expect(runs().some((r) => r[0] === "tab.new")).toBe(false);
   expect(runs().some((r) => String(r[0]).startsWith("pane.focus"))).toBe(false);
 });
 

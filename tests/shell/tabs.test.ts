@@ -26,7 +26,7 @@ beforeEach(() => {
   tabs._resetForTests();
 });
 
-test("bakers-tabs draws Tickets with the count, the italic preview and the needs-you dot", async () => {
+test("bakers-tabs draws Tickets with the count and the italic preview; a leftover ticket tab gets no dot", async () => {
   const Tabs = await load("bakers/main.js");
   space(
     tab("t0", "Tickets", 1, { active: true }),
@@ -51,7 +51,7 @@ test("bakers-tabs draws Tickets with the count, the italic preview and the needs
   expect(ticketsTab.calls.font_semibold).toBeDefined();
   expect(find(root, "tab-t6").calls.italic).toBeDefined();
   expect(find(root, "tab-t5").calls.italic).toBeUndefined();
-  expect(find(root, "dot-t5").calls.bg).toEqual(["blocked"]);
+  expect(find(root, "dot-t5")).toBeUndefined();
   expect(find(root, "dot-t7")).toBeUndefined();
   expect(root.calls.h).toEqual([40]);
 });
@@ -141,7 +141,7 @@ test("every tabs.decorate sees every tab, a plain tab included", async () => {
   env.shared["bakers.needs"] = { count: 1, ids: ["SHOP-41"], updated: 1 };
   const root = view.render();
   expect(find(root, "dot-t9").calls.bg).toEqual(["done"]);
-  expect(find(root, "dot-t5").calls.bg).toEqual(["blocked"]);
+  expect(find(root, "dot-t5")).toBeUndefined();
   expect(texts(root).slice(0, 2)).toEqual(["Tickets 1", "SHOP-41 working"]);
 });
 

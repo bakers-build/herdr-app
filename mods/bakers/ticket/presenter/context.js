@@ -1,6 +1,6 @@
 // ticket/presenter/context: a ticket as the right panel shows it (R2-3): the header, Agent and
 // conductor, Properties, the editable Markdown sections (Description, Acceptance, Summary),
-// Activity and Runs. The title and the comments stay in the full view.
+// Activity and Runs. The panel draws them beside the document (view/document.js).
 import { age, agentName, toMs } from "../../core/format.js";
 import { sectionText } from "../form/section.js";
 import { activeRun, isClosed } from "../rules.js";

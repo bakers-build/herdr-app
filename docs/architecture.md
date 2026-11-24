@@ -51,7 +51,7 @@ mods/bakers/
 
   ticket/    module
     register.js                   what the module puts in the registry (see below), among it
-                                  the routes ticket.list, ticket.view, ticket.context,
+                                  the routes ticket.list, ticket.context,
                                   ticket.run, ticket.rail, ticket.status,
                                   ticket.actions, ticket.label-picker
     model.js                      the Ticket, Run, Comment shapes (JSDoc) and the mapping from
@@ -64,12 +64,14 @@ mods/bakers/
     store.js                      the window's open tickets in memory, refresh, derived facts
     filter.js                     the Tickets tab's filter (Needs me, Mine, State, Label,
                                   Type; shared as bakers.filter), applied to the records
-    tabs.js                       the ticket vocabulary over core/tabs: open, pin, close, names
-    terminal.js                   a ticket's live run terminal and the run column beside the tabs
+    tabs.js                       the selection (bakers.selected): select a ticket into the
+                                  panel, the ticket in front, the Tickets tab, leftover tabs
+    terminal.js                   a ticket's live run terminal and the run area in the panel
     needs.js                      the toast for a ticket that newly asks a question
-    window.js                     the window task: refresh, needs count, tab names, toasts
+    window.js                     the window task: refresh, needs count, toasts; closes leftover
+                                  ticket tabs once
     presenter/                    view modes, one ticket → props: full, card, context,
-                                  search, notification, tab, counts; field/agent-line
+                                  search, notification, counts; field/agent-line
     list/                         list definitions: needs-me, open, closed;
                                   index (lookup, empty text)
     form/                         form definitions: comment, edit, confirm (state, freeze,
@@ -78,8 +80,9 @@ mods/bakers/
     operations/                   what one can do with a ticket: its actions (one list for the
                                   "..." menu, the keys G and R and the actions palette), the
                                   state menu, the "..." menu
-    view/                         list, full (the full view of one ticket), context, run (the
-                                  run column's header), rail, status,
+    view/                         list, context (the panel: the selected ticket's work area),
+                                  document (its document part and keys), run (the run
+                                  area's header), rail, status,
                                   actions (the cmd-K palette, also cmd-shift-O and Move to),
                                   label-picker;
                                   commands (key commands)
@@ -176,9 +179,8 @@ such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu
 | Route (`props.view`) | View | Herdr shows it as |
 |---|---|---|
 | `ticket.list` | `ticket/view/list.js` | the tab "Tickets" |
-| `ticket.view` | `ticket/view/full.js` | a tab "SHOP-41 working", `props.ticket` |
-| `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket` |
-| `ticket.run` | `ticket/view/run.js` | the header block `run-header` of the run column `run`, right of `main` (written by `ticket/terminal.js`, not by the installer) |
+| `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket`: the selected ticket, whole |
+| `ticket.run` | `ticket/view/run.js` | the header block `run-header` of the run area `run` in the panel, below `panel-body` (installed hidden; `ticket/terminal.js` adds the terminal) |
 | `ticket.actions` | `ticket/view/actions.js` | a window Herdr centres (Esc reaches the mod): cmd-K, cmd-shift-O (`page: "tickets"`), Move to (`page: "move"`) |
 | `ticket.rail`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail and status |
 | `ticket.label-picker` | `ticket/view/label-picker.js` | a popup |
@@ -187,8 +189,29 @@ such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu
 | `shell.rail`, `shell.tabs`, `shell.status` | `shell/view/…` | layout blocks (`scripts/layout.js`) |
 | `menu`, `dialog` | `ui/components/menu.js`, `ui/form/dialog.js` | popup menus, form dialogs |
 
-Herdr stores route names in its open tabs and layouts, so a route is never renamed; that is why
-`ticket.view` keeps its name although its view file is `ticket/view/full.js`.
+Herdr stores route names in its open tabs and layouts, so a route is never renamed. A route
+that goes (the old detail tab's) is removed, never reused: the window task closes the tabs left
+with it.
+
+## The panel and the run
+
+The right panel (`panel`, a column) holds the stack `panel-body` (Herdr's Files and Changes and
+the child `ticket`) and below it the run area `run` (a column: `run-header` and the run's
+terminal block `run-terminal`), 1:1, so Herdr's divider between them is the drag handle.
+
+- **The selection** (`bakers.selected`) is the one source. `ticket/tabs.js` `selectTicket`
+  sets it and shows the panel on `ticket`; the list's Enter, cmd-Enter and double click, Go to
+  ticket, a new ticket and a toast click use it. Arrows only move the selection.
+- **The run follows the selection.** The window task `ticket.run` (every second,
+  `ticket/terminal.js` `syncRun`) shows the selected ticket's live run (local `t7` or remote
+  `vps/t7`) while the panel is on `ticket`, else hides the run area. It calls `layout.set` only
+  when the terminal, the column's place or the panel's width changes, otherwise `layout.show`
+  or `layout.hide`, and never focuses, ends or relabels a run.
+- **Width.** While a run shows, the installed width (368 px) becomes 480 px and back without a
+  run; any other width is the user's and stays.
+- **Show agent** (G, the buttons) selects the ticket, shows the panel and the run, even after
+  Hide, and focuses the run's terminal once it shows. Hide goes through the same write memo, so a
+  Show agent right after it is never taken for a repeat.
 
 ## How a screen comes about
 
@@ -210,15 +233,18 @@ The Tickets list, from Herdr to the pixels:
    filter (the filter field), sort, group and pager.
 6. **`ticket/presenter/card.js`** turns each record into card props.
 7. **`ui/components/card.js`** and `ui/components/pager.js` draw them.
-8. **The view** wires Up and Down, Enter, cmd-Enter, N, R and the menus. These go to
-   `core/tabs` (preview, pin), to forms (`ui/form/dialog.js` with
+8. **The view** wires Up and Down, Enter, cmd-Enter, N, R and the menus. These go to the
+   selection (`ticket/tabs.js`, the panel follows), to forms (`ui/form/dialog.js` with
    `ticket/form/create.js`) and to registered actions.
 
-A ticket tab goes the same way:
-- `ticket/view/full.js` loads one ticket (`store.ticket` → `repository.readTicket`, one
-  request with `include`).
-- It maps the ticket with the view mode `presenter/full.js` and draws it.
-- It holds two inline forms, `form/comment.js` (the composer) and `form/edit.js`.
+The panel goes the same way:
+- `ticket/view/context.js` follows `bakers.selected` and makes one `TicketDocument`
+  (`ticket/view/document.js`) per ticket, which loads it (`store.ticket` →
+  `repository.readTicket`, one request with `include`); the panel adds its activity.
+- It maps the ticket with the view modes `presenter/full.js` (the document) and
+  `presenter/context.js` (agent, properties, the sections Description, Acceptance and Summary,
+  activity, runs) and draws them. Each section's Edit... opens `form/section.js` in a popup.
+- The document holds two inline forms, `form/comment.js` (the composer) and `form/edit.js`.
 - Its menus and its keys G and R come from `operations/`.
 
 ## A list definition
@@ -325,8 +351,8 @@ updates.
   signed-in user (`ticket/store.js`) and the token (`core/api.js`). All are created on first
   use, never at module top level (Herdr's `AGENTS.md`).
 - **Shared between copies (`setShared`):** identifiers, counts and flags only
-  (`bakers.project`, `bakers.filter`, `bakers.selected`, `bakers.preview`, `bakers.needs`).
-  No ticket content.
+  (`bakers.project`, `bakers.filter`, `bakers.selected`, `bakers.needs`, `bakers.runHidden`,
+  `bakers.runFocus`, and core's `bakers.preview` for keyed tabs). No ticket content.
 - **Per copy:** a view's own state, such as the selection, the page, a form's values and
   the open comment folds.
 

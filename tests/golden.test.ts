@@ -1,7 +1,7 @@
 // Characterisation: the frames of the shell and the ticket module as they render today, pinned
 // as snapshots, and the Herdr calls of their clicks and keys. A refactor must not change them.
 import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, NOW, resetMod, ticketTab } from "./fixtures/shop";
+import { activeSpace, backend, NOW, resetMod, ticketPanel } from "./fixtures/shop";
 import { serialise } from "./golden";
 import { click, env, find, flush, load, mount, reset, runs } from "./harness";
 
@@ -139,11 +139,11 @@ test("golden: ticket.list R2-4", async () => {
   expect(serialise(view.render())).toMatchSnapshot();
 });
 
-test("golden: ticket.view R2-3", async () => {
+test("golden: ticket.context, the whole ticket in the panel", async () => {
   env.terminals = [
     { address: "studio-mac/t7", state: "live", labels: { "bakers.ticket": "SHOP-41" } },
   ];
-  expect(serialise((await ticketTab()).render())).toMatchSnapshot();
+  expect(serialise((await ticketPanel()).render())).toMatchSnapshot();
 });
 
 test("golden calls: rail click", async () => {

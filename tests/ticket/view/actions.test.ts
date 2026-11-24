@@ -275,7 +275,7 @@ test("with text typed, matching tickets follow: the store's at once, the server'
   ]);
 });
 
-test("an exact identifier comes first and Enter opens its tab, pinned", async () => {
+test("an exact identifier comes first and Enter shows it in the panel, no tab", async () => {
   const copy = await palette();
   copy.inner.input.type("shop-56");
   const root = copy.render();
@@ -283,7 +283,9 @@ test("an exact identifier comes first and Enter opens its tab, pinned", async ()
   env.calls.length = 0;
   key(root, "enter");
   expect(closed()).toEqual(["overlay-9"]);
-  expect(runs().some(([c, a]: any) => c === "tab.new" && a.name === "SHOP-56 plan")).toBe(true);
+  expect(env.shared["bakers.selected"]).toBe("SHOP-56");
+  expect(runs()).toContainEqual(["layout.show", { id: "panel" }]);
+  expect(runs().some(([c]: any) => c === "tab.new")).toBe(false);
 });
 
 test("an empty field lists no tickets", async () => {

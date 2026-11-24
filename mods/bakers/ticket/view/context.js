@@ -1,8 +1,10 @@
-// ticket/view/context: the right panel's ticket child (frame R2-3, 368 px, cmd-shift-T). It follows
-// the focused ticket tab, else the selected list row, loads the ticket and its activity,
-// maps them with presenter/context and draws Agent and conductor, Properties, Description,
-// Acceptance and Summary (each with Edit..., a popup: ticket/form/section), Activity and
-// Runs. The title and the comments stay in the document; the panel never takes the focus.
+// ticket/view/context: the right panel's ticket child (route ticket.context, 368 px, 480 px while
+// a run shows below it; cmd-shift-T), the ticket's work area. It follows the selected ticket
+// (shared bakers.selected), loads it and its activity and draws, top to bottom: the document's
+// header, title, Needs-you card, Agent and conductor, Properties, Description, Acceptance and
+// Summary (each with Edit..., a popup: ticket/form/section), Comments, Activity and Runs in the
+// scroll, the composer pinned below. The document part and its keys (A, E, G, R) are
+// view/document.js. The panel never takes the focus; its keys work once clicked into.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { exec, shared, window } from "herdr";
@@ -10,7 +12,9 @@ import { perform } from "../../core/actions.js";
 import { openRoute } from "../../core/router.js";
 import { classify } from "../../core/errors.js";
 import { runReason, runTerminal, showAgent } from "../terminal.js";
-import { focusedTicket } from "../tabs.js";
+import { selectedTicket } from "../tabs.js";
+import { TicketDocument } from "./document.js";
+import { full } from "../presenter/full.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { chip } from "../../ui/components/chip.js";
@@ -21,7 +25,6 @@ import { markdown } from "../../ui/components/markdown.js";
 import { failureView, loading } from "../../ui/components/state.js";
 import { statusLine } from "../../ui/components/status-line.js";
 import { heading, mono } from "../../ui/components/text.js";
-import { getStore, ready } from "../store.js";
 import { listActivity } from "../repository.js";
 import { context } from "../presenter/context.js";
 
@@ -42,23 +45,24 @@ export default class Panel {
   key = null;
   /** @type {string | null} the followed ticket */
   id = null;
-  /** @type {any} */
-  detail = null;
-  /** @type {import("../../core/errors.js").Failure | null} */
-  failure = null;
+  /** @type {TicketDocument | null} the followed ticket's document */
+  doc = null;
   /** @type {any[] | null} */
   activity = null;
   activityServed = true;
   runsOpen = false;
+  /** @type {import("gpui-kit").FocusHandle} init sets it; never focused from here */
+  handle = /** @type {any} */ (null);
 
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
+    this.handle = cx.focus_handle();
     this.check(cx);
     cx.timer.every(CHECK_MS, (cx) => this.check(cx));
   }
 
   following() {
-    return focusedTicket() ?? /** @type {string | null} */ (shared("bakers.selected")) ?? null;
+    return selectedTicket();
   }
 
   /** Reloads when the followed ticket or the last refresh changed; no call otherwise. @param {import("gpui-kit").Context} cx */
@@ -67,9 +71,11 @@ export default class Panel {
     const key = `${id}|${/** @type {any} */ (shared("bakers.needs"))?.updated ?? null}`;
     if (key === this.key) return;
     this.key = key;
-    this.id = id;
+    if (id !== this.id) {
+      this.id = id;
+      this.doc = id ? new TicketDocument(id, () => this.load(id)) : null;
+    }
     if (!id) {
-      this.detail = null;
       cx.notify();
       return;
     }
@@ -79,23 +85,18 @@ export default class Panel {
     });
   }
 
-  /** @param {string} id */
+  /** Loads the document and the activity of the followed ticket. @param {string} id */
   async load(id) {
+    const doc = this.doc;
+    if (!doc || doc.id !== id) return;
+    await doc.load();
+    if (this.id !== id || !doc.detail) return;
     try {
-      await ready();
-      const detail = await getStore().ticket(id);
-      if (this.id !== id) return;
-      this.detail = detail;
-      this.failure = null;
-      try {
-        this.activity = await listActivity(detail.ticket.id);
-        this.activityServed = true;
-      } catch (e) {
-        this.activity = null;
-        this.activityServed = classify(e)?.kind !== "api";
-      }
+      this.activity = await listActivity(doc.detail.ticket.id);
+      this.activityServed = true;
     } catch (e) {
-      this.failure = classify(e);
+      this.activity = null;
+      this.activityServed = classify(e)?.kind !== "api";
     }
   }
 
@@ -103,7 +104,7 @@ export default class Panel {
   agentSection(vm) {
     const t = tokens();
     const small = { h: 24, size: 11 };
-    const term = runTerminal(vm.id, this.detail.ticket.id);
+    const term = runTerminal(vm.id, this.doc?.detail?.ticket?.id);
     return v_flex()
       .id("agent-section")
       .gap(6)
@@ -396,50 +397,56 @@ export default class Panel {
       .bg(t.surface)
       .font_family(UI_FONT)
       .text_size(12)
-      .text_color(t.foreground);
-    if (!this.id) return root.child(loading("No ticket selected"));
-    if (!this.detail || this.detail.ticket?.identifier !== this.id)
+      .text_color(t.foreground)
+      .track_focus(this.handle)
+      .on_mouse_down("left", () => this.handle.focus())
+      .on_key_down((e, cx) => {
+        if (!this.doc?.onKey(e, cx)) return;
+        cx.stop_propagation();
+        cx.notify();
+      });
+    const doc = this.doc;
+    if (!this.id || !doc) return root.child(loading("No ticket selected"));
+    const d = doc.detail;
+    if (!d || d.ticket?.identifier !== this.id)
       return root.child(
-        this.failure ? failureView(this.failure, null) : loading(`Loading ${this.id}...`),
+        doc.failure ? failureView(doc.failure, null) : loading(`Loading ${this.id}...`),
       );
-    const terminal = runTerminal(this.id, this.detail.ticket.id);
-    const vm = context(this.detail, {
+    const terminal = runTerminal(this.id, d.ticket.id);
+    const now = Date.now();
+    const vm = context(d, {
       terminal,
-      reason: runReason(
-        { runs: this.detail.runs, claim_machine: this.detail.ticket.claim_machine },
-        terminal,
-      ),
-      now: Date.now(),
+      reason: runReason({ runs: d.runs, claim_machine: d.ticket.claim_machine }, terminal),
+      now,
       activity: this.activity,
       activityServed: this.activityServed,
     });
+    const page = full(d, { terminal, now });
+    const card = doc.card(page.needs);
     return root
       .child(
-        h_flex()
-          .id("panel-header")
-          .flex_none()
-          .h(40)
-          .px(12)
-          .gap(8)
-          .items_center()
-          .bg(t.canvas)
-          .border_b(1)
-          .border_color(t.border)
-          .child(mono(vm.id, 12).font_semibold())
-          .child(div().text_size(12).text_color(t.muted).child(vm.sub)),
-      )
-      .child(
         v_flex()
-          .id("panel-body")
+          .id("panel-scroll")
           .flex_1()
           .min_h(0)
           .overflow_y_scrollbar()
           .p(12)
-          .gap(14)
-          .child(this.agentSection(vm))
-          .child(this.properties(vm))
-          .children(this.sections(vm))
-          .children(this.history(vm)),
-      );
+          // One column of its own height: children of the scrolling flex would shrink instead.
+          .child(
+            v_flex()
+              .id("panel-content")
+              .flex_none()
+              .gap(14)
+              .child(doc.header(page))
+              .child(doc.title(page))
+              .when(Boolean(card), (el) => el.child(card ?? ""))
+              .child(this.agentSection(vm))
+              .child(this.properties(vm))
+              .children(this.sections(vm))
+              .child(doc.comments(page))
+              .children(this.history(vm)),
+          ),
+      )
+      .child(doc.composerView());
   }
 }

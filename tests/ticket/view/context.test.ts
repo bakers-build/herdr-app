@@ -29,11 +29,12 @@ beforeEach(() => {
   resetMod();
 });
 
-async function panel(focusTicket = true, extra: Record<string, unknown> = {}) {
+/** The panel on the selected ticket, SHOP-41 unless a test selected another; none when select is false. */
+async function panel(select = true, extra: Record<string, unknown> = {}) {
   activeSpace();
   backend({ bakers_ticket_update: {}, bakers_ticket_classify: {}, ...extra });
-  env.spaces[0].tabs.push({ id: "t5", name: "SHOP-41 working", index: 2, active: focusTicket });
-  env.focused = { space: "s1", tab: focusTicket ? "t5" : "t0", pane: "p1" };
+  if (select) env.shared["bakers.selected"] ??= "SHOP-41";
+  env.focused = { space: "s1", tab: "t0", pane: "p1" };
   const Bakers = await load("bakers/main.js");
   const copy = mount(Bakers, { view: "ticket.context" });
   await flush();
@@ -42,21 +43,30 @@ async function panel(focusTicket = true, extra: Record<string, unknown> = {}) {
   return copy;
 }
 
-test("it follows the focused ticket tab", async () => {
+test("it follows the selected ticket", async () => {
   const root = (await panel()).render();
-  expect(texts(find(root, "panel-header"))).toEqual(["SHOP-41", "working, frozen"]);
+  expect(texts(find(root, "doc-header")).slice(0, 3)).toEqual(["SHOP-41", "working", "Frozen"]);
 });
 
-test("without a focused ticket tab it follows the selected list row", async () => {
+test("a leftover ticket tab in front does not move the panel off the selection", async () => {
   env.shared["bakers.selected"] = "SHOP-56";
-  const copy = await panel(false);
-  expect(texts(find(copy.render(), "panel-header"))).toEqual(["SHOP-56", "plan"]);
+  const copy = await panel();
+  env.spaces[0].tabs.push({ id: "t5", name: "SHOP-41 working", index: 2, active: true });
+  env.focused = { space: "s1", tab: "t5", pane: "p1" };
+  expect(texts(find(copy.render(), "doc-header")).slice(0, 2)).toEqual(["SHOP-56", "plan"]);
 });
 
 test("nothing selected says so", async () => {
   const copy = await panel(false);
   expect(texts(copy.render())).toEqual(["No ticket selected"]);
 });
+
+/** Herdr's layout with the panel shown on its ticket child. */
+function onTicket() {
+  env.layout = bakersLayout(main);
+  findNode(env.layout, "panel").hidden = false;
+  findNode(env.layout, "panel-body").active = "ticket";
+}
 
 test("Agent and conductor: the line, three actions and the key hint", async () => {
   env.terminals = [live("t7")];
@@ -75,40 +85,44 @@ test("Agent and conductor: the line, three actions and the key hint", async () =
     expect(find(s, id).calls.h).toEqual([24]);
     expect(find(s, id).calls.text_size).toEqual([11]);
   }
-  env.layout = bakersLayout(main);
+  onTicket();
   env.calls.length = 0;
   click(find(s, "show-agent"));
-  expect(runs().map(([c]) => c)).toEqual(["layout.set", "pane.focus"]);
-  expect(runs()[1]).toEqual(["pane.focus", { terminal: "t7" }]);
+  expect(runs().map(([c]) => c)).toEqual([
+    "layout.select",
+    "layout.show",
+    "layout.set",
+    "pane.focus",
+  ]);
+  expect(runs()[3]).toEqual(["pane.focus", { terminal: "t7" }]);
 });
 
-test("on the Tickets tab Show agent opens the ticket, then focuses its run once the tab is in front", async () => {
+test("Show agent never opens a tab; it shows the panel with the run and focuses it", async () => {
   env.shared["bakers.selected"] = "SHOP-56";
   env.terminals = [live("t9", "SHOP-56")];
-  const copy = await panel(false);
+  const copy = await panel();
   env.layout = bakersLayout(main);
   env.calls.length = 0;
   click(find(copy.render(), "show-agent"));
-  expect(runs().map(([c]) => c)).toEqual(["tab.new"]);
-  expect((runs()[0][1] as any).props).toMatchObject({ view: "ticket.view", ticket: "SHOP-56" });
-  env.spaces[0].tabs.push({ id: "t6", name: "SHOP-56 plan", index: 3, active: true });
-  env.focused = { space: "s1", tab: "t6", pane: "p1" };
-  terminal.syncRun();
+  expect(runs().some(([c]) => c === "tab.new")).toBe(false);
+  const set: any = runs().find(([c]) => c === "layout.set")?.[1];
+  expect(findNode(set.layout, "panel").hidden).toBe(false);
+  expect(findNode(set.layout, "panel-body").active).toBe("ticket");
   expect(runs().filter(([c]) => c === "pane.focus")).toEqual([["pane.focus", { terminal: "t9" }]]);
   expect(env.shared["bakers.runFocus"]).toBe(null);
 });
 
-test("Show agent after Hide shows the column again", async () => {
+test("Show agent after Hide shows the run again", async () => {
   env.terminals = [live("t7")];
   const copy = await panel();
-  env.layout = bakersLayout(main);
+  onTicket();
   terminal.syncRun();
   env.layout = (runs()[0][1] as any).layout;
   findNode(env.layout, "run").hidden = true;
   env.shared["bakers.runHidden"] = true;
   env.calls.length = 0;
   click(find(copy.render(), "show-agent"));
-  expect(runs()).toEqual([
+  expect(runs().slice(2)).toEqual([
     ["layout.show", { id: "run" }],
     ["pane.focus", { terminal: "t7" }],
   ]);
@@ -256,10 +270,11 @@ test("Runs are collapsed and expand on click", async () => {
   expect(texts(find(copy.render(), "runs"))).toEqual(["Runs 1", "running", "Claude Code", "1h"]);
 });
 
-test("the panel repeats neither the title nor the comments of the document", async () => {
+test("the panel holds the document: title, description and comments", async () => {
   const t = texts((await panel()).render());
-  expect(t).not.toContain("Checkout fails with an empty cart");
-  expect(t.some((x) => x.includes("Reproduced"))).toBe(false);
+  expect(t).toContain("Checkout fails with an empty cart");
+  expect(t).toContain("DESCRIPTION");
+  expect(t.some((x) => x.startsWith("COMMENTS"))).toBe(true);
 });
 
 const markdownOf = (node: any) => {
@@ -270,19 +285,18 @@ const markdownOf = (node: any) => {
   return text;
 };
 
-test("Description, Acceptance and Summary sit between Properties and Activity, each with Edit...", async () => {
+test("Description, Acceptance and Summary sit between Properties and the comments, each with Edit...", async () => {
   const root = (await panel()).render();
-  const body = find(root, "panel-body");
+  const body = find(root, "panel-content");
   const ids = body.nodes.map((n: any) => n.calls.id?.[0]);
-  expect(ids).toEqual([
-    "agent-section",
-    "properties",
-    "section-description",
-    "section-acceptance",
-    "section-summary",
-    "activity",
-    "runs",
-  ]);
+  const at = (id: string) => ids.indexOf(id);
+  expect(at("properties")).toBeGreaterThan(-1);
+  expect([
+    at("section-description"),
+    at("section-acceptance"),
+    at("section-summary"),
+    at("comments"),
+  ]).toEqual([1, 2, 3, 4].map((i) => at("properties") + i));
   expect(texts(find(root, "section-acceptance"))).toEqual(["ACCEPTANCE", "Edit...", "None yet."]);
   expect(texts(find(root, "section-summary"))).toEqual(["SUMMARY", "Edit...", "None yet."]);
   expect(texts(find(root, "section-description")).slice(0, 2)).toEqual(["DESCRIPTION", "Edit..."]);

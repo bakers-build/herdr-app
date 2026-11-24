@@ -764,36 +764,6 @@ exports[`golden: shell.tabs R2-4 1`] = `
                 "SHOP-41 working",
               ],
             },
-            {
-              "arg": undefined,
-              "calls": {
-                "bg": [
-                  [
-                    "blocked",
-                  ],
-                ],
-                "flex_none": [
-                  [],
-                ],
-                "id": [
-                  [
-                    "dot-t5",
-                  ],
-                ],
-                "rounded": [
-                  [
-                    3,
-                  ],
-                ],
-                "size": [
-                  [
-                    6,
-                  ],
-                ],
-              },
-              "kind": "div",
-              "nodes": [],
-            },
           ],
         },
         {
@@ -900,36 +870,6 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "nodes": [
                 "SHOP-56 plan",
               ],
-            },
-            {
-              "arg": undefined,
-              "calls": {
-                "bg": [
-                  [
-                    "blocked",
-                  ],
-                ],
-                "flex_none": [
-                  [],
-                ],
-                "id": [
-                  [
-                    "dot-t6",
-                  ],
-                ],
-                "rounded": [
-                  [
-                    3,
-                  ],
-                ],
-                "size": [
-                  [
-                    6,
-                  ],
-                ],
-              },
-              "kind": "div",
-              "nodes": [],
             },
           ],
         },
@@ -1729,36 +1669,6 @@ exports[`golden: shell.tabs R2-3 1`] = `
               "nodes": [
                 "SHOP-41 working",
               ],
-            },
-            {
-              "arg": undefined,
-              "calls": {
-                "bg": [
-                  [
-                    "blocked",
-                  ],
-                ],
-                "flex_none": [
-                  [],
-                ],
-                "id": [
-                  [
-                    "dot-t5",
-                  ],
-                ],
-                "rounded": [
-                  [
-                    3,
-                  ],
-                ],
-                "size": [
-                  [
-                    6,
-                  ],
-                ],
-              },
-              "kind": "div",
-              "nodes": [],
             },
           ],
         },
@@ -3769,7 +3679,7 @@ exports[`golden: ticket.list R2-4 1`] = `
               },
               "kind": "div",
               "nodes": [
-                "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. The filter bar narrows the list. Up and down move the selection; the Ticket panel, when shown, follows it.",
+                "Enter or a double click shows the ticket in the panel, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. The filter bar narrows the list. Up and down move the selection; the panel, when shown, follows it.",
               ],
             },
           ],
@@ -3780,7 +3690,7 @@ exports[`golden: ticket.list R2-4 1`] = `
 }
 `;
 
-exports[`golden: ticket.view R2-3 1`] = `
+exports[`golden: ticket.context, the whole ticket in the panel 1`] = `
 {
   "arg": undefined,
   "calls": {
@@ -3796,7 +3706,7 @@ exports[`golden: ticket.view R2-3 1`] = `
     ],
     "id": [
       [
-        "ticket",
+        "ticket-panel",
       ],
     ],
     "min_h": [
@@ -3806,6 +3716,12 @@ exports[`golden: ticket.view R2-3 1`] = `
     ],
     "on_key_down": [
       [
+        "[fn]",
+      ],
+    ],
+    "on_mouse_down:left": [
+      [
+        "left",
         "[fn]",
       ],
     ],
@@ -3819,14 +3735,14 @@ exports[`golden: ticket.view R2-3 1`] = `
     ],
     "text_size": [
       [
-        13,
+        12,
       ],
     ],
     "track_focus": [
       [
         {
           "focus": "[fn]",
-          "focused": true,
+          "focused": false,
         },
       ],
     ],
@@ -3841,11 +3757,8 @@ exports[`golden: ticket.view R2-3 1`] = `
         ],
         "id": [
           [
-            "doc-scroll",
+            "panel-scroll",
           ],
-        ],
-        "justify_center": [
-          [],
         ],
         "min_h": [
           [
@@ -3855,39 +3768,29 @@ exports[`golden: ticket.view R2-3 1`] = `
         "overflow_y_scrollbar": [
           [],
         ],
-        "px": [
+        "p": [
           [
-            24,
-          ],
-        ],
-        "py": [
-          [
-            20,
+            12,
           ],
         ],
       },
-      "kind": "h_flex",
+      "kind": "v_flex",
       "nodes": [
         {
           "arg": undefined,
           "calls": {
+            "flex_none": [
+              [],
+            ],
             "gap": [
               [
-                16,
+                14,
               ],
             ],
             "id": [
               [
-                "doc",
+                "panel-content",
               ],
-            ],
-            "max_w": [
-              [
-                760,
-              ],
-            ],
-            "w_full": [
-              [],
             ],
           },
           "kind": "v_flex",
@@ -4378,7 +4281,7 @@ exports[`golden: ticket.view R2-3 1`] = `
                 ],
                 "line_height": [
                   [
-                    27.5,
+                    "23px",
                   ],
                 ],
                 "on_click": [
@@ -4388,7 +4291,7 @@ exports[`golden: ticket.view R2-3 1`] = `
                 ],
                 "text_size": [
                   [
-                    22,
+                    18,
                   ],
                 ],
               },
@@ -4660,12 +4563,12 @@ exports[`golden: ticket.view R2-3 1`] = `
               "calls": {
                 "gap": [
                   [
-                    8,
+                    6,
                   ],
                 ],
                 "id": [
                   [
-                    "description",
+                    "agent-section",
                   ],
                 ],
               },
@@ -4690,43 +4593,316 @@ exports[`golden: ticket.view R2-3 1`] = `
                   },
                   "kind": "div",
                   "nodes": [
-                    "DESCRIPTION",
+                    "AGENT AND CONDUCTOR",
                   ],
                 },
                 {
                   "arg": undefined,
                   "calls": {
-                    "cursor_text": [
+                    "flex_wrap": [
                       [],
                     ],
-                    "id": [
+                    "gap": [
                       [
-                        "description-body",
+                        6,
                       ],
                     ],
-                    "on_click": [
+                    "items_center": [
+                      [],
+                    ],
+                    "text_color": [
                       [
-                        "[fn]",
+                        "blocked",
                       ],
                     ],
                   },
-                  "kind": "div",
+                  "kind": "h_flex",
                   "nodes": [
                     {
-                      "arg": {
-                        "id": "desc-SHOP-41",
-                        "text": 
-"Placing an order with an empty cart returns a 500 instead of a friendly page. Reported by support three times this week.
-
-**Acceptance**
-
-- An empty cart never reaches the checkout controller.
-- The customer sees a page, not an error."
-,
+                      "arg": undefined,
+                      "calls": {
+                        "bg": [
+                          [
+                            "blocked",
+                          ],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "rounded": [
+                          [
+                            4,
+                          ],
+                        ],
+                        "size": [
+                          [
+                            8,
+                          ],
+                        ],
                       },
-                      "calls": {},
-                      "kind": "markdown",
+                      "kind": "div",
                       "nodes": [],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "truncate": [
+                          [],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Claude Code needs you",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "on studio-mac, 35m",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "flex_wrap": [
+                      [],
+                    ],
+                    "gap": [
+                      [
+                        6,
+                      ],
+                    ],
+                  },
+                  "kind": "h_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "bg": [
+                          [
+                            "surface",
+                          ],
+                        ],
+                        "border": [
+                          [
+                            1,
+                          ],
+                        ],
+                        "border_color": [
+                          [
+                            "border",
+                          ],
+                        ],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "h": [
+                          [
+                            24,
+                          ],
+                        ],
+                        "hover": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "id": [
+                          [
+                            "show-agent",
+                          ],
+                        ],
+                        "items_center": [
+                          [],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "px": [
+                          [
+                            8,
+                          ],
+                        ],
+                        "rounded": [
+                          [
+                            6,
+                          ],
+                        ],
+                        "text_color": [
+                          [
+                            "foreground",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "h_flex",
+                      "nodes": [
+                        "Show agent",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "bg": [
+                          [
+                            "surface",
+                          ],
+                        ],
+                        "border": [
+                          [
+                            1,
+                          ],
+                        ],
+                        "border_color": [
+                          [
+                            "border",
+                          ],
+                        ],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "h": [
+                          [
+                            24,
+                          ],
+                        ],
+                        "hover": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "id": [
+                          [
+                            "move-to",
+                          ],
+                        ],
+                        "items_center": [
+                          [],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "px": [
+                          [
+                            8,
+                          ],
+                        ],
+                        "rounded": [
+                          [
+                            6,
+                          ],
+                        ],
+                        "text_color": [
+                          [
+                            "foreground",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "h_flex",
+                      "nodes": [
+                        "Move to...",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "bg": [
+                          [
+                            "surface",
+                          ],
+                        ],
+                        "border": [
+                          [
+                            1,
+                          ],
+                        ],
+                        "border_color": [
+                          [
+                            "border",
+                          ],
+                        ],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "h": [
+                          [
+                            24,
+                          ],
+                        ],
+                        "hover": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "id": [
+                          [
+                            "cancel-run",
+                          ],
+                        ],
+                        "items_center": [
+                          [],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "px": [
+                          [
+                            8,
+                          ],
+                        ],
+                        "rounded": [
+                          [
+                            6,
+                          ],
+                        ],
+                        "text_color": [
+                          [
+                            "foreground",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "h_flex",
+                      "nodes": [
+                        "Cancel run...",
+                      ],
                     },
                   ],
                 },
@@ -4746,7 +4922,1290 @@ exports[`golden: ticket.view R2-3 1`] = `
                   },
                   "kind": "div",
                   "nodes": [
-                    "Click or E to edit.",
+                    "R moves, G shows the agent.",
+                  ],
+                },
+              ],
+            },
+            {
+              "arg": undefined,
+              "calls": {
+                "flex_wrap": [
+                  [],
+                ],
+                "gap": [
+                  [
+                    12,
+                  ],
+                ],
+                "id": [
+                  [
+                    "properties",
+                  ],
+                ],
+              },
+              "kind": "h_flex",
+              "nodes": [
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w_full": [
+                      [],
+                    ],
+                  },
+                  "kind": "div",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "font_semibold": [
+                          [],
+                        ],
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "PROPERTIES",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w": [
+                      [
+                        160,
+                      ],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Type",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "id": [
+                          [
+                            "prop-type",
+                          ],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "bug",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w": [
+                      [
+                        160,
+                      ],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Recipe",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "id": [
+                          [
+                            "prop-recipe",
+                          ],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "matt",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w_full": [
+                      [],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Labels",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "flex_wrap": [
+                          [],
+                        ],
+                        "gap": [
+                          [
+                            4,
+                          ],
+                        ],
+                        "mt": [
+                          [
+                            2,
+                          ],
+                        ],
+                      },
+                      "kind": "h_flex",
+                      "nodes": [
+                        {
+                          "arg": undefined,
+                          "calls": {
+                            "bg": [
+                              [
+                                "raised",
+                              ],
+                            ],
+                            "border": [
+                              [
+                                1,
+                              ],
+                            ],
+                            "border_color": [
+                              [
+                                "border",
+                              ],
+                            ],
+                            "gap": [
+                              [
+                                4,
+                              ],
+                            ],
+                            "h": [
+                              [
+                                20,
+                              ],
+                            ],
+                            "items_center": [
+                              [],
+                            ],
+                            "px": [
+                              [
+                                8,
+                              ],
+                            ],
+                            "rounded": [
+                              [
+                                10,
+                              ],
+                            ],
+                            "text_size": [
+                              [
+                                11,
+                              ],
+                            ],
+                          },
+                          "kind": "h_flex",
+                          "nodes": [
+                            "Question",
+                            {
+                              "arg": undefined,
+                              "calls": {
+                                "cursor_pointer": [
+                                  [],
+                                ],
+                                "id": [
+                                  [
+                                    "label-x-Question",
+                                  ],
+                                ],
+                                "on_click": [
+                                  [
+                                    "[fn]",
+                                  ],
+                                ],
+                                "text_color": [
+                                  [
+                                    "muted",
+                                  ],
+                                ],
+                              },
+                              "kind": "div",
+                              "nodes": [
+                                "×",
+                              ],
+                            },
+                          ],
+                        },
+                        {
+                          "arg": undefined,
+                          "calls": {
+                            "bg": [
+                              [
+                                "raised",
+                              ],
+                            ],
+                            "border": [
+                              [
+                                1,
+                              ],
+                            ],
+                            "border_color": [
+                              [
+                                "border",
+                              ],
+                            ],
+                            "gap": [
+                              [
+                                4,
+                              ],
+                            ],
+                            "h": [
+                              [
+                                20,
+                              ],
+                            ],
+                            "items_center": [
+                              [],
+                            ],
+                            "px": [
+                              [
+                                8,
+                              ],
+                            ],
+                            "rounded": [
+                              [
+                                10,
+                              ],
+                            ],
+                            "text_size": [
+                              [
+                                11,
+                              ],
+                            ],
+                          },
+                          "kind": "h_flex",
+                          "nodes": [
+                            "checkout",
+                            {
+                              "arg": undefined,
+                              "calls": {
+                                "cursor_pointer": [
+                                  [],
+                                ],
+                                "id": [
+                                  [
+                                    "label-x-checkout",
+                                  ],
+                                ],
+                                "on_click": [
+                                  [
+                                    "[fn]",
+                                  ],
+                                ],
+                                "text_color": [
+                                  [
+                                    "muted",
+                                  ],
+                                ],
+                              },
+                              "kind": "div",
+                              "nodes": [
+                                "×",
+                              ],
+                            },
+                          ],
+                        },
+                        {
+                          "arg": undefined,
+                          "calls": {
+                            "bg": [
+                              [
+                                "surface",
+                              ],
+                            ],
+                            "border": [
+                              [
+                                1,
+                              ],
+                            ],
+                            "border_color": [
+                              [
+                                "muted",
+                              ],
+                            ],
+                            "border_dashed": [
+                              [],
+                            ],
+                            "cursor_pointer": [
+                              [],
+                            ],
+                            "h": [
+                              [
+                                20,
+                              ],
+                            ],
+                            "id": [
+                              [
+                                "label-add",
+                              ],
+                            ],
+                            "items_center": [
+                              [],
+                            ],
+                            "on_click": [
+                              [
+                                "[fn]",
+                              ],
+                            ],
+                            "px": [
+                              [
+                                8,
+                              ],
+                            ],
+                            "rounded": [
+                              [
+                                10,
+                              ],
+                            ],
+                            "text_color": [
+                              [
+                                "muted",
+                              ],
+                            ],
+                            "text_size": [
+                              [
+                                11,
+                              ],
+                            ],
+                          },
+                          "kind": "h_flex",
+                          "nodes": [
+                            "+",
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w": [
+                      [
+                        160,
+                      ],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Frozen",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "gap": [
+                          [
+                            4,
+                          ],
+                        ],
+                        "items_center": [
+                          [],
+                        ],
+                      },
+                      "kind": "h_flex",
+                      "nodes": [
+                        "Yes, 35m",
+                        {
+                          "arg": undefined,
+                          "calls": {
+                            "bg": [
+                              [
+                                "surface",
+                              ],
+                            ],
+                            "border": [
+                              [
+                                1,
+                              ],
+                            ],
+                            "border_color": [
+                              [
+                                "border",
+                              ],
+                            ],
+                            "cursor_pointer": [
+                              [],
+                            ],
+                            "flex_none": [
+                              [],
+                            ],
+                            "h": [
+                              [
+                                20,
+                              ],
+                            ],
+                            "hover": [
+                              [
+                                "[fn]",
+                              ],
+                            ],
+                            "id": [
+                              [
+                                "unfreeze",
+                              ],
+                            ],
+                            "items_center": [
+                              [],
+                            ],
+                            "on_click": [
+                              [
+                                "[fn]",
+                              ],
+                            ],
+                            "px": [
+                              [
+                                6,
+                              ],
+                            ],
+                            "rounded": [
+                              [
+                                6,
+                              ],
+                              [
+                                4,
+                              ],
+                            ],
+                            "text_color": [
+                              [
+                                "foreground",
+                              ],
+                            ],
+                            "text_size": [
+                              [
+                                11,
+                              ],
+                            ],
+                          },
+                          "kind": "h_flex",
+                          "nodes": [
+                            "Unfreeze...",
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w": [
+                      [
+                        160,
+                      ],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Assignee",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "-",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w": [
+                      [
+                        160,
+                      ],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Reviewers",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "-",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w_full": [
+                      [],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Branch",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "font_family": [
+                          [
+                            "JetBrains Mono",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "shop-41-checkout-empty-cart",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w": [
+                      [
+                        160,
+                      ],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Parent",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "-",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "w": [
+                      [
+                        160,
+                      ],
+                    ],
+                  },
+                  "kind": "v_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "Links",
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "id": [
+                          [
+                            "link-0",
+                          ],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "text_color": [
+                          [
+                            "accent",
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "MR !91",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "arg": undefined,
+              "calls": {
+                "gap": [
+                  [
+                    6,
+                  ],
+                ],
+                "id": [
+                  [
+                    "section-description",
+                  ],
+                ],
+              },
+              "kind": "v_flex",
+              "nodes": [
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "gap": [
+                      [
+                        8,
+                      ],
+                    ],
+                    "items_center": [
+                      [],
+                    ],
+                  },
+                  "kind": "h_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "flex_1": [
+                          [],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        {
+                          "arg": undefined,
+                          "calls": {
+                            "font_semibold": [
+                              [],
+                            ],
+                            "text_color": [
+                              [
+                                "muted",
+                              ],
+                            ],
+                            "text_size": [
+                              [
+                                11,
+                              ],
+                            ],
+                          },
+                          "kind": "div",
+                          "nodes": [
+                            "DESCRIPTION",
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "bg": [
+                          [
+                            "surface",
+                          ],
+                        ],
+                        "border": [
+                          [
+                            1,
+                          ],
+                        ],
+                        "border_color": [
+                          [
+                            "border",
+                          ],
+                        ],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "h": [
+                          [
+                            20,
+                          ],
+                        ],
+                        "hover": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "id": [
+                          [
+                            "edit-description",
+                          ],
+                        ],
+                        "items_center": [
+                          [],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "px": [
+                          [
+                            6,
+                          ],
+                        ],
+                        "rounded": [
+                          [
+                            6,
+                          ],
+                          [
+                            4,
+                          ],
+                        ],
+                        "text_color": [
+                          [
+                            "foreground",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "h_flex",
+                      "nodes": [
+                        "Edit...",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": {
+                    "id": "section-md-description",
+                    "text": 
+"Placing an order with an empty cart returns a 500 instead of a friendly page. Reported by support three times this week.
+
+**Acceptance**
+
+- An empty cart never reaches the checkout controller.
+- The customer sees a page, not an error."
+,
+                  },
+                  "calls": {},
+                  "kind": "markdown",
+                  "nodes": [],
+                },
+              ],
+            },
+            {
+              "arg": undefined,
+              "calls": {
+                "gap": [
+                  [
+                    6,
+                  ],
+                ],
+                "id": [
+                  [
+                    "section-acceptance",
+                  ],
+                ],
+              },
+              "kind": "v_flex",
+              "nodes": [
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "gap": [
+                      [
+                        8,
+                      ],
+                    ],
+                    "items_center": [
+                      [],
+                    ],
+                  },
+                  "kind": "h_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "flex_1": [
+                          [],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        {
+                          "arg": undefined,
+                          "calls": {
+                            "font_semibold": [
+                              [],
+                            ],
+                            "text_color": [
+                              [
+                                "muted",
+                              ],
+                            ],
+                            "text_size": [
+                              [
+                                11,
+                              ],
+                            ],
+                          },
+                          "kind": "div",
+                          "nodes": [
+                            "ACCEPTANCE",
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "bg": [
+                          [
+                            "surface",
+                          ],
+                        ],
+                        "border": [
+                          [
+                            1,
+                          ],
+                        ],
+                        "border_color": [
+                          [
+                            "border",
+                          ],
+                        ],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "h": [
+                          [
+                            20,
+                          ],
+                        ],
+                        "hover": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "id": [
+                          [
+                            "edit-acceptance",
+                          ],
+                        ],
+                        "items_center": [
+                          [],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "px": [
+                          [
+                            6,
+                          ],
+                        ],
+                        "rounded": [
+                          [
+                            6,
+                          ],
+                          [
+                            4,
+                          ],
+                        ],
+                        "text_color": [
+                          [
+                            "foreground",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "h_flex",
+                      "nodes": [
+                        "Edit...",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "text_color": [
+                      [
+                        "muted",
+                      ],
+                    ],
+                  },
+                  "kind": "div",
+                  "nodes": [
+                    "None yet.",
+                  ],
+                },
+              ],
+            },
+            {
+              "arg": undefined,
+              "calls": {
+                "gap": [
+                  [
+                    6,
+                  ],
+                ],
+                "id": [
+                  [
+                    "section-summary",
+                  ],
+                ],
+              },
+              "kind": "v_flex",
+              "nodes": [
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "gap": [
+                      [
+                        8,
+                      ],
+                    ],
+                    "items_center": [
+                      [],
+                    ],
+                  },
+                  "kind": "h_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "flex_1": [
+                          [],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        {
+                          "arg": undefined,
+                          "calls": {
+                            "font_semibold": [
+                              [],
+                            ],
+                            "text_color": [
+                              [
+                                "muted",
+                              ],
+                            ],
+                            "text_size": [
+                              [
+                                11,
+                              ],
+                            ],
+                          },
+                          "kind": "div",
+                          "nodes": [
+                            "SUMMARY",
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "bg": [
+                          [
+                            "surface",
+                          ],
+                        ],
+                        "border": [
+                          [
+                            1,
+                          ],
+                        ],
+                        "border_color": [
+                          [
+                            "border",
+                          ],
+                        ],
+                        "cursor_pointer": [
+                          [],
+                        ],
+                        "flex_none": [
+                          [],
+                        ],
+                        "h": [
+                          [
+                            20,
+                          ],
+                        ],
+                        "hover": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "id": [
+                          [
+                            "edit-summary",
+                          ],
+                        ],
+                        "items_center": [
+                          [],
+                        ],
+                        "on_click": [
+                          [
+                            "[fn]",
+                          ],
+                        ],
+                        "px": [
+                          [
+                            6,
+                          ],
+                        ],
+                        "rounded": [
+                          [
+                            6,
+                          ],
+                          [
+                            4,
+                          ],
+                        ],
+                        "text_color": [
+                          [
+                            "foreground",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "h_flex",
+                      "nodes": [
+                        "Edit...",
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "text_color": [
+                      [
+                        "muted",
+                      ],
+                    ],
+                  },
+                  "kind": "div",
+                  "nodes": [
+                    "None yet.",
                   ],
                 },
               ],
@@ -5050,6 +6509,145 @@ exports[`golden: ticket.view R2-3 1`] = `
                 },
               ],
             },
+            {
+              "arg": undefined,
+              "calls": {
+                "gap": [
+                  [
+                    6,
+                  ],
+                ],
+                "id": [
+                  [
+                    "activity",
+                  ],
+                ],
+              },
+              "kind": "v_flex",
+              "nodes": [
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "gap": [
+                      [
+                        6,
+                      ],
+                    ],
+                    "items_center": [
+                      [],
+                    ],
+                  },
+                  "kind": "h_flex",
+                  "nodes": [
+                    {
+                      "arg": undefined,
+                      "calls": {
+                        "font_semibold": [
+                          [],
+                        ],
+                        "text_color": [
+                          [
+                            "muted",
+                          ],
+                        ],
+                        "text_size": [
+                          [
+                            11,
+                          ],
+                        ],
+                      },
+                      "kind": "div",
+                      "nodes": [
+                        "ACTIVITY",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "arg": undefined,
+              "calls": {
+                "gap": [
+                  [
+                    6,
+                  ],
+                ],
+                "id": [
+                  [
+                    "runs",
+                  ],
+                ],
+              },
+              "kind": "v_flex",
+              "nodes": [
+                {
+                  "arg": undefined,
+                  "calls": {
+                    "border_color": [
+                      [
+                        "border",
+                      ],
+                    ],
+                    "border_t": [
+                      [
+                        1,
+                      ],
+                    ],
+                    "cursor_pointer": [
+                      [],
+                    ],
+                    "gap": [
+                      [
+                        6,
+                      ],
+                    ],
+                    "id": [
+                      [
+                        "runs-toggle",
+                      ],
+                    ],
+                    "items_center": [
+                      [],
+                    ],
+                    "on_click": [
+                      [
+                        "[fn]",
+                      ],
+                    ],
+                    "py": [
+                      [
+                        6,
+                      ],
+                    ],
+                    "text_color": [
+                      [
+                        "muted",
+                      ],
+                    ],
+                  },
+                  "kind": "h_flex",
+                  "nodes": [
+                    {
+                      "arg": "mods/bakers/ui/icons/chevron-right.svg",
+                      "calls": {
+                        "flex_none": [
+                          [],
+                        ],
+                        "size": [
+                          [
+                            12,
+                          ],
+                        ],
+                      },
+                      "kind": "svg",
+                      "nodes": [],
+                    },
+                    "Runs 1",
+                  ],
+                },
+              ],
+            },
           ],
         },
       ],
@@ -5080,7 +6678,7 @@ exports[`golden: ticket.view R2-3 1`] = `
         ],
         "px": [
           [
-            24,
+            12,
           ],
         ],
         "py": [
@@ -5094,11 +6692,6 @@ exports[`golden: ticket.view R2-3 1`] = `
         {
           "arg": undefined,
           "calls": {
-            "max_w": [
-              [
-                760,
-              ],
-            ],
             "w_full": [
               [],
             ],
@@ -5442,14 +7035,16 @@ exports[`golden calls: new 1`] = `
 exports[`golden calls: open:SHOP-41 1`] = `
 [
   [
-    "tab.new",
+    "layout.select",
     {
-      "mod": "bakers",
-      "name": "SHOP-41 working",
-      "props": {
-        "ticket": "SHOP-41",
-        "view": "ticket.view",
-      },
+      "child": "ticket",
+      "stack": "panel-body",
+    },
+  ],
+  [
+    "layout.show",
+    {
+      "id": "panel",
     },
   ],
 ]

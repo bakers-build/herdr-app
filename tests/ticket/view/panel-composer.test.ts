@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { ticketTab, resetMod } from "../../fixtures/shop";
+import { ticketPanel, resetMod } from "../../fixtures/shop";
 import { click, env, find, findText, flush, key, reset, texts, tools } from "../../harness";
 
 const writes = () => tools().filter(([t]) => !/_(read|list|search)$/.test(t));
@@ -10,13 +10,13 @@ beforeEach(() => {
 });
 
 async function answering(extra: Record<string, unknown> = {}) {
-  const copy = await ticketTab("SHOP-41", {
+  const copy = await ticketPanel("SHOP-41", {
     bakers_comment_publish: { id: "c9" },
     bakers_ticket_update: {},
     ...extra,
   });
   click(find(copy.render(), "answer-below"));
-  copy.inner.composer.inputs
+  copy.inner.doc.composer.inputs
     .input("body")
     .type("Show the empty-cart page with suggestions. The redirect was the old behavior.");
   env.calls.length = 0;
@@ -33,7 +33,7 @@ test("answer mode shows its label, the checked checkbox, the hint and both butto
     "Just comment",
     "Send answer",
   ]);
-  expect(copy.inner.composer.state.values.resume).toBe(true);
+  expect(copy.inner.doc.composer.state.values.resume).toBe(true);
   expect(root.calls.border_color).toEqual(["accent"]);
 });
 
@@ -54,8 +54,8 @@ test("Send answer posts the comment, then unfreezes and removes Question, then t
   ]);
   const toast: any = env.calls.find((c) => c.fn === "notify")?.args[0];
   expect(toast.title).toBe("Answered SHOP-41, the run continues");
-  expect(copy.inner.composer.inputs.input("body").value()).toBe("");
-  expect(copy.inner.composer.mode).toBe("comment");
+  expect(copy.inner.doc.composer.inputs.input("body").value()).toBe("");
+  expect(copy.inner.doc.composer.mode).toBe("comment");
 });
 
 test("unchecked, Send answer only posts the comment", async () => {
@@ -84,13 +84,15 @@ test("Just comment only posts the comment", async () => {
 
 test("cmd-Enter sends the answer; Esc goes back to a plain comment and keeps the text", async () => {
   const copy = await answering();
-  copy.inner.composer.inputs.input("body").handlers.focus({}, {});
+  copy.inner.doc.composer.inputs.input("body").handlers.focus({}, {});
   key(copy.render(), "escape");
-  expect(copy.inner.composer.mode).toBe("comment");
-  expect(copy.inner.composer.inputs.input("body").value()).toContain("Show the empty-cart page");
+  expect(copy.inner.doc.composer.mode).toBe("comment");
+  expect(copy.inner.doc.composer.inputs.input("body").value()).toContain(
+    "Show the empty-cart page",
+  );
   expect(writes()).toEqual([]);
   click(find(copy.render(), "answer-below"));
-  copy.inner.composer.inputs.input("body").handlers.focus({}, {});
+  copy.inner.doc.composer.inputs.input("body").handlers.focus({}, {});
   key(copy.render(), "cmd-enter");
   await flush();
   expect(writes().map((w) => w[0])).toEqual(["bakers_comment_publish", "bakers_ticket_update"]);
@@ -100,11 +102,13 @@ test("a failed unfreeze after the comment names the step and keeps the text", as
   const copy = await answering({ bakers_ticket_update: new Error("Not allowed") });
   click(find(copy.render(), "send-answer"));
   await flush();
-  expect(copy.inner.composer.state.message?.message).toBe(
+  expect(copy.inner.doc.composer.state.message?.message).toBe(
     "Comment posted; unfreezing failed: Not allowed",
   );
   expect(findText(copy.render(), "Comment posted; unfreezing failed: Not allowed")).toBeDefined();
-  expect(copy.inner.composer.inputs.input("body").value()).toContain("Show the empty-cart page");
+  expect(copy.inner.doc.composer.inputs.input("body").value()).toContain(
+    "Show the empty-cart page",
+  );
 });
 
 test("a retried answer after a failed unfreeze posts the comment once", async () => {
@@ -125,17 +129,9 @@ test("a retried answer after a failed unfreeze posts the comment once", async ()
   expect(toast.title).toBe("Answered SHOP-41, the run continues");
 });
 
-test("the first keystroke in the composer pins the preview tab", async () => {
-  env.shared["bakers.preview"] = { id: "SHOP-41", index: null };
-  const copy = await ticketTab("SHOP-41");
-  env.shared["bakers.preview"] = { id: "SHOP-41", index: null };
-  copy.inner.composer.inputs.input("body").type("H");
-  expect(env.shared["bakers.preview"]).toBe(null);
-});
-
 test("a plain comment from comment mode", async () => {
-  const copy = await ticketTab("SHOP-58", { bakers_comment_publish: { id: "c9" } });
-  copy.inner.composer.inputs.input("body").type("Looks good");
+  const copy = await ticketPanel("SHOP-58", { bakers_comment_publish: { id: "c9" } });
+  copy.inner.doc.composer.inputs.input("body").type("Looks good");
   env.calls.length = 0;
   click(find(copy.render(), "send-comment"));
   await flush();

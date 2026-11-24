@@ -1,4 +1,4 @@
-// ticket/form/comment: the composer of a ticket tab (R2-3). Comment mode posts a comment. Answer
+// ticket/form/comment: the composer of the ticket in the panel. Comment mode posts a comment. Answer
 // mode, while the agent asked a question, posts the answer, then (checked) unfreezes and
 // removes the label Question, then toasts. A failure after the comment says so.
 import * as actions from "../commands.js";

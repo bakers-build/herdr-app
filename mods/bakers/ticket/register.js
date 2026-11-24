@@ -7,13 +7,11 @@ import LabelPicker from "./view/label-picker.js";
 import List from "./view/list.js";
 import Rail from "./view/rail.js";
 import Status from "./view/status.js";
-import Full from "./view/full.js";
 import RunHeader from "./view/run.js";
 import * as commands from "./view/commands.js";
 import { windowTask } from "./window.js";
 import { showAgent, syncRun } from "./terminal.js";
 import { openRoute } from "../core/router.js";
-import { closeAll, closeFinished } from "./tabs.js";
 import { classify, labels } from "./commands.js";
 import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./form/confirm.js";
 import { createForm } from "./form/create.js";
@@ -26,29 +24,26 @@ import { refresh } from "./store.js";
 import { shared } from "herdr";
 
 /**
- * The ticket tab bar decoration: "Tickets <n>" on the home tab while tickets need you, the
- * blocked dot on a ticket tab that needs you.
- * @param {any} _tab @param {{ kind: string | null, key: string | null, home: string | null }} info
- * @returns {{ label?: string, dot?: string } | null}
+ * The tab bar decoration of the kind ticket: "Tickets <n>" on the home tab while tickets need you.
+ * @param {any} _tab @param {{ kind: string | null, home: string | null }} info
+ * @returns {{ label?: string } | null}
  */
-function decorate(_tab, { kind, key, home }) {
-  if (kind !== "ticket") return null;
-  const needs = /** @type {any} */ (shared("bakers.needs")) ?? { count: 0, ids: [] };
-  if (home) return needs.count ? { label: `Tickets ${needs.count}` } : null;
-  return needs.ids?.includes(key) ? { dot: "blocked" } : null;
+function decorate(_tab, { kind, home }) {
+  if (kind !== "ticket" || !home) return null;
+  const needs = /** @type {any} */ (shared("bakers.needs")) ?? { count: 0 };
+  return needs.count ? { label: `Tickets ${needs.count}` } : null;
 }
 
 export function register() {
+  // A ticket opens in the panel, never as a tab: the kind keeps the home tab "Tickets" and
+  // recognises leftover "<ID> <state>" tabs, which the window task closes; it has no route.
   define("tab", "ticket", {
-    route: "ticket.view",
-    props: (/** @type {string} */ key) => ({ ticket: key }),
     match: /^([A-Z][A-Z0-9_]*-\d+) (\S+)$/, // group 1 = key, group 2 = the name's state part
     home: { name: "Tickets", route: "ticket.list", index: 1 },
   });
   define("route", "ticket.list", { view: List }); // tab "Tickets"
-  define("route", "ticket.view", { view: Full }); // tab "<ID> <state>", props.ticket
   define("route", "ticket.context", { view: Context }); // the right panel's child "ticket"
-  define("route", "ticket.run", { view: RunHeader }); // the run column's header block "run-header"
+  define("route", "ticket.run", { view: RunHeader }); // the run header block "run-header" in the panel
   define("route", "ticket.rail", { view: Rail }); // the rail button
   define("route", "ticket.status", { view: Status }); // the status block's item
   // window, cmd-K: centred by Herdr (mods get no window size). A window does not take the
@@ -67,7 +62,7 @@ export function register() {
   define("tabs.panel", "ticket", { order: 2, label: "Ticket", bordered: true });
   define("tabs.decorate", "ticket", { decorate });
   define("window.task", "ticket.refresh", windowTask());
-  define("window.task", "ticket.run", { every: 1000, run: () => syncRun() }); // the run column follows the front ticket tab
+  define("window.task", "ticket.run", { every: 1000, run: () => syncRun() }); // the run follows the selected ticket
   // In this order in the actions palette.
   define("command", "goto", commands.goto);
   define("command", "new", commands.create);
@@ -93,6 +88,4 @@ export function register() {
   define("action", "ticket.filter", {
     run: (/** @type {Partial<import("./filter.js").Filter>} */ patch) => setFilter(patch),
   });
-  define("action", "tabs.closeFinished", { run: () => closeFinished() });
-  define("action", "tabs.closeAll", { run: () => closeAll() });
 }

@@ -54,3 +54,17 @@ test("withNode runs without structuredClone, as in Herdr's mod runtime", () => {
     globalThis.structuredClone = keep;
   }
 });
+
+test("withoutNode removes a node anywhere and leaves its input unchanged", () => {
+  const input = tree();
+  const out = herdr.withoutNode(input, "side");
+  expect(out.children[0].children).toEqual([{ id: "main" }]);
+  expect(input).toEqual(tree());
+});
+
+test("withoutNode gives an equal copy when the node is absent", () => {
+  const input = tree();
+  const out = herdr.withoutNode(input, "nope");
+  expect(out).toEqual(tree());
+  expect(out).not.toBe(input);
+});

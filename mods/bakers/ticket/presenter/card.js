@@ -4,7 +4,7 @@ import { age } from "../../core/format.js";
 import { agentLine } from "./field/agent-line.js";
 
 export const KEY_HINT =
-  "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. The filter bar narrows the list. Up and down move the selection; the Ticket panel, when shown, follows it.";
+  "Enter or a double click shows the ticket in the panel, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. The filter bar narrows the list. Up and down move the selection; the panel, when shown, follows it.";
 
 /** The agent status of a record: the agent line, with the claiming machine when a run has one. @param {any} record @param {number} now */
 export function agentStatus(record, now) {
