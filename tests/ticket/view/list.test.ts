@@ -241,7 +241,7 @@ test("filters narrow the rows; with nothing left the hint says so", async () => 
   let root = copy.render();
   expect(find(root, "row-SHOP-56")).toBeDefined();
   expect(find(root, "row-SHOP-41")).toBeUndefined();
-  env.shared["bakers.filter"] = { ...DEFAULT, mine: true }; // no signed-in user: Mine matches nothing
+  env.shared["bakers.filter"] = { ...DEFAULT, mine: true }; // the signed-in user has no ticket
   root = copy.render();
   expect(find(root, "row-SHOP-56")).toBeUndefined();
   expect(findText(root, "Nothing matches these filters.")).toBeDefined();

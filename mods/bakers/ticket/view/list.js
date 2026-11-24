@@ -307,7 +307,7 @@ export default class TicketList {
     const clickable = (id, on, label, onClick) =>
       control(id, on)
         .cursor_pointer()
-        .hover((s) => s.bg(t.hover))
+        .hover((s) => (on ? s : s.bg(t.hover))) // an active control keeps its fill
         .on_click((_e, cx) => {
           onClick();
           cx.notify();
@@ -334,7 +334,7 @@ export default class TicketList {
       n.mine === null
         ? control("filter-mine", false).opacity(0.5).child("Mine").child(chip())
         : toggle("filter-mine", f.mine, "Mine", n.mine, { mine: !f.mine });
-    const active = isActive(f) || Boolean(this.filter.value());
+    const active = isActive(f, store.user) || Boolean(this.filter.value());
     return h_flex()
       .id("filter-bar")
       .flex_wrap()
@@ -454,7 +454,7 @@ export default class TicketList {
                     emptyText(
                       list,
                       this.filter.value(),
-                      !records.length && isActive(currentFilter()),
+                      !records.length && isActive(currentFilter(), getStore().user),
                     ),
                   ),
                 ),

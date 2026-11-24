@@ -7,7 +7,6 @@ export default {
   derived: [(/** @type {any} */ r) => !r.closed],
   exposed: { fields: ["id", "title"] },
   group: { by: "state", order: STATES },
-  row: { mode: "teaser" },
   empty: "No other open tickets.",
   count: true,
 };

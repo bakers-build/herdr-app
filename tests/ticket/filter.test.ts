@@ -89,7 +89,7 @@ test("T3.3 isActive and clearFilter", () => {
     label: null,
     type: null,
   });
-  expect(isActive(DEFAULT_FILTER)).toBe(false);
+  expect(isActive(DEFAULT_FILTER, user)).toBe(false);
   for (const p of [
     { needsMe: true },
     { mine: true },
@@ -98,7 +98,7 @@ test("T3.3 isActive and clearFilter", () => {
     { label: "ui" },
     { type: "bug" },
   ])
-    expect(isActive({ ...DEFAULT_FILTER, ...p })).toBe(true);
+    expect(isActive({ ...DEFAULT_FILTER, ...p }, user)).toBe(true);
   setFilter({ needsMe: true });
   setFilter({ label: "ui" });
   expect(currentFilter()).toEqual({ ...DEFAULT_FILTER, needsMe: true, label: "ui" });
@@ -133,9 +133,11 @@ test("T3.5 closed runs the server list: 50 per page, newest closing first", () =
   ).toEqual(["SHOP-49"]);
 });
 
-test("T3.6 without the signed-in user Mine counts null and matches nothing", () => {
+test("T3.6 without the signed-in user Mine counts null and does not filter", () => {
   expect(counts(records, null).mine).toBeNull();
-  expect(run({ mine: true }, null)).toEqual([]);
+  expect(run({ mine: true }, null)).toEqual(run({}, null));
+  expect(isActive({ ...DEFAULT_FILTER, mine: true }, null)).toBe(false);
+  expect(isActive({ ...DEFAULT_FILTER, mine: true }, user)).toBe(true);
 });
 
 test("T3.7 choices: distinct values, sorted", () => {

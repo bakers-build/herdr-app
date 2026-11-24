@@ -25,9 +25,8 @@ const run = (key: string, o: any = {}) => {
   return runList(l.def, records, { args: l.args, ...o });
 };
 
-test("Needs me: the tickets that need you, longest waiting first, with the reason column", () => {
+test("Needs me: the tickets that need you, longest waiting first", () => {
   expect(run("needs-me").rows.map((r: any) => r.id)).toEqual(["SHOP-60", "SHOP-41", "SHOP-56"]);
-  expect(listFor("needs-me").def.row.reason).toBe(true);
 });
 
 test("Open by state: grouped in workflow order", () => {

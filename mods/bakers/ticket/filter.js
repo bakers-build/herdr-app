@@ -30,10 +30,10 @@ export const setFilter = (patch) => setShared("bakers.filter", { ...currentFilte
 
 export const clearFilter = () => setShared("bakers.filter", { ...DEFAULT_FILTER });
 
-/** @param {Filter} f */
-export const isActive = (f) =>
+/** Mine is disabled without a signed-in user, so it neither filters nor counts as active. @param {Filter} f @param {{ name: string } | null} user */
+export const isActive = (f, user) =>
   f.needsMe ||
-  f.mine ||
+  (f.mine && user != null) ||
   f.state !== DEFAULT_FILTER.state ||
   f.label !== DEFAULT_FILTER.label ||
   f.type !== DEFAULT_FILTER.type;
@@ -52,7 +52,7 @@ export function applyFilter(records, f, { user }) {
   return records.filter(
     (r) =>
       (!f.needsMe || r.why !== null) &&
-      (!f.mine || (user != null && r.assignee === user.name)) &&
+      (!f.mine || user == null || r.assignee === user.name) &&
       (f.state === "open" || f.state === "closed" || r.state === f.state) &&
       (f.label === null || (r.labels ?? []).includes(f.label)) &&
       (f.type === null || r.type === f.type),
