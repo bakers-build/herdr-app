@@ -75,6 +75,14 @@ While a run shows, the panel is 480 px wide unless you resized it; without a run
 to its width. Hide in the run's header leaves the run alone and gives the ticket the full
 height until Show agent (G).
 
+The run's header is a tab bar: the agent's tab `Run <n>` first, then `Shell 1`, `Shell 2`, ...
+each with a close control, then Execute and Hide. Execute (only for a live run with a known
+folder) starts the machine's own shell in the run's folder, local or on the run's machine, as a
+new tab; focus stays where it is, and a failure shows a toast. The header shows the shown
+terminal's address and machine. Shells belong to their ticket, stay when you select another
+ticket and come back, and leave when they exit. When the run ends they keep running unseen and
+return with the next run; Close or their own exit ends them.
+
 Every change of state, freeze, move or cancel asks first; Esc writes nothing.
 
 ## Data

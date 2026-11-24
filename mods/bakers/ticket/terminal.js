@@ -3,9 +3,11 @@
 // case-sensitively, by identifier or UUID. Only a live terminal counts, on this computer (t12) or
 // on a machine Herdr is connected to (vps/t7). The run area (column "run" below the panel's stack
 // "panel-body") shows the selected ticket's terminal as a layout block, so Herdr never takes it
-// over and nothing ends or relabels the run.
+// over and nothing ends or relabels the run. Below its header, the stack "run-stack" holds the run
+// ("run-terminal") and one block per Execute shell of the ticket (ticket/exec), one of them shown.
 import { layout, machines, run, setShared, shared, terminals } from "herdr";
 import { findNode, withNode, withoutNode } from "../core/herdr.js";
+import { childId, selectTab, shells, shownShell } from "./exec.js";
 import { activeRun } from "./rules.js";
 import { getStore } from "./store.js";
 import { selectTicket, selectedTicket } from "./tabs.js";
@@ -16,6 +18,7 @@ export const PANEL_BODY = "panel-body";
 export const RUN = "run";
 const HEADER = "run-header";
 export const TERMINAL = "run-terminal";
+export const STACK = "run-stack";
 /** The panel's installed width (scripts/layout.js) and its width while a run shows. */
 export const PANEL_PX = 368;
 export const RUN_PX = 480;
@@ -65,11 +68,37 @@ function selectedRun() {
 }
 
 /**
- * The run area (column "run") showing `address`, or hidden without one: `col` with only hidden and its
- * terminal changed, else a new one (in place of a `run` that is no column).
- * @param {any} col @param {string | null} address
+ * What the run stack should hold for the selected ticket's run: its children (the run, then the
+ * ticket's shells, oldest first) and the shown one.
+ * @param {string} id identifier @param {any} want the run terminal
+ * @returns {{ kids: { id: string, terminal: string }[], active: string }}
  */
-function column(col, address) {
+function wanted(id, want) {
+  const kids = [
+    { id: TERMINAL, terminal: want.address },
+    ...shells(id).map((s) => ({ id: childId(s.address), terminal: s.address })),
+  ];
+  const shown = shownShell(id);
+  return { kids, active: shown ? childId(shown.address) : TERMINAL };
+}
+
+/** Whether the stack holds these children, in this order. @param {any} stack
+ *  @param {{ id: string, terminal: string }[]} kids */
+function holds(stack, kids) {
+  const have = stack?.type === "stack" ? (stack.children ?? []) : [];
+  return (
+    have.length === kids.length &&
+    kids.every((k, i) => have[i].id === k.id && have[i].content?.terminal === k.terminal)
+  );
+}
+
+/**
+ * The run area (column "run") showing the stack `stack`, or hidden without one: `col` with only
+ * hidden and its stack changed (a run terminal sitting directly in it, from an older version,
+ * dropped), else a new one (in place of a `run` that is no column).
+ * @param {any} col @param {{ kids: { id: string, terminal: string }[], active: string } | null} stack
+ */
+function column(col, stack) {
   const base =
     col?.type === "column"
       ? col
@@ -87,11 +116,20 @@ function column(col, address) {
             },
           ],
         };
-  if (!address) return { ...base, hidden: true };
-  const content = { terminal: address };
-  const children = findNode(base, TERMINAL)
-    ? base.children.map((/** @type {any} */ c) => (c.id === TERMINAL ? { ...c, content } : c))
-    : [...base.children, { id: TERMINAL, type: "block", content }];
+  if (!stack) return { ...base, hidden: true };
+  const old = findNode(base, STACK);
+  const node = {
+    ...(old?.type === "stack" ? old : { id: STACK, type: "stack", size: { weight: 1 } }),
+    active: stack.active,
+    children: stack.kids.map((k) => {
+      const had = (old?.children ?? []).find((/** @type {any} */ c) => c.id === k.id);
+      return { ...(had ?? { id: k.id, type: "block" }), content: { terminal: k.terminal } };
+    }),
+  };
+  const rest = base.children.filter((/** @type {any} */ c) => c.id !== TERMINAL);
+  const children = rest.some((/** @type {any} */ c) => c.id === STACK)
+    ? rest.map((/** @type {any} */ c) => (c.id === STACK ? node : c))
+    : [...rest, node];
   return { ...base, hidden: false, children };
 }
 
@@ -109,9 +147,11 @@ function panelSize(panel, showing) {
 
 /**
  * The window task's tick: the run area below the panel body shows the selected ticket's live
- * run, or hides. Synchronous, and it writes the layout only on a real change (layout.set
- * rewrites the layout file): another terminal, a misplaced column or a width; else layout.show
- * or layout.hide. It never shows or hides the panel and never focuses, but for Show agent.
+ * run and its shells, or hides. Synchronous, and it writes the layout only on a real change
+ * (layout.set rewrites the layout file): other stack children, a missing stack, a misplaced
+ * column or a width; else layout.show or layout.hide, or (the column shown) layout.select for
+ * another shown tab.
+ * It never shows or hides the panel, never ends a terminal and never focuses, but for Show agent.
  * @param {number} [now]
  */
 export function syncRun(now = Date.now()) {
@@ -124,19 +164,16 @@ export function syncRun(now = Date.now()) {
   const fresh = now - Number(shared("bakers.panelAt") ?? 0) < 2000;
   const onTicket = body.active === "ticket" || fresh;
   const want = shared("bakers.runHidden") || !onTicket ? null : selectedRun();
+  const stack = want ? wanted(/** @type {string} */ (selectedTicket()), want) : null;
   const col = findNode(root, RUN);
   if (!col && !want) return settleFocus(want, now);
   const placed = (panel.children ?? []).some((/** @type {any} */ c) => c.id === RUN);
   const size = panelSize(panel, Boolean(want));
-  const moved = want && findNode(col, TERMINAL)?.content?.terminal !== want.address;
+  const inStack = findNode(col, STACK);
+  const moved = stack && !holds(inStack, stack.kids);
   if (!placed || moved || size) {
     const base = placed ? root : withoutNode(root, RUN);
-    const next = withNode(
-      base,
-      column(placed ? col : null, want?.address ?? null),
-      PANEL,
-      PANEL_BODY,
-    );
+    const next = withNode(base, column(placed ? col : null, stack), PANEL, PANEL_BODY);
     if (next) {
       const p = findNode(next, PANEL);
       if (size) p.size = size;
@@ -148,8 +185,14 @@ export function syncRun(now = Date.now()) {
       }
       write("layout.set", { layout: next }, now);
     }
-  } else if (want && col.hidden) write("layout.show", { id: RUN }, now);
-  else if (!want && !col.hidden) write("layout.hide", { id: RUN }, now);
+  } else {
+    // A hidden column is shown first; its tab switches on a later tick, once layout() shows it,
+    // so the write memo holds one command while layout() lags.
+    if (want && col.hidden) write("layout.show", { id: RUN }, now);
+    else if (!want && !col.hidden) write("layout.hide", { id: RUN }, now);
+    else if (stack && inStack.active !== stack.active)
+      write("layout.select", { stack: STACK, child: stack.active }, now);
+  }
   settleFocus(want, now);
 }
 
@@ -175,9 +218,10 @@ export function hideRun() {
 }
 
 /** Show agent from anywhere: selects the ticket, shows the panel and its run, even after Hide,
- *  and focuses the run once it shows. @param {string} id */
+ *  switches the run area to the agent's tab and focuses the run once it shows. @param {string} id */
 export function showAgent(id) {
   selectTicket(id);
+  selectTab(id, null);
   setShared("bakers.runHidden", false);
   setShared("bakers.runFocus", { id, at: Date.now() });
   syncRun();
