@@ -287,7 +287,7 @@ const markdownOf = (node: any) => {
 
 test("Description, Acceptance and Summary sit between Properties and the comments, each with Edit...", async () => {
   const root = (await panel()).render();
-  const body = find(root, "panel-scroll");
+  const body = find(root, "panel-content");
   const ids = body.nodes.map((n: any) => n.calls.id?.[0]);
   const at = (id: string) => ids.indexOf(id);
   expect(at("properties")).toBeGreaterThan(-1);

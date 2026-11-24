@@ -261,6 +261,19 @@ test("the panel draws the whole ticket in order, the composer pinned below the s
   expect(find(find(root, "panel-scroll"), "composer")).toBeUndefined();
 });
 
+test("the title's line height is in px: Herdr reads a bare number as a multiple of the text size", async () => {
+  const title = find((await ticketPanel()).render(), "title");
+  expect(title.calls.line_height).toEqual(["23px"]);
+});
+
+test("the scroll holds one column that keeps its height, so a long ticket scrolls instead of squashing", async () => {
+  const scroll = find((await ticketPanel()).render(), "panel-scroll");
+  expect(scroll.nodes.length).toBe(1);
+  const content = scroll.nodes[0];
+  expect(content.calls.id).toEqual(["panel-content"]);
+  expect(content.calls.flex_none).toBeDefined();
+});
+
 test("a new selection loads that ticket and never takes the focus", async () => {
   const copy = await ticketPanel();
   expect(texts(find(copy.render(), "doc-header"))[0]).toBe("SHOP-41");

@@ -431,15 +431,21 @@ export default class Panel {
           .min_h(0)
           .overflow_y_scrollbar()
           .p(12)
-          .gap(14)
-          .child(doc.header(page))
-          .child(doc.title(page))
-          .when(Boolean(card), (el) => el.child(card ?? ""))
-          .child(this.agentSection(vm))
-          .child(this.properties(vm))
-          .children(this.sections(vm))
-          .child(doc.comments(page))
-          .children(this.history(vm)),
+          // One column of its own height: children of the scrolling flex would shrink instead.
+          .child(
+            v_flex()
+              .id("panel-content")
+              .flex_none()
+              .gap(14)
+              .child(doc.header(page))
+              .child(doc.title(page))
+              .when(Boolean(card), (el) => el.child(card ?? ""))
+              .child(this.agentSection(vm))
+              .child(this.properties(vm))
+              .children(this.sections(vm))
+              .child(doc.comments(page))
+              .children(this.history(vm)),
+          ),
       )
       .child(doc.composerView());
   }

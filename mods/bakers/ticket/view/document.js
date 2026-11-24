@@ -244,7 +244,7 @@ export class TicketDocument {
       .id("title")
       .text_size(18)
       .font_semibold()
-      .line_height(23)
+      .line_height("23px")
       .on_click((_e, cx) => {
         this.edit();
         cx.notify();

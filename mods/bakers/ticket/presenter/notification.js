@@ -1,5 +1,5 @@
 // ticket/presenter/notification: the toast for a ticket that newly asks a question. A click runs
-// bakers.open:<id>, which opens that ticket's tab: Herdr delivers only the command name to
+// bakers.open:<id>, which shows that ticket in the panel: Herdr delivers only the command name to
 // nextCommand(), so the ticket travels in it. A toast is read, never focused.
 import { firstLine } from "../../core/format.js";
 import { question } from "../rules.js";
