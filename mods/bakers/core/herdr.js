@@ -1,4 +1,5 @@
-// core/herdr: reading Herdr's live data: a terminal's machine, the layout tree (find a node, put a node).
+// core/herdr: reading Herdr's live data: a terminal's machine, the layout tree (find, put and
+// remove a node).
 
 /** "this computer" for a bare address, else the machine before the slash. @param {any} terminal */
 export function machineOf(terminal) {
@@ -45,5 +46,15 @@ export function withNode(root, node, parent, after) {
   const i = (p?.children ?? []).findIndex((/** @type {any} */ c) => c.id === after);
   if (i < 0) return null;
   p.children.splice(i + 1, 0, add);
+  return copy;
+}
+
+/** A copy of a layout tree without the node of this id; an equal copy when there is none.
+ * @param {any} root @param {string} id @returns {any} */
+export function withoutNode(root, id) {
+  // Herdr's mod runtime has no structuredClone; a layout tree is plain JSON.
+  const copy = JSON.parse(JSON.stringify(root));
+  const at = parentOf(copy, id);
+  if (at) at.children = at.children.filter((/** @type {any} */ c) => c.id !== id);
   return copy;
 }
