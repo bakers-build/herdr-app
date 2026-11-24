@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, resetMod } from "../../fixtures/shop";
+import { activeSpace, backend, list as shop, resetMod } from "../../fixtures/shop";
 import {
   click,
   env,
@@ -24,22 +24,21 @@ beforeEach(() => {
   resetMod();
 });
 
-async function list(view = "needs-me") {
+const DEFAULT = { needsMe: false, mine: false, state: "open", label: null, type: null };
+
+async function list(patch: any = { needsMe: true }) {
   activeSpace();
   backend();
-  env.shared["bakers.view"] = view;
+  env.shared["bakers.filter"] = { ...DEFAULT, ...patch };
   const Bakers = await load("bakers/main.js");
   const copy = mount(Bakers, { view: "ticket.list" });
   await flush();
   return copy;
 }
 
-test("header: view menu, filter, ... and New ticket as drawn", async () => {
+test("header: filter, ... and New ticket as drawn; the filter bar below", async () => {
   const root = (await list()).render();
-  const menu = find(root, "view-menu");
-  expect(texts(menu)).toEqual(["Needs me"]);
-  expect(menu.calls.h).toEqual([28]);
-  expect(menu.calls.font_semibold).toBeDefined();
+  expect(find(root, "view-menu")).toBeUndefined();
   const filter = find(root, "filter");
   expect(filter.calls.w).toEqual([220]);
   expect(filter.calls.h).toEqual([28]);
@@ -50,22 +49,33 @@ test("header: view menu, filter, ... and New ticket as drawn", async () => {
   expect(texts(create)).toEqual(["New ticket"]);
   expect(create.calls.bg).toEqual(["solid"]);
   expect(create.calls.px).toEqual([12]);
+  expect(texts(find(root, "filter-bar"))).toEqual([
+    "Needs me",
+    "2",
+    "Mine",
+    "0",
+    "State: Open",
+    "Label: any",
+    "Type: any",
+    "Clear",
+  ]);
 });
 
-test("columns and rows of Needs me as drawn", async () => {
+test("cards of Needs me as drawn, 8 px apart, no table columns", async () => {
   const root = (await list()).render();
-  const head = find(root, "columns");
-  expect(texts(head)).toEqual(["TICKET", "TITLE", "WHY", "AGENT", "AGE"]);
-  expect(head.calls.text_size).toEqual([11]);
-  expect(head.nodes.map((n: any) => n.calls.w?.[0] ?? "flex")).toEqual([76, "flex", 170, 150, 44]);
-  expect(head.calls.gap).toEqual([12]);
+  expect(find(root, "columns")).toBeUndefined();
+  expect(find(root, "rows").calls.gap).toEqual([8]);
   const r41 = find(root, "row-SHOP-41");
   expect(texts(r41)).toEqual([
     "SHOP-41",
+    "working",
+    "bug",
+    "35m",
     "Checkout fails with an empty cart",
     "Asked a question",
+    "Question",
+    "checkout",
     "Claude Code needs you",
-    "35m",
   ]);
   expect(r41.calls.px).toEqual([12]);
   expect(r41.calls.py).toEqual([10]);
@@ -74,20 +84,29 @@ test("columns and rows of Needs me as drawn", async () => {
   expect(why.calls.font_semibold).toBeDefined();
   expect(texts(find(root, "row-SHOP-56"))).toEqual([
     "SHOP-56",
+    "plan",
+    "",
+    "12m",
     "Show delivery date on the product page",
     "Plan ready for approval",
     "No active run, no conductor",
-    "12m",
   ]);
 });
 
-test("WHY becomes STATE outside Needs me", async () => {
-  const root = (await list("open")).render();
-  expect(texts(find(root, "columns"))).toEqual(["TICKET", "TITLE", "STATE", "AGENT", "AGE"]);
-  expect(texts(find(root, "row-SHOP-57"))[2]).toBe("qualification");
+test("in every view a card shows its why only while the ticket needs you", async () => {
+  const root = (await list({})).render();
+  expect(texts(find(root, "row-SHOP-41"))).toContain("Asked a question");
+  expect(texts(find(root, "row-SHOP-57"))).toEqual([
+    "SHOP-57",
+    "qualification",
+    "",
+    "",
+    "Q one",
+    "No active run, no conductor",
+  ]);
 });
 
-test("the selected row has the accent outline, the selected background and its selection state", async () => {
+test("the selected card has the accent outline, the selected background and its selection state", async () => {
   const root = (await list()).render();
   const r41 = find(root, "row-SHOP-41");
   expect(r41.calls.border_color).toEqual(["accent"]);
@@ -143,7 +162,7 @@ test("a single click selects a row", async () => {
 });
 
 test("/ focuses the filter; typing filters; Esc clears it", async () => {
-  const copy = await list("open");
+  const copy = await list({});
   key(copy.render(), "/");
   expect(copy.inner.filter.focused).toBe(true);
   copy.inner.filter.handlers.focus({}, {});
@@ -179,7 +198,7 @@ test("letters typed into the filter do not act as keys", async () => {
   expect(env.calls.find((c) => c.fn === "openOverlay")).toBeUndefined();
 });
 
-test("the ... menu lists Refresh and Show closed tickets and each one acts", async () => {
+test("the ... menu lists Refresh alone and it acts", async () => {
   const copy = await list();
   env.calls.length = 0;
   click(find(copy.render(), "list-menu"));
@@ -190,34 +209,32 @@ test("the ... menu lists Refresh and Show closed tickets and each one acts", asy
     width: 220,
     props: { view: "menu" },
   });
-  expect(spec.props.items.map((i: any) => i.label)).toEqual(["Refresh", "Show closed tickets"]);
+  expect(spec.props.items.map((i: any) => i.label)).toEqual(["Refresh"]);
   env.calls.length = 0;
-  const [refresh, closed] = spec.props.items;
+  const [refresh] = spec.props.items;
   await actions.perform(refresh.action);
   expect(fetched().some((u) => u.includes("/jsonapi/bb_ticket/bb_ticket?"))).toBe(true);
-  await actions.perform(closed.action);
-  expect(env.shared["bakers.showClosed"]).toBe(true);
 });
 
-test("Show closed tickets lists done tickets in Open by state", async () => {
-  const copy = await list("open");
-  expect(find(copy.render(), "row-SHOP-49")).toBeUndefined();
-  env.shared["bakers.showClosed"] = true;
-  fireTimers();
-  await flush();
-  expect(find(copy.render(), "row-SHOP-49")).toBeDefined();
+test("the closed state lists the server's closed tickets", async () => {
+  const copy = await list({ state: "closed" });
+  const root = copy.render();
+  expect(find(root, "row-SHOP-49")).toBeDefined();
+  expect(find(root, "row-SHOP-41")).toBeUndefined();
 });
 
-test("a closed ticket open as a tab shows once with Show closed tickets", async () => {
+test("a closed selected ticket is not in the Open list and shows once when closed", async () => {
   activeSpace();
-  env.spaces[0].tabs.push({ id: "t6", name: "SHOP-49 closed", index: 2 });
+  env.shared["bakers.selected"] = "SHOP-49";
   backend();
-  env.shared["bakers.view"] = "open";
+  env.shared["bakers.filter"] = { ...DEFAULT };
   const Bakers = await load("bakers/main.js");
   const copy = mount(Bakers, { view: "ticket.list" });
   await flush();
+  const { getStore } = await import("../../../mods/bakers/ticket/store.js");
+  expect(getStore().byId("SHOP-49")?.closed).toBe(true); // the store holds the selected ticket
   expect(find(copy.render(), "row-SHOP-49")).toBeUndefined();
-  env.shared["bakers.showClosed"] = true;
+  env.shared["bakers.filter"] = { ...DEFAULT, state: "closed" };
   fireTimers();
   await flush();
   let rows = 0;
@@ -227,25 +244,49 @@ test("a closed ticket open as a tab shows once with Show closed tickets", async 
   expect(rows).toBe(1);
 });
 
-test("the view menu offers the sidebar's views and switches", async () => {
-  const copy = await list();
-  env.calls.length = 0;
-  click(find(copy.render(), "view-menu"));
-  const spec: any = env.calls.find((c) => c.fn === "openOverlay")?.args[0];
-  expect(spec.props.items.map((i: any) => i.label)).toEqual([
-    "Needs me",
-    "Mine",
-    "Open by state",
-    "Qualification",
-    "Plan",
-    "Working",
-    "Review",
-    "Recently closed",
-  ]);
-  expect(spec.props.items[1].disabled).toBe(true);
-  await actions.perform(spec.props.items[2].action);
-  expect(env.shared["bakers.view"]).toBe("open");
-  expect(texts(find(copy.render(), "view-menu"))).toEqual(["Open by state"]);
+test("the closed list follows a project switch", async () => {
+  activeSpace();
+  backend({
+    jsonapi: {
+      projects: [
+        { id: "p1", name: "acme-shop", key: "ACMESHOP" },
+        { id: "p2", name: "other", key: "OTHER" },
+      ],
+      tickets: [
+        ...shop,
+        {
+          id: "u90",
+          identifier: "OTHER-1",
+          title: "Old",
+          state: "done",
+          closed: true,
+          project: "p2",
+        },
+      ],
+    },
+  });
+  env.shared["bakers.filter"] = { ...DEFAULT, state: "closed" };
+  const Bakers = await load("bakers/main.js");
+  const copy = mount(Bakers, { view: "ticket.list" });
+  await flush();
+  expect(find(copy.render(), "row-SHOP-49")).toBeDefined();
+  await actions.perform(["project.choose", "p2", "other"]);
+  fireTimers();
+  await flush();
+  const root = copy.render();
+  expect(find(root, "row-SHOP-49")).toBeUndefined();
+  expect(find(root, "row-OTHER-1")).toBeDefined();
+});
+
+test("filters narrow the rows; with nothing left the hint says so", async () => {
+  const copy = await list({ state: "plan" });
+  let root = copy.render();
+  expect(find(root, "row-SHOP-56")).toBeDefined();
+  expect(find(root, "row-SHOP-41")).toBeUndefined();
+  env.shared["bakers.filter"] = { ...DEFAULT, mine: true }; // the signed-in user has no ticket
+  root = copy.render();
+  expect(find(root, "row-SHOP-56")).toBeUndefined();
+  expect(findText(root, "Nothing matches these filters.")).toBeDefined();
 });
 
 test("New ticket button opens the dialog", async () => {
@@ -259,12 +300,10 @@ test("New ticket button opens the dialog", async () => {
 
 test("empty hint and key hint as drawn", async () => {
   const root = (await list()).render();
-  expect(
-    findText(root, "Nothing else needs you. Switch the view for Mine or Open by state."),
-  ).toBeDefined();
+  expect(findText(root, "Nothing else needs you.")).toBeDefined();
   const hint = findText(
     root,
-    "Enter or a double click shows the ticket in the panel, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the panel, when shown, follows it.",
+    "Enter or a double click shows the ticket in the panel, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. The filter bar narrows the list. Up and down move the selection; the panel, when shown, follows it.",
   );
   expect(hint.calls.text_size).toEqual([11]);
 });
@@ -276,9 +315,7 @@ test("an empty project shows the hint, no rows and nothing selected", async () =
   const copy = mount(Bakers, { view: "ticket.list" });
   await flush();
   const root = copy.render();
-  expect(
-    findText(root, "Nothing else needs you. Switch the view for Mine or Open by state."),
-  ).toBeDefined();
+  expect(findText(root, "No other open tickets.")).toBeDefined();
   expect(texts(root).some((t) => /^SHOP-/.test(t))).toBe(false);
   expect(env.shared["bakers.selected"]).toBe(null);
 });

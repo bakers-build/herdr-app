@@ -6,7 +6,6 @@ import Context from "./view/context.js";
 import LabelPicker from "./view/label-picker.js";
 import List from "./view/list.js";
 import Rail from "./view/rail.js";
-import Sidebar from "./view/sidebar.js";
 import Status from "./view/status.js";
 import RunHeader from "./view/run.js";
 import * as commands from "./view/commands.js";
@@ -18,13 +17,11 @@ import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./for
 import { createForm } from "./form/create.js";
 import { sectionForm } from "./form/section.js";
 import closed from "./list/closed.js";
-import mine from "./list/mine.js";
 import needsMe from "./list/needs-me.js";
 import open from "./list/open.js";
-import state from "./list/state.js";
-import { setView, showClosed } from "./state.js";
+import { setFilter } from "./filter.js";
 import { refresh } from "./store.js";
-import { setShared, shared } from "herdr";
+import { shared } from "herdr";
 
 /**
  * The tab bar decoration of the kind ticket: "Tickets <n>" on the home tab while tickets need you.
@@ -48,7 +45,6 @@ export function register() {
   define("route", "ticket.context", { view: Context }); // the right panel's child "ticket"
   define("route", "ticket.run", { view: RunHeader }); // the run header block "run-header" in the panel
   define("route", "ticket.rail", { view: Rail }); // the rail button
-  define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar
   define("route", "ticket.status", { view: Status }); // the status block's item
   // window, cmd-K: centred by Herdr (mods get no window size). A window does not take the
   // keyboard, so Esc reaches the palette only once it has focused itself after mounting; it goes
@@ -62,7 +58,6 @@ export function register() {
     open: { kind: "popup", width: 220 },
   }); // popup, props.ticket
   define("rail.item", "ticket", { order: 0, route: "ticket.rail" });
-  define("sidebar.section", "ticket", { order: 0, title: "Tickets", route: "ticket.sidebar" });
   define("status.item", "ticket", { order: 0, route: "ticket.status" });
   define("tabs.panel", "ticket", { order: 2, label: "Ticket", bordered: true });
   define("tabs.decorate", "ticket", { decorate });
@@ -75,7 +70,7 @@ export function register() {
   define("command", "panel", commands.panel);
   define("command", "open", commands.open);
   define("command", "actions", commands.actions);
-  for (const list of [needsMe, mine, open, state, closed]) define("list", list.id, list);
+  for (const list of [needsMe, open, closed]) define("list", list.id, list);
   define("form", "create", { build: createForm });
   define("form", "state", { build: stateForm });
   define("form", "freeze", { build: freezeForm });
@@ -90,8 +85,7 @@ export function register() {
   define("action", "ticket.move", {
     run: (/** @type {string} */ id) => openRoute("ticket.actions", { ticket: id, page: "move" }),
   });
-  define("action", "ticket.view", { run: (/** @type {string} */ view) => setView(view) });
-  define("action", "ticket.toggleClosed", {
-    run: () => setShared("bakers.showClosed", !showClosed()),
+  define("action", "ticket.filter", {
+    run: (/** @type {Partial<import("./filter.js").Filter>} */ patch) => setFilter(patch),
   });
 }

@@ -1,11 +1,12 @@
 // scripts/layout: the bakers layout, a pure transform of Herdr's `main` layout (herdr-app v0.1.15
 // defaults/layouts/main.json) or a developer's clone of it. It keeps that layout's own
 // blocks and adds, as drawn in R2-4 and R2-3: a 56 px rail, the sidebar at 220 px hidden
-// (cmd-B) with the bakers section after Agents, the bakers tab bar (view "tabs") at 40 px, the ticket
-// child of the right panel (368 px, hidden; cmd-shift-T), the hidden run column below the panel's
-// stack (1:1, its header only; the mod adds the run's terminal), the bakers status item beside
-// Herdr's status, and 8 px pane corners. A run column an older version put into work-body moves
-// into the panel. Applying it twice changes nothing.
+// (cmd-B; Herdr's own Spaces and Agents, with no bakers box: one an older layout carries is
+// removed), the bakers tab bar (view "tabs") at 40 px, the ticket child of the right panel
+// (368 px, hidden; cmd-shift-T), the hidden run column below the panel's stack (1:1, its header
+// only; the mod adds the run's terminal), the bakers status item beside Herdr's status, and 8 px
+// pane corners. A run column an older version put into work-body moves into the panel.
+// Applying it twice changes nothing.
 
 /** The keys the installer merges into keys.json (global section). */
 export const BAKERS_KEYS = {
@@ -37,6 +38,13 @@ function parentOf(node, id) {
   return null;
 }
 
+/** Removes every node with this id. @param {any} node @param {string} id */
+function removeNode(node, id) {
+  if (!node?.children) return;
+  node.children = node.children.filter((/** @type {any} */ c) => c.id !== id);
+  for (const c of node.children) removeNode(c, id);
+}
+
 /** @param {any} main the source layout @returns {any} */
 export function bakersLayout(main) {
   const l = structuredClone(main);
@@ -54,17 +62,7 @@ export function bakersLayout(main) {
     sidebar.size = { px: 220 };
     sidebar.hidden = true;
   }
-  const list = parentOf(l, "agents");
-  if (list && !find(l, "bakers-sidebar")) {
-    const i = list.children.findIndex((/** @type {any} */ c) => c.id === "agents");
-    list.children.splice(i + 1, 0, {
-      id: "bakers-sidebar",
-      type: "block",
-      size: { weight: 1 },
-      min: 200,
-      content: { mod: "bakers", props: { view: "shell.sidebar" } },
-    });
-  }
+  removeNode(l, "bakers-sidebar");
 
   const tabs = find(l, "tabs");
   if (tabs) {

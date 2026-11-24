@@ -2,9 +2,7 @@
 import { expect, test } from "bun:test";
 import "../harness";
 
-const { emptyText, listFor, menuItems, navItems } = await import(
-  "../../mods/bakers/ticket/list/index.js"
-);
+const { emptyText, listFor } = await import("../../mods/bakers/ticket/list/index.js");
 const { runList } = await import("../../mods/bakers/list/run.js");
 const { toQuery } = await import("../../mods/bakers/list/query.js");
 
@@ -27,9 +25,8 @@ const run = (key: string, o: any = {}) => {
   return runList(l.def, records, { args: l.args, ...o });
 };
 
-test("Needs me: the tickets that need you, longest waiting first, with the reason column", () => {
+test("Needs me: the tickets that need you, longest waiting first", () => {
   expect(run("needs-me").rows.map((r: any) => r.id)).toEqual(["SHOP-60", "SHOP-41", "SHOP-56"]);
-  expect(listFor("needs-me").def.row.reason).toBe(true);
 });
 
 test("Open by state: grouped in workflow order", () => {
@@ -39,12 +36,6 @@ test("Open by state: grouped in workflow order", () => {
     ["working", ["SHOP-41", "SHOP-58"]],
     ["review", ["SHOP-60"]],
   ]);
-});
-
-test("a state list takes the state as its argument", () => {
-  expect(listFor("state:working").label).toBe("Working");
-  expect(run("state:working").rows.map((r: any) => r.id)).toEqual(["SHOP-41", "SHOP-58"]);
-  expect(emptyText(listFor("state:review"), "")).toBe("No other tickets in review.");
 });
 
 test("the exposed filter matches identifier or title, case-insensitive", () => {
@@ -66,39 +57,8 @@ test("Recently closed is a server list: closed tickets of the project, newest fi
   });
 });
 
-test("Mine stays empty with the API chip; an unknown key falls back to Needs me", () => {
-  expect(run("mine").rows).toEqual([]);
-  expect(listFor("mine").def).toMatchObject({ api: true, disabled: true });
+test("an unknown key falls back to Needs me; Mine and the state lists are gone", () => {
   expect(listFor("nope").def.id).toBe("needs-me");
-});
-
-test("the sidebar's rows: every list with its count, one row per state", () => {
-  expect(
-    navItems(records, "needs-me").map((r: any) => [r.label, r.count, r.selected, r.sub, r.api]),
-  ).toEqual([
-    ["Needs me", 3, true, false, false],
-    ["Mine", null, false, false, true],
-    ["Open by state", 5, false, false, false],
-    ["Qualification", 1, false, true, false],
-    ["Plan", 1, false, true, false],
-    ["Working", 2, false, true, false],
-    ["Review", 1, false, true, false],
-    ["Recently closed", null, false, false, false],
-  ]);
-});
-
-test("the view menu offers the same lists and switches through ticket.view", () => {
-  const items = menuItems("open");
-  expect(items.map((i: any) => i.label)).toEqual([
-    "Needs me",
-    "Mine",
-    "Open by state",
-    "Qualification",
-    "Plan",
-    "Working",
-    "Review",
-    "Recently closed",
-  ]);
-  expect(items[2]).toMatchObject({ current: true, action: ["ticket.view", "open"] });
-  expect(items[1].disabled).toBe(true);
+  expect(listFor("mine").def.id).toBe("needs-me");
+  expect(listFor("state:working").def.id).toBe("needs-me");
 });

@@ -3,7 +3,6 @@
 import { shared } from "herdr";
 import { define } from "../core/registry.js";
 import Rail from "./view/rail.js";
-import Sidebar from "./view/sidebar.js";
 import Status from "./view/status.js";
 import Tabs from "./view/tabs.js";
 
@@ -15,7 +14,6 @@ const panelOn = (id) => {
 
 export function register() {
   define("route", "shell.rail", { view: Rail }); // block bakers-rail, 56 px
-  define("route", "shell.sidebar", { view: Sidebar }); // block bakers-sidebar, below Spaces and Agents
   define("route", "shell.tabs", { view: Tabs }); // block tabs, 40 px
   define("route", "shell.status", { view: Status }); // block bakers-status, beside Herdr's status
   define("tabs.panel", "files", {

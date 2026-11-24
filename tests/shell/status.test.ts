@@ -3,6 +3,8 @@ import { click, env, findText, flush, load, mount, reset, runs, texts } from "..
 
 import { activeSpace, backend, resetMod } from "../fixtures/shop";
 
+const { DEFAULT_FILTER } = await import("../../mods/bakers/ticket/filter.js");
+
 beforeEach(() => {
   reset();
   resetMod();
@@ -22,8 +24,10 @@ test("status: project, need-you count and last update; a click opens the Tickets
   expect(root.calls.text_size).toEqual([11]);
   expect(env.shared["bakers.needs"]).toMatchObject({ count: 2, ids: ["SHOP-41", "SHOP-56"] });
   env.calls.length = 0;
+  env.shared["bakers.filter"] = { ...DEFAULT_FILTER, label: "ui", state: "plan" };
   click(root);
   expect(runs()).toEqual([["tab.select", { id: "t0" }]]);
+  expect(env.shared["bakers.filter"]).toEqual({ ...DEFAULT_FILTER, needsMe: true });
 });
 
 test("status: bakers offline when the CLI is missing", async () => {

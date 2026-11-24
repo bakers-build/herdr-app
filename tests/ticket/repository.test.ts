@@ -49,3 +49,33 @@ test("the store's refresh also reads the selected ticket, a closed one included"
   await ready();
   expect(getStore().byId("SHOP-49")?.closed).toBe(true);
 });
+
+test("the list carries each ticket's type, read with the list", async () => {
+  const list = await repository.listOpen("p1");
+  expect(list.find((t: any) => t.identifier === "SHOP-41")?.type).toBe("bug");
+  expect(list.find((t: any) => t.identifier === "SHOP-56")?.type).toBeNull();
+  const url = fetched().find((u) => u.includes("/bb_ticket/bb_ticket?")) ?? "";
+  expect(decodeURIComponent(url)).toContain("include=runs,labels,ticket_type");
+});
+
+test("currentUser reads the signed-in user's uuid and display name", async () => {
+  expect(await repository.currentUser()).toEqual({
+    uuid: "u-me",
+    name: "Pascal Glass",
+    names: ["Pascal Glass"],
+  });
+});
+
+test("currentUser keeps the display name for showing and both names for matching", async () => {
+  backend({ jsonapi: { users: [{ id: "u-me", display_name: "Pascal Glass", name: "pg" }] } });
+  expect(await repository.currentUser()).toEqual({
+    uuid: "u-me",
+    name: "Pascal Glass",
+    names: ["Pascal Glass", "pg"],
+  });
+});
+
+test("currentUser is null when the user cannot be read", async () => {
+  backend({ jsonapi: { users: [] } });
+  expect(await repository.currentUser()).toBeNull();
+});

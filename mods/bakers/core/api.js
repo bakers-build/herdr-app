@@ -57,7 +57,7 @@ async function get(path, params) {
     if (!s) return null;
     let r;
     try {
-      r = await fetch(`${s.base}/jsonapi/${path}${q ? `?${q}` : ""}`, {
+      r = await fetch(`${s.base}/jsonapi${path ? `/${path}` : ""}${q ? `?${q}` : ""}`, {
         headers: { Authorization: `Bearer ${s.token}`, Accept: "application/vnd.api+json" },
       });
     } catch (e) {
@@ -156,4 +156,15 @@ export async function search(type, bundle, q = {}) {
     offset += q.limit;
   }
   return out;
+}
+
+/** The signed-in user's UUID, from the JSON:API index; null through dropsh, without one, or on any failure. */
+export async function me() {
+  try {
+    /** @type {any} */
+    const doc = await get("", new URLSearchParams());
+    return doc?.meta?.links?.me?.meta?.id ?? null;
+  } catch {
+    return null;
+  }
 }
