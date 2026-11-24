@@ -67,6 +67,8 @@ mods/bakers/
     tabs.js                       the selection (bakers.selected): select a ticket into the
                                   panel, the ticket in front, the Tickets tab, leftover tabs
     terminal.js                   a ticket's live run terminal and the run area in the panel
+    exec.js                       Execute: a shell beside the run (`hc run --bg`), found again
+                                  by its labels, ordered by opened
     needs.js                      the toast for a ticket that newly asks a question
     window.js                     the window task: refresh, needs count, toasts; closes leftover
                                   ticket tabs once
@@ -196,8 +198,9 @@ with it.
 ## The panel and the run
 
 The right panel (`panel`, a column) holds the stack `panel-body` (Herdr's Files and Changes and
-the child `ticket`) and below it the run area `run` (a column: `run-header` and the run's
-terminal block `run-terminal`), 1:1, so Herdr's divider between them is the drag handle.
+the child `ticket`) and below it the run area `run` (a column: `run-header` and the stack
+`run-stack`, whose children are the run's terminal `run-terminal` and one `run-x-<address>`
+per shell, the address with `/` as `-`), 1:1, so Herdr's divider between them is the drag handle.
 
 - **The selection** (`bakers.selected`) is the one source. `ticket/tabs.js` `selectTicket`
   sets it and shows the panel on `ticket`; the list's Enter, cmd-Enter and double click, Go to
@@ -207,6 +210,19 @@ terminal block `run-terminal`), 1:1, so Herdr's divider between them is the drag
   `vps/t7`) while the panel is on `ticket`, else hides the run area. It calls `layout.set` only
   when the terminal, the column's place or the panel's width changes, otherwise `layout.show`
   or `layout.hide`, and never focuses, ends or relabels a run.
+- **Tabs.** `run-header` is a tab bar: the agent's `Run <n>` first (no close), `Shell 1...`
+  with a close control, Execute (only with a live run with a known cwd) and Hide. It shows the
+  shown terminal's address and machine. `run-stack`'s `active` is the shown tab.
+  `shared("bakers.runTab")` is `{[identifier]: tab key}`, the shell's `bakers.opened` label,
+  else its address; absent means the agent's tab. `syncRun` calls `layout.set` only when the
+  children, the width or the visibility change, and `layout.select` when only the active tab
+  changes; a column without the stack (an older install) is rebuilt once.
+- **Execute** (`ticket/exec.js`) starts the machine's own shell with
+  `hc run --bg --no-parent --cwd <run cwd> [--on <machine>]`, labelled `bakers.exec=<id>` and
+  `bakers.opened=<ms>`, and changes no focus; a failure toasts. Shells are found by label,
+  ordered by opened. They belong to their ticket, survive ticket switches and leave when they
+  end. When the run ends they keep running unseen and come back with the next run; Close or
+  their own exit ends them.
 - **Width.** While a run shows, the installed width (368 px) becomes 480 px and back without a
   run; any other width is the user's and stays.
 - **Show agent** (G, the buttons) selects the ticket, shows the panel and the run, even after
