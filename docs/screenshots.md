@@ -22,16 +22,17 @@ Take each shot with `herdr-app shot r2-4.png` and `herdr-app shot r2-3.png`.
 
 - Sidebar closed (cmd-B), Ticket panel closed.
 - cmd-shift-B opens the Tickets tab; the view menu says Needs me.
-- Select the first row; press Enter once, so a preview tab (italic) is open; go back with cmd-1.
+- Select the first row; press Enter once, so the panel shows it; hide the panel again (cmd-shift-T).
 - Open the "..." menu.
 - Press cmd-shift-O and type `deliv` (the popup is drawn open).
 - To show the toast, freeze a ticket of the project with the label Question while Herdr runs
   (the next refresh, at most 60 s, posts "<ID> asks a question").
 
-## R2-3: ticket tab
+## R2-3: the ticket in the panel
 
-- Sidebar open (cmd-B), Ticket panel open (cmd-shift-T).
-- Open a ticket that asked a question (frozen, label Question) as a tab.
+- Sidebar open (cmd-B).
+- Select a ticket that asked a question (frozen, label Question) and press Enter, so the panel
+  shows it.
 - Press A, so the composer is in answer mode, and type an answer without sending it.
 
 ## What to compare

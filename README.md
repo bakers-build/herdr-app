@@ -5,9 +5,12 @@ ticket's state next to the agent terminals, so a developer does not switch to th
 
 ## Status
 
-The layout with the Tickets list (frame R2-4) and a ticket in its own tab (frame R2-3) are
-built as one mod, `bakers`. Herdr places it in several blocks, tabs and overlays; each copy
-gets a route (`ticket.list`, `ticket.view`, `ticket.context`, `ticket.actions`,
+The layout with the Tickets list (frame R2-4) and the right panel as the selected ticket's work
+area are built as one mod, `bakers`. The panel shows the whole ticket (header, state,
+description, comments, the composer, agent, properties, activity) and, below it, the live run of
+that ticket with its terminal, 50/50 and resizable. A ticket never opens as a tab. Herdr places
+the mod in several blocks, tabs and overlays; each copy gets a route (`ticket.list`,
+`ticket.context`, `ticket.run`, `ticket.actions`,
 `shell.sidebar`, ...), and the router runs that route's view. The code is split into a
 small framework (logic: `core`, `form`, `list`; drawing: `ui`) and modules (`ticket`, `project`,
 `shell`), each with its model, repository, commands, store, lists, view modes, forms,
@@ -60,13 +63,17 @@ It never overwrites a key you already use; it prints the ones it kept.
 | Key | What it does |
 |---|---|
 | cmd-B | sidebar with the bakers section |
-| cmd-shift-T | Ticket panel (the context of the focused ticket tab or the selected row) |
+| cmd-shift-T | Ticket panel: the selected ticket and its live run |
 | cmd-shift-O | Go to ticket |
 | cmd-shift-B | Tickets tab |
 | cmd-shift-N | New ticket |
-| cmd-K | Actions of the ticket in front, or of the selected row on the Tickets tab, and the bakers commands |
-| Tickets tab | Up/Down select, Enter preview tab, cmd-Enter pinned tab, `/` filter, N new ticket, R refresh |
-| Ticket tab | A acts on the Needs-you card, E edits, G shows the agent, R moves the run; cmd-Enter sends or saves, Esc cancels |
+| cmd-K | Actions of the selected ticket (on the Tickets tab or while the panel shows it) and the bakers commands |
+| Tickets tab | Up/Down select (the panel follows), Enter, cmd-Enter or a double click show the ticket in the panel, `/` filter, N new ticket, R refresh |
+| Ticket panel (once clicked into) | A acts on the Needs-you card, E edits, G shows the agent and focuses its run, R moves the run; cmd-Enter sends or saves, Esc cancels |
+
+While a run shows, the panel is 480 px wide unless you resized it; without a run it goes back
+to its width. Hide in the run's header leaves the run alone and gives the ticket the full
+height until Show agent (G).
 
 Every change of state, freeze, move or cancel asks first; Esc writes nothing.
 

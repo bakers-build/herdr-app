@@ -65,7 +65,7 @@ function selectedRun() {
 }
 
 /**
- * The run column showing `address`, or hidden without one: `col` with only hidden and its
+ * The run area (column "run") showing `address`, or hidden without one: `col` with only hidden and its
  * terminal changed, else a new one (in place of a `run` that is no column).
  * @param {any} col @param {string | null} address
  */

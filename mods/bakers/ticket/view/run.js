@@ -1,4 +1,4 @@
-// ticket/view/run: the run column's header (the layout block "run-header" over the run's terminal
+// ticket/view/run: the run area's header (the layout block "run-header" over the run's terminal
 // block): the run's number, its program, address and machine, and Hide, which hides the column
 // and leaves the run alone. It only reads while it renders.
 import { div } from "gpui-kit";

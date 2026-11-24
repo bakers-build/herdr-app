@@ -68,7 +68,7 @@ export default class Actions {
   hot = null;
   /** True once the arrows moved the highlight; until then it follows the first usable row. */
   moved = false;
-  /** Loaded tickets by identifier, as a ticket tab loads them. @type {Map<string, any>} */
+  /** Loaded tickets by identifier, as the panel loads them. @type {Map<string, any>} */
   details = new Map();
   /** Why a ticket did not load, by identifier. @type {Map<string, string>} */
   failures = new Map();

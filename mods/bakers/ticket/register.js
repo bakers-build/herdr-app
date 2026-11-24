@@ -26,7 +26,7 @@ import { refresh } from "./store.js";
 import { setShared, shared } from "herdr";
 
 /**
- * The ticket tab bar decoration: "Tickets <n>" on the home tab while tickets need you.
+ * The tab bar decoration of the kind ticket: "Tickets <n>" on the home tab while tickets need you.
  * @param {any} _tab @param {{ kind: string | null, home: string | null }} info
  * @returns {{ label?: string } | null}
  */

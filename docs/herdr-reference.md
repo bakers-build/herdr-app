@@ -7,7 +7,7 @@ decided a design choice, the choice is named.
 | File in `v0.1.15` | Used for |
 |---|---|
 | `defaults/AGENTS.md` | Layout tree format (`block`, `row`, `column`, `stack`, `size.px`, `hidden`), keys (`global`, `<mod>.<command>` to `nextCommand()`), commands (`tab.new {name, mod, props}`, `tab.close`, `tab.rename`, `tab.move`, `tab.select`, `layout.toggle/show/hide/select`, `agent.focus {terminal}`), overlays (`openOverlay`, `closeOverlay`, `kind: dialog/popup`, `modal`), `notify({title, body, level, action})`, `exec`, `readTextFile`, `shared`/`setShared`, `cx.timer`, `cx.spawn`, key events (`e.key`, `e.keystroke`, `e.modifiers.platform`) |
-| `defaults/herdr.d.ts` | Vendored as `types/herdr.d.ts`. `TabInfo` has no props and `run()` returns `null`, so ticket tabs are found by their name (`"<ID> <state>"`) and a new tab's id is learned when it appears in `spaces()` |
+| `defaults/herdr.d.ts` | Vendored as `types/herdr.d.ts`. `TabInfo` has no props and `run()` returns `null`, so keyed tabs (the Tickets tab, leftover ticket tabs) are found by their name and a new tab's id is learned when it appears in `spaces()` |
 | `defaults/layouts/main.json` | The tree the installer transforms (`sidebar`, `sidebar-lists` with `spaces` and `agents`, `tabs` 42 px, `work-body` with `main` and `panel` 368 px holding the `panel-body` stack, `status` 28 px). Copied as `tests/fixtures/herdr-main.json` |
 | `defaults/keys.macos.json` | `cmd-b` is already `layout.toggle:sidebar`; `cmd-shift-t`, `cmd-shift-o`, `cmd-shift-n` are free on macOS |
 | `defaults/mods/tabs/main.js` | Origin of `mods/bakers/ui/layout/tabs-bar.js` (tab items, panel buttons, window buttons) |

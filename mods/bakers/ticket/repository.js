@@ -22,7 +22,7 @@ const DETAIL_INCLUDE = [
 /**
  * The open tickets of a project, with runs and labels: the base of the open lists. The
  * tickets of open tabs come along, closed or not, so their tabs can follow the state.
- * @param {string} project @param {string[]} [tabs] identifiers of the open ticket tabs
+ * @param {string} project @param {string[]} [tabs] identifiers read besides the open tickets (the selected one)
  */
 export async function listOpen(project, tabs = []) {
   const inProject = /** @type {[string, string, string]} */ (["project_id.id", "=", project]);

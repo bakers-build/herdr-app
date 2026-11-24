@@ -54,7 +54,7 @@ export function toTicket(t) {
   };
 }
 
-/** A bb_ticket with its includes, as a ticket tab and the panel need it. @param {any} t */
+/** A bb_ticket with its includes, as the panel needs it. @param {any} t */
 export function toDetail(t) {
   const c = t.conductor_id;
   return {

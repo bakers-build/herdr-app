@@ -75,7 +75,7 @@ export function createStore(api, options = {}) {
       return detail;
     },
 
-    /** A fresh detail for a ticket tab or the panel. @param {string} idOrUuid */
+    /** A fresh detail for the panel. @param {string} idOrUuid */
     async ticket(idOrUuid) {
       const row = store.byId(idOrUuid);
       return row ? store.enrich(row.uuid, true) : store.enrich(idOrUuid);
