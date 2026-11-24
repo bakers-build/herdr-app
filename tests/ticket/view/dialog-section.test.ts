@@ -1,7 +1,7 @@
 // The dialog with keys "inline" (cmd-Enter saves, Esc cancels, Enter types) and the section
 // form that uses it: edit the description, acceptance or summary of a ticket in a popup.
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, NOW, read, resetMod } from "../../fixtures/shop";
+import { activeSpace, backend, list, NOW, read, resetMod } from "../../fixtures/shop";
 import { env, find, findText, flush, key, load, mount, reset, texts, tools } from "../../harness";
 
 const { define } = await import("../../../mods/bakers/core/registry.js");
@@ -286,4 +286,39 @@ test("two cmd-Enter before the save finishes post once", async () => {
   expect(writes()).toEqual([
     ["bakers_comment_publish", { ticket: "SHOP-41", type: "summary", body: "Once." }],
   ]);
+});
+
+test("a popup whose ticket cannot be read shows why and closes on Esc", async () => {
+  const copy = await open({
+    view: "dialog",
+    form: "section",
+    ticket: "SHOP-99",
+    section: "summary",
+  });
+  const root = copy.render();
+  expect(texts(root).join(" ")).toContain("SHOP-99");
+  key(root, "escape");
+  expect(closed()).toBe(true);
+  expect(writes()).toEqual([]);
+});
+
+test("a ticket closed after the popup opened is not written, also on a second cmd-Enter", async () => {
+  const copy = await section("summary");
+  const row: any = list.find((t: any) => t.id === "u41");
+  const state = row.state;
+  row.state = "done";
+  row.closed = true;
+  try {
+    await typeAndSave(copy, "Late summary.");
+    expect(texts(find(copy.render(), "form-message"))[0]).toContain(
+      "A closed ticket cannot be changed any more.",
+    );
+    key(copy.render(), "cmd-enter");
+    await flush();
+    expect(writes()).toEqual([]);
+    expect(closed()).toBe(false);
+  } finally {
+    row.state = state;
+    row.closed = false;
+  }
 });

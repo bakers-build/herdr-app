@@ -6,10 +6,12 @@
 import { utf8Bytes } from "../../core/format.js";
 import * as actions from "../commands.js";
 import { readTicket } from "../repository.js";
-import { newest, SECTION_LIMITS } from "../rules.js";
+import { isClosed, newest, SECTION_LIMITS } from "../rules.js";
 import { getStore, ready, refresh } from "../store.js";
 
 /** @typedef {"description" | "acceptance" | "summary"} Section */
+
+const CLOSED = "A closed ticket cannot be changed any more.";
 
 /** The section's text and the stamp that changes when someone else saves it. @param {any} ticket @param {any[]} comments @param {Section} section */
 export function sectionText(ticket, comments, section) {
@@ -31,6 +33,7 @@ export async function sectionForm(p) {
   const detail = await getStore().ticket(id);
   const opened = sectionText(detail.ticket, detail.comments, section);
   const limit = SECTION_LIMITS[section];
+  let closedMeanwhile = false;
   return {
     kind: "dialog",
     keys: "inline",
@@ -52,6 +55,10 @@ export async function sectionForm(p) {
     },
     check: async () => {
       const t = await readTicket(id);
+      if (isClosed(t)) {
+        closedMeanwhile = true;
+        return CLOSED;
+      }
       return sectionText(t, t.comments, section).stamp !== opened.stamp
         ? `A newer ${section} of ${id} arrived since you opened this. cmd-Enter again saves over it.`
         : null;
@@ -59,6 +66,8 @@ export async function sectionForm(p) {
     steps: [
       {
         run: (/** @type {any} */ v) => {
+          // The check warns once; a ticket closed meanwhile stays unwritten on the second send.
+          if (closedMeanwhile) throw new Error(CLOSED);
           const text = String(v.body).trim();
           return section === "description"
             ? actions.describe(id, text)

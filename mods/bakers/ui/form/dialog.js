@@ -78,12 +78,22 @@ export default class Dialog {
       .text_size(13)
       .text_color(t.foreground);
     // init sets the handle; def, state and inputs are set together, without an await between.
-    if (!this.def || !this.state || !this.inputs || !this.handle)
-      return root.p(20).child(
-        div()
-          .text_color(this.error ? t.blocked : t.muted)
-          .child(this.error ?? "..."),
-      );
+    const handle = this.handle;
+    if (!this.def || !this.state || !this.inputs || !handle)
+      // Loading or failed: Esc still closes, so a failed form never traps the user.
+      return root
+        .p(20)
+        .when(Boolean(handle), (el) => el.track_focus(/** @type {any} */ (handle)))
+        .on_key_down((e, cx) => {
+          if (formKey(e.keystroke, "inline") !== "cancel") return;
+          this.close();
+          cx.stop_propagation();
+        })
+        .child(
+          div()
+            .text_color(this.error ? t.blocked : t.muted)
+            .child(this.error ?? "..."),
+        );
     const d = this.def;
     const keep = button(
       "secondary",
@@ -102,7 +112,7 @@ export default class Dialog {
     return root
       .p(d.size === 15 ? 16 : 20)
       .gap(12)
-      .track_focus(this.handle)
+      .track_focus(handle)
       .on_key_down((e, cx) => {
         const k = formKey(e.keystroke, d.keys === "inline" ? "inline" : "dialog");
         if (k === "submit") this.send(cx);
