@@ -54,6 +54,7 @@ export type Env = {
     args: string[],
     opts?: unknown,
   ) => Promise<{ code: number; stdout: string; stderr: string }>;
+  hc: (args: string[]) => { code: number; stdout: string; stderr: string };
   fetch: (url: string, opts?: any) => Promise<any>;
   spaces: any[];
   panes: any[];
@@ -81,6 +82,7 @@ export function reset() {
     tasks: [],
     timers: [],
     exec: async () => ({ code: 127, stdout: "", stderr: "bakers: not found" }),
+    hc: () => ({ code: 0, stdout: "{}", stderr: "" }),
     fetch: async () => {
       throw new Error("no network in tests");
     },
@@ -174,6 +176,10 @@ mock.module("herdr", () => ({
   setShared: record("setShared", (k: string, v: unknown) => {
     env.shared[k] = v;
   }),
+  hc: (args: string[]) => {
+    env.calls.push({ fn: "hc", args: [args] });
+    return Promise.resolve(env.hc(args));
+  },
   exec: (cmd: string, args: string[], opts?: unknown) => {
     env.calls.push({ fn: "exec", args: [cmd, args] });
     return env.exec(cmd, args, opts);
