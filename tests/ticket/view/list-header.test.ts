@@ -34,7 +34,7 @@ function opened(node: any): any[] {
   return env.calls.filter((c) => c.fn === "openOverlay").map((c) => c.args[0]);
 }
 
-test("T5.1 row 1: project button, / text field, ..., New ticket, in that order", async () => {
+test("row 1: project button, / text field, ..., New ticket, in that order", async () => {
   const root = (await list()).render();
   const header = find(root, "list-header");
   const ids: string[] = [];
@@ -48,21 +48,21 @@ test("T5.1 row 1: project button, / text field, ..., New ticket, in that order",
   ).toEqual(["project-button", "filter", "list-menu", "new-ticket"]);
 });
 
-test("T5.1 with one project the button shows its name and a click does nothing", async () => {
+test("with one project the button shows its name and a click does nothing", async () => {
   const root = (await list()).render();
   const button = find(root, "project-button");
   expect(texts(button)).toEqual(["acme-shop"]);
   expect(button.calls.on_click).toBeUndefined();
 });
 
-test("T5.1 with two projects a click opens exactly the project picker", async () => {
+test("with two projects a click opens exactly the project picker", async () => {
   const root = (await list({}, { projects: TWO })).render();
   expect(opened(find(root, "project-button"))).toEqual([
     { mod: "bakers", props: { view: "project.picker" }, kind: "popup", width: 220 },
   ]);
 });
 
-test("T5.1 header tools are launched once, drawn every render and stopped on close", async () => {
+test("header tools are launched once, drawn every render and stopped on close", async () => {
   const { div } = await import("gpui-kit");
   let inits = 0;
   let closes = 0;
@@ -95,7 +95,7 @@ test("T5.1 header tools are launched once, drawn every render and stopped on clo
   expect(closes).toBe(1);
 });
 
-test("T5.2 clicking Needs me sets the shared filter; the active control shows; Clear resets", async () => {
+test("clicking Needs me sets the shared filter; the active control shows; Clear resets", async () => {
   const copy = await list();
   let root = copy.render();
   expect(find(root, "filter-clear")).toBeUndefined();
@@ -113,19 +113,19 @@ test("T5.2 clicking Needs me sets the shared filter; the active control shows; C
   expect(find(copy.render(), "filter-clear")).toBeUndefined();
 });
 
-test("T5.2 Clear also shows while only the / text is set", async () => {
+test("Clear also shows while only the / text is set", async () => {
   const copy = await list();
   copy.inner.filter.type("cart");
   expect(find(copy.render(), "filter-clear")).toBeDefined();
 });
 
-test("T5.2 a second click on an active toggle turns it off", async () => {
+test("a second click on an active toggle turns it off", async () => {
   const copy = await list({ needsMe: true });
   click(find(copy.render(), "filter-needs-me"));
   expect(env.shared["bakers.filter"]).toEqual(DEFAULT);
 });
 
-test("T5.3 the toggles carry their counts; State, Label and Type say their value", async () => {
+test("the toggles carry their counts; State, Label and Type say their value", async () => {
   const root = (await list()).render();
   expect(texts(find(root, "filter-needs-me"))).toEqual(["Needs me", "2"]);
   expect(texts(find(root, "filter-mine"))).toEqual(["Mine", "0"]);
@@ -134,7 +134,7 @@ test("T5.3 the toggles carry their counts; State, Label and Type say their value
   expect(texts(find(root, "filter-type"))).toEqual(["Type: any"]);
 });
 
-test("T5.3 Mine counts the signed-in user's tickets and filters to them", async () => {
+test("Mine counts the signed-in user's tickets and filters to them", async () => {
   const mine = tickets.map((t) =>
     t.identifier === "SHOP-57" ? { ...t, assignee_name: "Pascal Glass" } : t,
   );
@@ -147,7 +147,7 @@ test("T5.3 Mine counts the signed-in user's tickets and filters to them", async 
   expect(find(root, "row-SHOP-41")).toBeUndefined();
 });
 
-test("T5.3 without a signed-in user Mine is disabled with the API chip", async () => {
+test("without a signed-in user Mine is disabled with the API chip", async () => {
   const root = (await list({}, { users: [] })).render();
   const mine = find(root, "filter-mine");
   expect(texts(mine)).toEqual(["Mine", "API"]);
@@ -155,7 +155,7 @@ test("T5.3 without a signed-in user Mine is disabled with the API chip", async (
   expect(mine.calls.opacity).toEqual([0.5]);
 });
 
-test("T5.3 the State menu: Open and each state with counts, then Recently closed; it patches the filter", async () => {
+test("the State menu: Open and each state with counts, then Recently closed; it patches the filter", async () => {
   const root = (await list()).render();
   const [spec] = opened(find(root, "filter-state"));
   expect(spec).toMatchObject({ mod: "bakers", kind: "popup", props: { view: "menu" } });
@@ -176,7 +176,7 @@ test("T5.3 the State menu: Open and each state with counts, then Recently closed
   expect(env.shared["bakers.filter"]).toEqual({ ...DEFAULT, state: "closed" });
 });
 
-test("T5.3 an active State, Label or Type control names its value and has the accent", async () => {
+test("an active State, Label or Type control names its value and has the accent", async () => {
   const root = (await list({ state: "closed", label: "checkout", type: "bug" })).render();
   expect(texts(find(root, "filter-state"))).toEqual(["State: Recently closed"]);
   expect(texts(find(root, "filter-label"))).toEqual(["Label: checkout"]);
@@ -185,7 +185,7 @@ test("T5.3 an active State, Label or Type control names its value and has the ac
     expect(find(root, id).calls.border_color).toEqual(["accent"]);
 });
 
-test("T5.3 the Label and Type menus list Any, then the values of the open tickets, sorted", async () => {
+test("the Label and Type menus list Any, then the values of the open tickets, sorted", async () => {
   const copy = await list({ label: "checkout" });
   const [labels] = opened(find(copy.render(), "filter-label"));
   expect(labels.props.items.map((i: any) => i.label)).toEqual(["Any", "Question", "checkout"]);

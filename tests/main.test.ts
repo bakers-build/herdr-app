@@ -58,7 +58,7 @@ test("registerAll fills lists, forms and actions", () => {
   expect(get("action", "tabs.closeAll")).toBeTruthy();
 });
 
-test("T5.6 the project button is a header.tool; the sidebar kinds are gone", () => {
+test("the project button is a header.tool; the sidebar kinds are gone", () => {
   _resetForTests();
   registerAll();
   expect(all("header.tool")).toEqual([{ id: "project.picker", order: 0, route: "project.button" }]);
