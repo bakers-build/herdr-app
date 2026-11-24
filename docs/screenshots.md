@@ -40,7 +40,7 @@ Take each shot with `herdr-app shot r2-4.png` and `herdr-app shot r2-3.png`.
 | Item | Frame value |
 |---|---|
 | Rail | 56 px wide; bakers button 36 x 36, 10 px semibold |
-| Sidebar | 220 px; padding 12/10 px; 12 px text; rows 4/6 px, state rows indented 18 px |
+| Sidebar | 220 px; Herdr's Spaces and Agents only, no bakers box |
 | Tab bar | 40 px; tabs 26 px high, 10 px padding, 12 px text, 6 px apart |
 | Status bar | 28 px; 11 px text; "2 need you" semibold in the blocked color |
 | List header | 10/12 px padding; buttons 28 px; filter 220 px |
