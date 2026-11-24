@@ -21,7 +21,8 @@ Take each shot with `herdr-app shot r2-4.png` and `herdr-app shot r2-3.png`.
 ## R2-4: Tickets tab
 
 - Sidebar closed (cmd-B), Ticket panel closed.
-- cmd-shift-B opens the Tickets tab; the filter bar shows Needs me.
+- Click the bakers button in the rail: it opens the Tickets tab with the filter Needs me
+  (cmd-shift-B opens the tab with the filter as it was, by default Open).
 - Select the first row; press Enter once, so a preview tab (italic) is open; go back with cmd-1.
 - Open the "..." menu.
 - Press cmd-shift-O and type `deliv` (the popup is drawn open).
@@ -43,8 +44,7 @@ Take each shot with `herdr-app shot r2-4.png` and `herdr-app shot r2-3.png`.
 | Tab bar | 40 px; tabs 26 px high, 10 px padding, 12 px text, 6 px apart |
 | Status bar | 28 px; 11 px text; "2 need you" semibold in the blocked color |
 | List header | 10/12 px padding; buttons 28 px; filter 220 px |
-| List columns | 76 / rest / 170 / 150 / 44 px, 12 px gap; header 11 px semibold upper case |
-| List rows | 10/12 px padding; identifier monospace 12 px; selected row accent outline on the selected color |
+| List cards | 8 px apart; 10/12 px padding, 6 px corners, 2 px border; identifier monospace 12 px; title 13 px semibold, at most two lines; selected card accent border on the selected color |
 | Go to ticket | 480 px wide, 120 px from the top, 10 px padding, field 32 px with a 2 px accent border |
 | Document | at most 760 px; padding 20/24 px; 16 px between blocks; title 22 px semibold |
 | Needs-you card | 1 px accent border, 8 px corners, 12/14 px padding |
@@ -59,7 +59,8 @@ the reader and are not built. Colors follow the Herdr theme, not the wireframe's
 
 - Herdr draws a pane header on every pane of the main area, so the Tickets tab has one too
   (R2-4 draws the list without it).
-- Only the allowed states keep the "API" chip (Mine too, when the signed-in user is unknown). Assignee, Reviewers and Recently
-  closed show data from JSON:API, where the frames draw "-" and the chip.
+- Only the allowed states keep the "API" chip (Mine too, when the signed-in user is
+  unknown). Assignee, Reviewers and Recently closed show data from JSON:API, where the frames
+  draw "-" and the chip.
 - The agent line in the list names the claiming machine ("needs you, studio-mac"); in the
   ticket header and the panel the machine comes from the run's terminal when Herdr shows it.

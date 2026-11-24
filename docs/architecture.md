@@ -40,7 +40,7 @@ mods/bakers/
                                   conflict warning, steps with partial failures), keys
   list/      framework logic    list engine (like Views): run (filters, derived filters, exposed
                                   filter, sort, group, pager), query (a server list's query),
-                                  lookup (findList: a list by key, also "state:working")
+                                  lookup (findList: a list by key, "id:arg" passes args)
   ui/        framework drawing  generic drawing, knows no entity
     components/                   button, card, chip, dot, pill, text, status-line, pager,
                                   callout, entry, markdown, menu, state
@@ -108,7 +108,7 @@ A type is any string. The registry knows none of them. The types the mod uses:
 | type | id | definition | registered by |
 |---|---|---|---|
 | `route` | route name (`ticket.list`, `menu`, …) | `{ view, open? }`: the view class and the route's fixed overlay fields | every module, `ui` (`menu`, `dialog`) |
-| `list` | list id (`needs-me`, `state`, …) | the list definition | `ticket` |
+| `list` | list id (`needs-me`, `open`, `closed`) | the list definition | `ticket` |
 | `form` | form kind (`create`, `state`, …) | `{ build(props) }` | `ticket` |
 | `action` | action name (`ticket.refresh`, `form.open`, …) | `{ run(...args) }` | `ticket`, `project`, `ui` |
 | `tab` | kind (`ticket`) | `{ route, props(key), match, home? }`: a keyed tab of the kind; `match` reads the key (group 1) and the rest of the name (group 2), must accept `<key> <word>` (the key alone is tried as `<key> x`), and the kinds must not overlap; `home` is `{ name, route, index }` | `ticket` |
@@ -124,8 +124,8 @@ A type is any string. The registry knows none of them. The types the mod uses:
 - The router (`main.js`) reads `route` through `viewOf`. `core/actions.js` (`perform`) reads `action`;
   `copy` alone is built in, because it needs the chooser's context. `list/lookup.js`
   (`findList`) reads `list`. `ui/form/dialog.js` reads `form`. `core/tabs.js` reads `tab`.
-- The shell reads the rest. `shell.rail` and `shell.status` draw `rail.item` and `status.item`, in order. Each
-  contribution names a route. `shell/view/contributions.js` finds the view with `viewOf`,
+- The shell reads the rest. `shell.rail` and `shell.status` draw `rail.item` and
+  `status.item`, in order. Each contribution names a route. `shell/view/contributions.js` finds the view with `viewOf`,
   makes it once from that route, starts it with `init`, draws it with `render` (an element or
   an array of them) and stops it with `close`. A click on the status block runs the first item
   whose view has `click()`.
@@ -197,9 +197,9 @@ The Tickets list, from Herdr to the pixels:
 1. **Herdr** shows the tab with `props.view = "ticket.list"`.
 2. **`main.js`** looks the route's view up with `viewOf` (the `route` type of the registry) and
    runs `ticket/view/list.js`.
-3. **The view** reads the filter (`ticket/filter.js`, shared as `bakers.filter`) and looks up the
-   list it needs (Needs me, open or closed) with `findList` (`list/lookup.js`), which reads the
-   `list` type of the registry.
+3. **The view** reads the filter (`ticket/filter.js`, shared as `bakers.filter`) and looks up
+   the list it needs (Needs me, open or closed) with `findList` (`list/lookup.js`), which reads
+   the `list` type of the registry.
 4. **The data:**
    - A local list takes the store's open tickets (`ticket/store.js`, loaded by
      `ticket/repository.js` through `core/api.js`).
@@ -243,7 +243,8 @@ The other parts a definition may have:
 - `filters`: local conditions;
 - `derived`: conditions on derived facts, such as who needs you;
 - `sort` and `group`;
-- `args`: through the key, `state:working`;
+- `args`: through the key (`id:arg`), handed to the definition (label, query, filters); the
+  engine supports them, though no current list takes any;
 - `exposed`, `empty`, `count`: the filter field, the empty text and whether the list counts.
 
 The open lists filter the store's open tickets locally, because the filter bar, the rail and the
@@ -321,10 +322,11 @@ updates.
 ## Where state lives
 
 - **Per window, in memory:** the project (`project/state.js`), the open tickets and the
-  signed-in user (`ticket/store.js`) and the token (`core/api.js`). All are created on first use, never at
-  module top level (Herdr's `AGENTS.md`).
+  signed-in user (`ticket/store.js`) and the token (`core/api.js`). All are created on first
+  use, never at module top level (Herdr's `AGENTS.md`).
 - **Shared between copies (`setShared`):** identifiers, counts and flags only
-  (`bakers.project`, `bakers.filter`, `bakers.selected`, `bakers.preview`, `bakers.needs`). No ticket content.
+  (`bakers.project`, `bakers.filter`, `bakers.selected`, `bakers.preview`, `bakers.needs`).
+  No ticket content.
 - **Per copy:** a view's own state, such as the selection, the page, a form's values and
   the open comment folds.
 
