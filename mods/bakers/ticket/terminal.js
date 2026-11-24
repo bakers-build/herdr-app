@@ -7,7 +7,7 @@
 // ("run-terminal") and one block per Execute shell of the ticket (ticket/exec), one of them shown.
 import { layout, machines, run, setShared, shared, terminals } from "herdr";
 import { findNode, withNode, withoutNode } from "../core/herdr.js";
-import { childId, shells, shownShell } from "./exec.js";
+import { childId, selectTab, shells, shownShell } from "./exec.js";
 import { activeRun } from "./rules.js";
 import { getStore } from "./store.js";
 import { selectTicket, selectedTicket } from "./tabs.js";
@@ -149,7 +149,8 @@ function panelSize(panel, showing) {
  * The window task's tick: the run area below the panel body shows the selected ticket's live
  * run and its shells, or hides. Synchronous, and it writes the layout only on a real change
  * (layout.set rewrites the layout file): other stack children, a missing stack, a misplaced
- * column or a width; else layout.show or layout.hide, and layout.select for another shown tab.
+ * column or a width; else layout.show or layout.hide, or (the column shown) layout.select for
+ * another shown tab.
  * It never shows or hides the panel, never ends a terminal and never focuses, but for Show agent.
  * @param {number} [now]
  */
@@ -185,9 +186,11 @@ export function syncRun(now = Date.now()) {
       write("layout.set", { layout: next }, now);
     }
   } else {
+    // A hidden column is shown first; its tab switches on a later tick, once layout() shows it,
+    // so the write memo holds one command while layout() lags.
     if (want && col.hidden) write("layout.show", { id: RUN }, now);
     else if (!want && !col.hidden) write("layout.hide", { id: RUN }, now);
-    if (stack && inStack.active !== stack.active)
+    else if (stack && inStack.active !== stack.active)
       write("layout.select", { stack: STACK, child: stack.active }, now);
   }
   settleFocus(want, now);
@@ -215,9 +218,10 @@ export function hideRun() {
 }
 
 /** Show agent from anywhere: selects the ticket, shows the panel and its run, even after Hide,
- *  and focuses the run once it shows. @param {string} id */
+ *  switches the run area to the agent's tab and focuses the run once it shows. @param {string} id */
 export function showAgent(id) {
   selectTicket(id);
+  selectTab(id, null);
   setShared("bakers.runHidden", false);
   setShared("bakers.runFocus", { id, at: Date.now() });
   syncRun();

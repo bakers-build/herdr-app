@@ -218,8 +218,9 @@ per shell, the address with `/` as `-`), 1:1, so Herdr's divider between them is
   (the address with `/` as `-`), while `bakers.runTab` and the header's element ids
   (`run-tab-<key>`, `run-close-<key>`) use the tab key. `syncRun` calls `layout.set` only when
   the children (or the column's place) or the width change, `layout.show`/`layout.hide` for
-  visibility, and `layout.select` when only the active tab changes; a column without the stack
-  (an older install) is rebuilt once.
+  visibility, and `layout.select` when only the active tab changes; a hidden column gets only
+  `layout.show`, its `layout.select` follows on a later tick once `layout()` shows it. A column
+  without the stack (an older install) is rebuilt once.
 - **Execute** (`ticket/exec.js`) starts the machine's own shell with
   `hc run --json --bg --no-parent --cwd <run cwd> [--on <machine>]`, labelled `bakers.exec=<id>` and
   `bakers.opened=<ms>`, and changes no focus; a failure toasts. Shells are found by label,
@@ -229,7 +230,8 @@ per shell, the address with `/` as `-`), 1:1, so Herdr's divider between them is
 - **Width.** While a run shows, the installed width (368 px) becomes 480 px and back without a
   run; any other width is the user's and stays.
 - **Show agent** (G, the buttons) selects the ticket, shows the panel and the run, even after
-  Hide, and focuses the run's terminal once it shows. Hide goes through the same write memo, so a
+  Hide, switches the run area back to the agent's tab and focuses the run's terminal once it
+  shows. Hide goes through the same write memo, so a
   Show agent right after it is never taken for a repeat.
 
 ## How a screen comes about

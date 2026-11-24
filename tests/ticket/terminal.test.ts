@@ -538,3 +538,41 @@ test("Show agent with the panel hidden: the same tick's layout.set never hides i
   expect(findNode(env.layout, "panel-body").active).toBe("ticket");
   expect(col().hidden).toBe(false);
 });
+
+test("Show agent with a shell tab shown goes back to the agent's tab and focuses it", () => {
+  select("SHOP-41");
+  env.terminals = [live("t7"), shell("t20", "1000")];
+  env.shared["bakers.runTab"] = { "SHOP-41": "1000", "SHOP-56": "3000" };
+  terminal.syncRun();
+  applies();
+  expect(stack().active).toBe("run-x-t20");
+  terminal.showAgent("SHOP-41");
+  expect(env.shared["bakers.runTab"]).toEqual({ "SHOP-56": "3000" });
+  expect(runs().filter(([c, a]: any) => c === "pane.focus" || a?.stack === "run-stack")).toEqual([
+    ["layout.select", { stack: "run-stack", child: "run-terminal" }],
+    ["pane.focus", { terminal: "t7" }],
+  ]);
+  applies();
+  expect(stack().active).toBe("run-terminal");
+});
+
+test("a hidden column with another tab: layout.show first, layout.select on a later tick", () => {
+  select("SHOP-41");
+  env.terminals = [live("t7"), shell("t20", "1000")];
+  terminal.syncRun();
+  applies();
+  col().hidden = true;
+  env.shared["bakers.runTab"] = { "SHOP-41": "1000" };
+  const t0 = Date.now() + 10000;
+  terminal.syncRun(t0);
+  expect(runs()).toEqual([["layout.show", { id: "run" }]]);
+  // layout() lags: still hidden, so nothing within 2 s
+  env.calls.length = 0;
+  terminal.syncRun(t0 + 500);
+  terminal.syncRun(t0 + 1000);
+  expect(runs()).toEqual([]);
+  // layout() shows the column: the tab switches
+  col().hidden = false;
+  terminal.syncRun(t0 + 1500);
+  expect(runs()).toEqual([["layout.select", { stack: "run-stack", child: "run-x-t20" }]]);
+});
