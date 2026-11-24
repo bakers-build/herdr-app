@@ -66,7 +66,7 @@ herdr-core.
 7. **Close** runs `terminal.kill {terminal}` for the shell, clears its active entry and syncs at once.
    The agent's tab has no close control.
 8. **Execute is offered** only when the run header shows a live run with a known `cwd`; otherwise the
-   button is absent (AC7). A failed `hc run` (non-zero code, unparsable output) shows a toast with
+   button is absent (AC7). A failed `hc run` (non-zero code or a rejected call) shows a toast with
    its stderr and adds no tab.
 9. **When the run ends, its shells keep running unseen** (our call, non-destructive: a shell may
    hold a dev server or unsaved work). The run area hides as today; the shells come back as tabs
