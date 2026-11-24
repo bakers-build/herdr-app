@@ -2,7 +2,7 @@
 // the selection (shared "bakers.selected") is the one source, and the panel's child "ticket"
 // follows it. The tab kind "ticket" (ticket/register.js) only keeps the home tab "Tickets" and
 // recognises leftover ticket tabs of older versions, which the window task closes.
-import { focused, layout, run, setShared, shared } from "herdr";
+import { focused, layout, panes, run, setShared, shared } from "herdr";
 import { findNode } from "../core/herdr.js";
 import { closeWhere, homeTab, openHome } from "../core/tabs.js";
 
@@ -42,8 +42,16 @@ export function frontTicket() {
   return panelShowsTicket() ? id : null;
 }
 
+/** Whether a tab holds only bakers mod panes: no terminal, so closing it ends no shell or run.
+ *  @param {string} tabId @param {import("herdr").PaneInfo[]} all */
+function onlyModPanes(tabId, all) {
+  const mine = all.filter((p) => p.tab === tabId);
+  return mine.length > 0 && mine.every((p) => p.terminal == null && p.mod === "bakers");
+}
+
 /** Closes the ticket tabs left from versions that opened tickets as tabs: a tab named like one
- *  that holds one pane and no agent; never "Tickets", never a tab with a terminal or a run. */
+ *  whose every pane is a bakers mod pane; never "Tickets", never a tab with a terminal or a run. */
 export function closeAll() {
-  closeWhere(KIND, ({ tab }) => (tab.panes ?? 1) <= 1 && tab.status == null);
+  const all = panes();
+  closeWhere(KIND, ({ tab }) => tab.status == null && onlyModPanes(tab.id, all));
 }

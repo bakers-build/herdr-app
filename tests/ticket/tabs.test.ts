@@ -17,6 +17,14 @@ const tab = (id: string, name: string, index: number, extra: any = {}) => ({
   ...extra,
 });
 
+const modPane = (tabId: string) => ({
+  pane: `p-${tabId}`,
+  terminal: null,
+  mod: "bakers",
+  tab: tabId,
+  title: "bakers",
+});
+
 function space(...list: any[]) {
   env.spaces = [{ id: "s1", name: "acme-shop", active: true, tabs: list }];
 }
@@ -68,11 +76,29 @@ test("closeAll closes every leftover ticket tab but Tickets", () => {
     tab("t6", "SHOP-49 closed", 3),
     tab("t8", "1", 4),
   );
+  env.panes = ["t0", "t5", "t6", "t8"].map((t) => modPane(t));
   ticketTabs.closeAll();
   expect(runs()).toEqual([
     ["tab.close", { id: "t5" }],
     ["tab.close", { id: "t6" }],
   ]);
+});
+
+test("closeAll keeps a ticket-named tab with a terminal and closes the bakers mod tab", () => {
+  space(
+    tab("t0", "Tickets", 1),
+    tab("t5", "ABC-12 notes", 2),
+    tab("t6", "ABC-13 working", 3),
+    tab("t7", "ABC-14 done", 4),
+  );
+  env.panes = [
+    { pane: "p0", terminal: null, mod: "bakers", tab: "t0", title: "bakers" },
+    { pane: "p5", terminal: "t12", tab: "t5", title: "zsh" },
+    { pane: "p6", terminal: null, mod: "bakers", tab: "t6", title: "bakers" },
+    { pane: "p7", terminal: null, mod: "other", tab: "t7", title: "other" },
+  ];
+  ticketTabs.closeAll();
+  expect(runs()).toEqual([["tab.close", { id: "t6" }]]);
 });
 
 const panelLayout = (hidden: boolean, active: string) => ({
