@@ -8,11 +8,12 @@ export const EXEC = "bakers.exec";
 export const OPENED = "bakers.opened";
 export const TAB = "bakers.runTab";
 
-/** The ticket's live shells, oldest first; one without a numeric opened label comes last.
- *  @param {string} id identifier */
+/** The ticket's live shells, oldest first; one without a numeric opened label (missing, empty or
+ *  blank) comes last. @param {string} id identifier */
 export function shells(id) {
   const at = (/** @type {any} */ s) => {
-    const n = Number(s.labels?.[OPENED]);
+    const v = s.labels?.[OPENED];
+    const n = typeof v === "string" && v.trim() !== "" ? Number(v) : Number.NaN;
     return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
   };
   return terminals()

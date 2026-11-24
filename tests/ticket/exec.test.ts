@@ -152,3 +152,8 @@ test("runTerminal never returns a shell, even one labelled for the ticket's UUID
   env.terminals = [shell("t1", "1000", "uuid-41")];
   expect(terminal.runTerminal("SHOP-41", "uuid-41")).toBeUndefined();
 });
+
+test("a shell with an empty or blank opened label sorts last, like one without", () => {
+  env.terminals = [shell("t1", ""), shell("t2", "  "), shell("t3", "2000"), shell("t4", "1000")];
+  expect(exec.shells("SHOP-41").map((s: any) => s.address)).toEqual(["t4", "t3", "t1", "t2"]);
+});
