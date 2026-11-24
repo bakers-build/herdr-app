@@ -240,7 +240,8 @@ The panel goes the same way:
   (`ticket/view/document.js`) per ticket, which loads it (`store.ticket` →
   `repository.readTicket`, one request with `include`); the panel adds its activity.
 - It maps the ticket with the view modes `presenter/full.js` (the document) and
-  `presenter/context.js` (agent, properties, activity, runs) and draws them.
+  `presenter/context.js` (agent, properties, the sections Description, Acceptance and Summary,
+  activity, runs) and draws them. Each section's Edit... opens `form/section.js` in a popup.
 - The document holds two inline forms, `form/comment.js` (the composer) and `form/edit.js`.
 - Its menus and its keys G and R come from `operations/`.
 
