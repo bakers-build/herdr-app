@@ -1,11 +1,12 @@
 // ticket/view/status: the status item of the ticket module: project, need-you count and
-// last update (or "bakers offline"); a click opens the Tickets tab. The shell's status block
+// last update (or "bakers offline"); a click opens the Tickets tab on Needs me. The shell's status block
 // draws it (status.item "ticket").
 import { div } from "gpui-kit";
 import { classify } from "../../core/errors.js";
 import { currentProject } from "../../project/state.js";
 import { tokens } from "../../ui/theme.js";
 import { statusParts } from "../presenter/counts.js";
+import { DEFAULT_FILTER, setFilter } from "../filter.js";
 import { getStore, loadError } from "../store.js";
 import { ensureTicketsTab } from "../tabs.js";
 
@@ -30,6 +31,7 @@ export default class TicketStatus {
   }
 
   click() {
+    setFilter({ ...DEFAULT_FILTER, needsMe: true });
     ensureTicketsTab();
   }
 }

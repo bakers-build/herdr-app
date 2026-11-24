@@ -1,6 +1,6 @@
 // ticket/view/list (route ticket.list): the Tickets list (frame R2-4). It runs the chosen
 // list definition (ticket/list) with the list engine over the store's open tickets, or over
-// the pages a server list loads, maps each row with the teaser view mode and draws the header,
+// the pages a server list loads, filtered by the Tickets filter (ticket/filter), maps each row with the teaser view mode and draws the header,
 // the table, the pager and the hints. Keys: Up and Down select (the panel follows),
 // Enter opens the preview tab, cmd-Enter or a double click a pinned tab, / the filter,
 // N a new ticket, R refreshes.
@@ -13,15 +13,14 @@ import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { pager } from "../../ui/components/pager.js";
 import { openForm } from "../../ui/form/dialog.js";
-import { chevron } from "../../ui/components/icon.js";
 import { openMenu } from "../../ui/components/menu.js";
 import { failureView } from "../../ui/components/state.js";
 import { tableHeader, tableRow } from "../../ui/components/table.js";
 import { getStore, loadError, ready, refresh } from "../store.js";
-import { currentView, showClosed } from "../state.js";
+import { applyFilter, currentFilter, isActive, listForFilter } from "../filter.js";
 import { tabName } from "../presenter/tab.js";
 import { columns, KEY_HINT, teaser } from "../presenter/teaser.js";
-import { emptyText, listFor, menuItems } from "../list/index.js";
+import { emptyText } from "../list/index.js";
 import { toQuery } from "../../list/query.js";
 import { runList } from "../../list/run.js";
 import { currentProject } from "../../project/state.js";
@@ -67,18 +66,16 @@ export default class TicketList {
     cx.timer.every(CHECK_MS, (cx) => this.check(cx));
   }
 
-  /** The list on screen and the server list it needs loaded (the closed list also feeds Show closed). */
+  /** The list the filter runs, and the same list when it is a server list that needs loading. */
   wanted() {
-    const list = listFor(currentView());
-    if (list.def.load) return { list, server: list };
-    if (list.def.id === "open" && showClosed()) return { list, server: listFor("closed") };
-    return { list, server: null };
+    const list = listForFilter(currentFilter());
+    return { list, server: list.def.load ? list : null };
   }
 
   /** A new list starts at page 0; a server list loads what is missing. @param {import("gpui-kit").Context} cx */
   check(cx) {
     const { list, server } = this.wanted();
-    const key = currentView();
+    const key = JSON.stringify(currentFilter());
     if (key !== this.key) {
       this.key = key;
       this.page = 0;
@@ -116,22 +113,16 @@ export default class TicketList {
   result() {
     const { list, server } = this.wanted();
     const isServer = list === server;
-    const records = isServer ? [] : getStore().records();
-    const known = new Set(records.map((/** @type {any} */ r) => r.id));
-    // A closed ticket open as a tab is in the store and in the closed list: show it once.
-    const base = isServer
-      ? this.server.rows
-      : [
-          ...records,
-          ...(server ? this.server.rows : []).filter((/** @type {any} */ r) => !known.has(r.id)),
-        ];
+    const filter = currentFilter();
+    const base = applyFilter(isServer ? this.server.rows : getStore().records(), filter, {
+      user: getStore().user,
+    });
     return {
       list,
       ...runList(list.def, base, {
         args: list.args,
         exposed: this.filter.value(),
         page: this.page,
-        showClosed: showClosed(),
         server: isServer,
         more: this.server.more,
       }),
@@ -173,7 +164,6 @@ export default class TicketList {
   menu() {
     openMenu([
       { label: "Refresh", action: ["ticket.refresh"] },
-      { label: "Show closed tickets", action: ["ticket.toggleClosed"], current: showClosed() },
       { label: "Close finished ticket tabs", action: ["tabs.closeFinished"], separator: true },
       { label: "Close all ticket tabs", action: ["tabs.closeAll"] },
     ]);
@@ -228,10 +218,7 @@ export default class TicketList {
           .border_color(t.border)
           .bg(t.surface)
           .font_semibold()
-          .cursor_pointer()
-          .on_click(() => openMenu(menuItems(currentView())))
-          .child(listFor(currentView()).label)
-          .child(chevron(12)),
+          .child(listForFilter(currentFilter()).label),
       )
       .child(
         h_flex()
@@ -317,7 +304,17 @@ export default class TicketList {
               .gap(4)
               .text_size(12)
               .text_color(t.muted)
-              .when(!failure, (el) => el.child(div().child(emptyText(list, this.filter.value()))))
+              .when(!failure, (el) =>
+                el.child(
+                  div().child(
+                    emptyText(
+                      list,
+                      this.filter.value(),
+                      !records.length && isActive(currentFilter()),
+                    ),
+                  ),
+                ),
+              )
               .child(div().text_size(11).child(KEY_HINT)),
           ),
       );

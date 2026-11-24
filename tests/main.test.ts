@@ -25,7 +25,6 @@ test("bakers routes each placement to its view by props().view", async () => {
     "ticket.list",
     "ticket.rail",
     "ticket.run",
-    "ticket.sidebar",
     "ticket.status",
     "ticket.view",
   ]);

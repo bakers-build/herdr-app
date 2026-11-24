@@ -6,7 +6,6 @@ import Context from "./view/context.js";
 import LabelPicker from "./view/label-picker.js";
 import List from "./view/list.js";
 import Rail from "./view/rail.js";
-import Sidebar from "./view/sidebar.js";
 import Status from "./view/status.js";
 import Full from "./view/full.js";
 import RunHeader from "./view/run.js";
@@ -24,9 +23,9 @@ import mine from "./list/mine.js";
 import needsMe from "./list/needs-me.js";
 import open from "./list/open.js";
 import state from "./list/state.js";
-import { setView, showClosed } from "./state.js";
+import { setFilter } from "./filter.js";
 import { refresh } from "./store.js";
-import { setShared, shared } from "herdr";
+import { shared } from "herdr";
 
 /**
  * The ticket tab bar decoration: "Tickets <n>" on the home tab while tickets need you, the
@@ -53,7 +52,6 @@ export function register() {
   define("route", "ticket.context", { view: Context }); // the right panel's child "ticket"
   define("route", "ticket.run", { view: RunHeader }); // the run column's header block "run-header"
   define("route", "ticket.rail", { view: Rail }); // the rail button
-  define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar
   define("route", "ticket.status", { view: Status }); // the status block's item
   // window, cmd-K: centred by Herdr (mods get no window size), and Esc reaches the palette, which
   // goes back a page (Herdr closes a dialog or popup on Esc itself); the key keeps it one window
@@ -66,7 +64,6 @@ export function register() {
     open: { kind: "popup", width: 220 },
   }); // popup, props.ticket
   define("rail.item", "ticket", { order: 0, route: "ticket.rail" });
-  define("sidebar.section", "ticket", { order: 0, title: "Tickets", route: "ticket.sidebar" });
   define("status.item", "ticket", { order: 0, route: "ticket.status" });
   define("tabs.panel", "ticket", { order: 2, label: "Ticket", bordered: true });
   define("tabs.decorate", "ticket", { decorate });
@@ -94,9 +91,8 @@ export function register() {
   define("action", "ticket.move", {
     run: (/** @type {string} */ id) => openRoute("ticket.actions", { ticket: id, page: "move" }),
   });
-  define("action", "ticket.view", { run: (/** @type {string} */ view) => setView(view) });
-  define("action", "ticket.toggleClosed", {
-    run: () => setShared("bakers.showClosed", !showClosed()),
+  define("action", "ticket.filter", {
+    run: (/** @type {Partial<import("./filter.js").Filter>} */ patch) => setFilter(patch),
   });
   define("action", "tabs.closeFinished", { run: () => closeFinished() });
   define("action", "tabs.closeAll", { run: () => closeAll() });

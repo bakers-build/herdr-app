@@ -13,8 +13,6 @@ import {
   runs,
   texts,
   fetched,
-  fireTimers,
-  walk,
 } from "../../harness";
 
 const actions: any = await import("../../../mods/bakers/core/actions.js");
@@ -24,10 +22,12 @@ beforeEach(() => {
   resetMod();
 });
 
-async function list(view = "needs-me") {
+const DEFAULT = { needsMe: false, mine: false, state: "open", label: null, type: null };
+
+async function list(patch: any = { needsMe: true }) {
   activeSpace();
   backend();
-  env.shared["bakers.view"] = view;
+  env.shared["bakers.filter"] = { ...DEFAULT, ...patch };
   const Bakers = await load("bakers/main.js");
   const copy = mount(Bakers, { view: "ticket.list" });
   await flush();
@@ -82,7 +82,7 @@ test("columns and rows of Needs me as drawn", async () => {
 });
 
 test("WHY becomes STATE outside Needs me", async () => {
-  const root = (await list("open")).render();
+  const root = (await list({})).render();
   expect(texts(find(root, "columns"))).toEqual(["TICKET", "TITLE", "STATE", "AGENT", "AGE"]);
   expect(texts(find(root, "row-SHOP-57"))[2]).toBe("qualification");
 });
@@ -141,7 +141,7 @@ test("a single click selects a row", async () => {
 });
 
 test("/ focuses the filter; typing filters; Esc clears it", async () => {
-  const copy = await list("open");
+  const copy = await list({});
   key(copy.render(), "/");
   expect(copy.inner.filter.focused).toBe(true);
   copy.inner.filter.handlers.focus({}, {});
@@ -177,7 +177,7 @@ test("letters typed into the filter do not act as keys", async () => {
   expect(env.calls.find((c) => c.fn === "openOverlay")).toBeUndefined();
 });
 
-test("the ... menu lists the four items in order and each one acts", async () => {
+test("the ... menu lists the three items in order and each one acts", async () => {
   const copy = await list();
   env.calls.length = 0;
   click(find(copy.render(), "list-menu"));
@@ -190,7 +190,6 @@ test("the ... menu lists the four items in order and each one acts", async () =>
   });
   expect(spec.props.items.map((i: any) => i.label)).toEqual([
     "Refresh",
-    "Show closed tickets",
     "Close finished ticket tabs",
     "Close all ticket tabs",
   ]);
@@ -199,11 +198,9 @@ test("the ... menu lists the four items in order and each one acts", async () =>
     { id: "t6", name: "SHOP-49 closed", index: 3 },
   );
   env.calls.length = 0;
-  const [refresh, closed, finished, all] = spec.props.items;
+  const [refresh, finished, all] = spec.props.items;
   await actions.perform(refresh.action);
   expect(fetched().some((u) => u.includes("/jsonapi/bb_ticket/bb_ticket?"))).toBe(true);
-  await actions.perform(closed.action);
-  expect(env.shared["bakers.showClosed"]).toBe(true);
   env.calls.length = 0;
   await actions.perform(finished.action);
   expect(runs()).toEqual([["tab.close", { id: "t6" }]]);
@@ -215,53 +212,22 @@ test("the ... menu lists the four items in order and each one acts", async () =>
   ]);
 });
 
-test("Show closed tickets lists done tickets in Open by state", async () => {
-  const copy = await list("open");
-  expect(find(copy.render(), "row-SHOP-49")).toBeUndefined();
-  env.shared["bakers.showClosed"] = true;
-  fireTimers();
-  await flush();
-  expect(find(copy.render(), "row-SHOP-49")).toBeDefined();
+test("the closed state lists the server's closed tickets", async () => {
+  const copy = await list({ state: "closed" });
+  const root = copy.render();
+  expect(find(root, "row-SHOP-49")).toBeDefined();
+  expect(find(root, "row-SHOP-41")).toBeUndefined();
 });
 
-test("a closed ticket open as a tab shows once with Show closed tickets", async () => {
-  activeSpace();
-  env.spaces[0].tabs.push({ id: "t6", name: "SHOP-49 closed", index: 2 });
-  backend();
-  env.shared["bakers.view"] = "open";
-  const Bakers = await load("bakers/main.js");
-  const copy = mount(Bakers, { view: "ticket.list" });
-  await flush();
-  expect(find(copy.render(), "row-SHOP-49")).toBeUndefined();
-  env.shared["bakers.showClosed"] = true;
-  fireTimers();
-  await flush();
-  let rows = 0;
-  walk(copy.render(), (n: any) => {
-    if (n?.calls?.id?.[0] === "row-SHOP-49") rows++;
-  });
-  expect(rows).toBe(1);
-});
-
-test("the view menu offers the sidebar's views and switches", async () => {
-  const copy = await list();
-  env.calls.length = 0;
-  click(find(copy.render(), "view-menu"));
-  const spec: any = env.calls.find((c) => c.fn === "openOverlay")?.args[0];
-  expect(spec.props.items.map((i: any) => i.label)).toEqual([
-    "Needs me",
-    "Mine",
-    "Open by state",
-    "Qualification",
-    "Plan",
-    "Working",
-    "Review",
-    "Recently closed",
-  ]);
-  expect(spec.props.items[1].disabled).toBe(true);
-  await actions.perform(spec.props.items[2].action);
-  expect(env.shared["bakers.view"]).toBe("open");
-  expect(texts(find(copy.render(), "view-menu"))).toEqual(["Open by state"]);
+test("filters narrow the rows; with nothing left the hint says so", async () => {
+  const copy = await list({ state: "plan" });
+  let root = copy.render();
+  expect(find(root, "row-SHOP-56")).toBeDefined();
+  expect(find(root, "row-SHOP-41")).toBeUndefined();
+  env.shared["bakers.filter"] = { ...DEFAULT, mine: true }; // no signed-in user: Mine matches nothing
+  root = copy.render();
+  expect(find(root, "row-SHOP-56")).toBeUndefined();
+  expect(findText(root, "Nothing matches these filters.")).toBeDefined();
 });
 
 test("New ticket button opens the dialog", async () => {
@@ -275,9 +241,7 @@ test("New ticket button opens the dialog", async () => {
 
 test("empty hint and key hint as drawn", async () => {
   const root = (await list()).render();
-  expect(
-    findText(root, "Nothing else needs you. Switch the view for Mine or Open by state."),
-  ).toBeDefined();
+  expect(findText(root, "Nothing else needs you.")).toBeDefined();
   const hint = findText(
     root,
     "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the Ticket panel, when shown, follows it.",
@@ -292,9 +256,7 @@ test("an empty project shows the hint, no rows and nothing selected", async () =
   const copy = mount(Bakers, { view: "ticket.list" });
   await flush();
   const root = copy.render();
-  expect(
-    findText(root, "Nothing else needs you. Switch the view for Mine or Open by state."),
-  ).toBeDefined();
+  expect(findText(root, "No other open tickets.")).toBeDefined();
   expect(texts(root).some((t) => /^SHOP-/.test(t))).toBe(false);
   expect(env.shared["bakers.selected"]).toBe(null);
 });

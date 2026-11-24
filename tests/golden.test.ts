@@ -102,11 +102,6 @@ test("golden: shell.rail", async () => {
   expect(serialise(mount(Bakers, { view: "shell.rail" }).render())).toMatchSnapshot();
 });
 
-test("golden: shell.sidebar", async () => {
-  const view = await shell("shell.sidebar");
-  expect(serialise(view.render())).toMatchSnapshot();
-});
-
 test("golden: shell.status", async () => {
   const view = await shell("shell.status");
   expect(serialise(view.render())).toMatchSnapshot();
@@ -132,7 +127,13 @@ test("golden: ticket.list R2-4", async () => {
   const Bakers = await load("bakers/main.js");
   activeSpace();
   backend();
-  env.shared["bakers.view"] = "needs-me";
+  env.shared["bakers.filter"] = {
+    needsMe: true,
+    mine: false,
+    state: "open",
+    label: null,
+    type: null,
+  };
   const view = mount(Bakers, { view: "ticket.list" });
   await flush();
   expect(serialise(view.render())).toMatchSnapshot();
@@ -152,13 +153,6 @@ test("golden calls: rail click", async () => {
   const root = mount(Bakers, { view: "shell.rail" }).render();
   click(find(root, "rail-bakers"));
   click(find(root, "rail-spaces"));
-  expect(runs()).toMatchSnapshot();
-});
-
-test("golden calls: sidebar row click", async () => {
-  const root = (await shell("shell.sidebar")).render();
-  env.calls.length = 0;
-  click(find(root, "view-state:working"));
   expect(runs()).toMatchSnapshot();
 });
 

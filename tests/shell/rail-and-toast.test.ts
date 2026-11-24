@@ -38,7 +38,13 @@ test("rail: 56 px column with the bakers button 36x36 labelled b 2", async () =>
   expect(b.calls.border_color).toEqual(["accent"]);
   expect(b.calls.accessibility_label).toEqual(["bakers, 2 tickets need you"]);
   click(b);
-  expect(env.shared["bakers.view"]).toBe("needs-me");
+  expect(env.shared["bakers.filter"]).toEqual({
+    needsMe: true,
+    mine: false,
+    state: "open",
+    label: null,
+    type: null,
+  });
   expect(runs()).toContainEqual(["tab.select", { id: "t0" }]);
   click(find(root, "rail-spaces"));
   expect(runs()).toContainEqual(["layout.toggle", { id: "sidebar" }]);

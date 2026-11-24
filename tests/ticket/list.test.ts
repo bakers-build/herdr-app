@@ -2,9 +2,7 @@
 import { expect, test } from "bun:test";
 import "../harness";
 
-const { emptyText, listFor, menuItems, navItems } = await import(
-  "../../mods/bakers/ticket/list/index.js"
-);
+const { emptyText, listFor } = await import("../../mods/bakers/ticket/list/index.js");
 const { runList } = await import("../../mods/bakers/list/run.js");
 const { toQuery } = await import("../../mods/bakers/list/query.js");
 
@@ -70,35 +68,4 @@ test("Mine stays empty with the API chip; an unknown key falls back to Needs me"
   expect(run("mine").rows).toEqual([]);
   expect(listFor("mine").def).toMatchObject({ api: true, disabled: true });
   expect(listFor("nope").def.id).toBe("needs-me");
-});
-
-test("the sidebar's rows: every list with its count, one row per state", () => {
-  expect(
-    navItems(records, "needs-me").map((r: any) => [r.label, r.count, r.selected, r.sub, r.api]),
-  ).toEqual([
-    ["Needs me", 3, true, false, false],
-    ["Mine", null, false, false, true],
-    ["Open by state", 5, false, false, false],
-    ["Qualification", 1, false, true, false],
-    ["Plan", 1, false, true, false],
-    ["Working", 2, false, true, false],
-    ["Review", 1, false, true, false],
-    ["Recently closed", null, false, false, false],
-  ]);
-});
-
-test("the view menu offers the same lists and switches through ticket.view", () => {
-  const items = menuItems("open");
-  expect(items.map((i: any) => i.label)).toEqual([
-    "Needs me",
-    "Mine",
-    "Open by state",
-    "Qualification",
-    "Plan",
-    "Working",
-    "Review",
-    "Recently closed",
-  ]);
-  expect(items[2]).toMatchObject({ current: true, action: ["ticket.view", "open"] });
-  expect(items[1].disabled).toBe(true);
 });

@@ -4,7 +4,7 @@ import { shared } from "herdr";
 import { square } from "../../ui/components/square.js";
 import { tokens } from "../../ui/theme.js";
 import { railLabel } from "../presenter/counts.js";
-import { setView } from "../state.js";
+import { DEFAULT_FILTER, setFilter } from "../filter.js";
 import { ensureTicketsTab } from "../tabs.js";
 
 export default class TicketRail {
@@ -19,7 +19,7 @@ export default class TicketRail {
       .text_color(t[label.tone])
       .accessibility_label(label.aria)
       .on_click(() => {
-        setView("needs-me");
+        setFilter({ ...DEFAULT_FILTER, needsMe: true });
         ensureTicketsTab();
       })
       .child(label.text);
