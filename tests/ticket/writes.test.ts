@@ -26,7 +26,9 @@ test("comment is a publish of type comment", async () => {
 test("describe replaces the description alone", async () => {
   cli({ bakers_ticket_update: {} });
   await commands.describe("SHOP-41", "New text");
-  expect(tools()).toEqual([["bakers_ticket_update", { ticket: "SHOP-41", description: "New text" }]]);
+  expect(tools()).toEqual([
+    ["bakers_ticket_update", { ticket: "SHOP-41", description: "New text" }],
+  ]);
 });
 
 test("newest is the last comment of a type, null when there is none", () => {

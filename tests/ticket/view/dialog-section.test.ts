@@ -1,8 +1,8 @@
 // The dialog with keys "inline" (cmd-Enter saves, Esc cancels, Enter types) and the section
 // form that uses it: edit the description, acceptance or summary of a ticket in a popup.
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, resetMod } from "../../fixtures/shop";
-import { env, flush, key, load, mount, reset, tools } from "../../harness";
+import { activeSpace, backend, NOW, read, resetMod } from "../../fixtures/shop";
+import { env, find, findText, flush, key, load, mount, reset, texts, tools } from "../../harness";
 
 const { define } = await import("../../../mods/bakers/core/registry.js");
 const { openForm } = await import("../../../mods/bakers/ui/form/dialog.js");
@@ -33,14 +33,14 @@ let sent = 0;
 const defineTestForm = () =>
   define("form", "test-inline", {
     build: () => ({
-    kind: "dialog",
-    keys: "inline",
-    title: "Inline",
-    fields: [{ name: "body", type: "textarea", value: "x" }],
-    keep: "Cancel",
-    submit: "Save",
-    steps: [{ run: async () => void sent++ }],
-  }),
+      kind: "dialog",
+      keys: "inline",
+      title: "Inline",
+      fields: [{ name: "body", type: "textarea", value: "x" }],
+      keep: "Cancel",
+      submit: "Save",
+      steps: [{ run: async () => void sent++ }],
+    }),
   });
 
 test("an inline dialog saves on cmd-Enter, once", async () => {
@@ -82,4 +82,208 @@ test("openForm passes per-call overlay fields, such as the width", async () => {
     modal: true,
     width: 640,
   });
+});
+
+// --- the section form ---------------------------------------------------------------
+
+const at = (min: number) => new Date(NOW - min * 60000).toISOString();
+const OLDER = { id: "a1", type: "acceptance", author: "pg", created: at(90), body: "AC1 old." };
+const NEWER = { id: "a2", type: "acceptance", author: "pg", created: at(30), body: "AC1 new." };
+
+/** Runs fn with SHOP-41 holding an older and a newer acceptance comment, then restores it. */
+async function withAcceptance(fn: () => Promise<void>) {
+  const before = read.u41.comments;
+  read.u41.comments = [...before, OLDER, NEWER];
+  try {
+    await fn();
+  } finally {
+    read.u41.comments = before;
+  }
+}
+
+const section = (s: string, extra: Record<string, unknown> = {}) =>
+  open({ view: "dialog", form: "section", ticket: "SHOP-41", section: s }, extra);
+const body = (copy: any) => copy.inner.inputs.input("body");
+const toasts = () => env.calls.filter((c) => c.fn === "notify").map((c: any) => c.args[0].title);
+
+test("AC2: acceptance opens with the newest acceptance, its title, consequence and keys", async () => {
+  await withAcceptance(async () => {
+    const copy = await section("acceptance");
+    const root = copy.render();
+    expect(body(copy).value()).toBe("AC1 new.");
+    expect(findText(root, "Edit acceptance of SHOP-41")).toBeDefined();
+    expect(
+      findText(
+        root,
+        "Saving posts a new acceptance comment; the panel and later runs read the newest.",
+      ),
+    ).toBeDefined();
+    expect(texts(find(root, "dialog-footer"))).toEqual([
+      "cmd-Enter saves, Esc cancels",
+      "Cancel",
+      "Save",
+    ]);
+  });
+});
+
+test("AC2: summary opens empty when there is none; description opens with the description", async () => {
+  let copy = await section("summary");
+  expect(body(copy).value()).toBe("");
+  expect(findText(copy.render(), "Edit summary of SHOP-41")).toBeDefined();
+  reset();
+  resetMod();
+  copy = await section("description");
+  expect(body(copy).value()).toBe(read.u41.description);
+  expect(findText(copy.render(), "Saving replaces the description.")).toBeDefined();
+});
+
+test("AC3: cmd-Enter posts a new acceptance comment, trimmed, closes and toasts", async () => {
+  await withAcceptance(async () => {
+    const copy = await section("acceptance");
+    body(copy).type("  AC1 newest.\n\n");
+    key(copy.render(), "cmd-enter");
+    await flush();
+    expect(writes()).toEqual([
+      ["bakers_comment_publish", { ticket: "SHOP-41", type: "acceptance", body: "AC1 newest." }],
+    ]);
+    expect(closed()).toBe(true);
+    expect(toasts()).toContain("Acceptance of SHOP-41 saved");
+  });
+});
+
+test("AC3: cmd-Enter on the description replaces it", async () => {
+  const copy = await section("description");
+  body(copy).type("A shorter description.");
+  key(copy.render(), "cmd-enter");
+  await flush();
+  expect(writes()).toEqual([
+    ["bakers_ticket_update", { ticket: "SHOP-41", description: "A shorter description." }],
+  ]);
+  expect(toasts()).toContain("Description of SHOP-41 saved");
+});
+
+test("AC5: Esc closes the section popup and writes nothing", async () => {
+  const copy = await section("summary");
+  body(copy).type("Something");
+  key(copy.render(), "escape");
+  await flush();
+  expect(writes()).toEqual([]);
+  expect(closed()).toBe(true);
+});
+
+/** Types text and sends it with cmd-Enter. (Returns nothing: the harness's elements look thenable.) */
+async function typeAndSave(copy: any, text: string) {
+  body(copy).type(text);
+  key(copy.render(), "cmd-enter");
+  await flush();
+}
+
+test("AC6: an empty or whitespace-only text writes nothing and says why", async () => {
+  const copy = await section("summary");
+  await typeAndSave(copy, "  \n ");
+  const root = copy.render();
+  expect(findText(root, "Write something first.")).toBeDefined();
+  expect(writes()).toEqual([]);
+  expect(closed()).toBe(false);
+});
+
+test("AC6: an unchanged text, trailing spaces included, writes nothing", async () => {
+  await withAcceptance(async () => {
+    const copy = await section("acceptance");
+    await typeAndSave(copy, "AC1 new.  \n");
+    const root = copy.render();
+    expect(findText(root, "Nothing changed.")).toBeDefined();
+    expect(writes()).toEqual([]);
+    expect(closed()).toBe(false);
+  });
+});
+
+test("AC6: 3072 bytes of ä save; one byte more is refused with the size", async () => {
+  let copy = await section("summary");
+  await typeAndSave(copy, `${"ä".repeat(1536)}a`);
+  let root = copy.render();
+  expect(findText(root, "3073 bytes; the limit is 3072.")).toBeDefined();
+  expect(writes()).toEqual([]);
+  await typeAndSave(copy, "ä".repeat(1536));
+  expect(writes()).toEqual([
+    ["bakers_comment_publish", { ticket: "SHOP-41", type: "summary", body: "ä".repeat(1536) }],
+  ]);
+  reset();
+  resetMod();
+  copy = await section("description");
+  await typeAndSave(copy, "x".repeat(6145));
+  root = copy.render();
+  expect(findText(root, "6145 bytes; the limit is 6144.")).toBeDefined();
+  expect(writes()).toEqual([]);
+});
+
+test("AC7: a failed save keeps the popup, the text and says it was not saved", async () => {
+  const copy = await section("summary", {
+    bakers_comment_publish: new Error("Server said no"),
+  });
+  await typeAndSave(copy, "My summary");
+  const root = copy.render();
+  expect(closed()).toBe(false);
+  expect(body(copy).value()).toBe("My summary");
+  expect(texts(find(root, "form-message"))[0]).toStartWith("Not saved:");
+});
+
+test("AC8: a newer acceptance since opening warns once; the second cmd-Enter saves", async () => {
+  await withAcceptance(async () => {
+    const copy = await section("acceptance");
+    const third = { id: "a3", type: "acceptance", author: "x", created: at(1), body: "Theirs." };
+    read.u41.comments = [...read.u41.comments, third];
+    await typeAndSave(copy, "Mine.");
+    const root = copy.render();
+    expect(writes()).toEqual([]);
+    expect(
+      findText(
+        root,
+        "A newer acceptance of SHOP-41 arrived since you opened this. cmd-Enter again saves over it.",
+      ),
+    ).toBeDefined();
+    key(copy.render(), "cmd-enter");
+    await flush();
+    expect(writes()).toEqual([
+      ["bakers_comment_publish", { ticket: "SHOP-41", type: "acceptance", body: "Mine." }],
+    ]);
+  });
+});
+
+test("AC8: a changed description warns once", async () => {
+  const before = read.u41.description;
+  try {
+    const copy = await section("description");
+    read.u41.description = "Someone else rewrote this.";
+    await typeAndSave(copy, "Mine.");
+    const root = copy.render();
+    expect(writes()).toEqual([]);
+    expect(
+      findText(
+        root,
+        "A newer description of SHOP-41 arrived since you opened this. cmd-Enter again saves over it.",
+      ),
+    ).toBeDefined();
+  } finally {
+    read.u41.description = before;
+  }
+});
+
+test("AC8: no summary before and none now raises no warning", async () => {
+  const copy = await section("summary");
+  await typeAndSave(copy, "First summary.");
+  expect(writes()).toEqual([
+    ["bakers_comment_publish", { ticket: "SHOP-41", type: "summary", body: "First summary." }],
+  ]);
+});
+
+test("two cmd-Enter before the save finishes post once", async () => {
+  const copy = await section("summary");
+  body(copy).type("Once.");
+  key(copy.render(), "cmd-enter");
+  key(copy.render(), "cmd-enter");
+  await flush();
+  expect(writes()).toEqual([
+    ["bakers_comment_publish", { ticket: "SHOP-41", type: "summary", body: "Once." }],
+  ]);
 });

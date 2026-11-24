@@ -18,6 +18,7 @@ import { closeAll, closeFinished } from "./tabs.js";
 import { classify, labels } from "./commands.js";
 import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./form/confirm.js";
 import { createForm } from "./form/create.js";
+import { sectionForm } from "./form/section.js";
 import closed from "./list/closed.js";
 import mine from "./list/mine.js";
 import needsMe from "./list/needs-me.js";
@@ -85,6 +86,7 @@ export function register() {
   define("form", "unfreeze", { build: unfreezeForm });
   define("form", "move", { build: moveForm });
   define("form", "cancel", { build: cancelForm });
+  define("form", "section", { build: sectionForm });
   define("action", "ticket.classify", { run: classify });
   define("action", "ticket.labels", { run: labels });
   define("action", "ticket.refresh", { run: () => refresh() });
