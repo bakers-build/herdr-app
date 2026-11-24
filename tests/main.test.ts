@@ -27,7 +27,6 @@ test("bakers routes each placement to its view by props().view", async () => {
     "ticket.run",
     "ticket.sidebar",
     "ticket.status",
-    "ticket.view",
   ]);
   for (const view of names) {
     const copy = mount(Bakers, { view, ticket: "SHOP-41", items: [] });
@@ -61,4 +60,5 @@ test("registerAll fills lists, forms and actions", () => {
   expect(get("action", "ticket.showAgent")).toBeTruthy();
   expect(get("action", "tabs.closeAll")).toBeNull();
   expect(get("action", "tabs.closeFinished")).toBeNull();
+  expect(get("route", "ticket.view")).toBeNull();
 });

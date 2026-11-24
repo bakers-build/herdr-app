@@ -280,12 +280,15 @@ export const live = (address: string, id = "SHOP-41", extra: any = {}) => ({
 });
 
 /** A ticket tab on the given ticket, loaded. */
-export async function ticketTab(id = "SHOP-41", extra: Record<string, unknown> = {}) {
+/** The panel's ticket child on the selected ticket `id`, loaded. */
+export async function ticketPanel(id = "SHOP-41", extra: Record<string, unknown> = {}) {
   activeSpace();
   backend(extra);
-  env.spaces[0].tabs.push({ id: "t5", name: `${id} working`, index: 2, active: true });
+  env.shared["bakers.selected"] = id;
   const Bakers = await load("bakers/main.js");
-  const copy = mount(Bakers, { view: "ticket.view", ticket: id });
+  const copy = mount(Bakers, { view: "ticket.context" });
+  await flush();
+  copy.render();
   await flush();
   return copy;
 }

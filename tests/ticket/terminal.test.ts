@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import { bakersLayout } from "../../scripts/layout.js";
-import { activeSpace, live, resetMod, ticketTab } from "../fixtures/shop";
+import { activeSpace, live, resetMod, ticketPanel } from "../fixtures/shop";
 import { env, reset, runs } from "../harness";
 
 const terminal: any = await import("../../mods/bakers/ticket/terminal.js");
@@ -297,7 +297,7 @@ test("a run labelled with the ticket's UUID shows once the store knows it", asyn
   select("SHOP-41");
   terminal.syncRun();
   expect(runs()).toEqual([]);
-  await ticketTab();
+  await ticketPanel();
   env.layout = bakersLayout(structuredClone(main));
   select("SHOP-41");
   env.calls.length = 0;

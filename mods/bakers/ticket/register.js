@@ -8,7 +8,6 @@ import List from "./view/list.js";
 import Rail from "./view/rail.js";
 import Sidebar from "./view/sidebar.js";
 import Status from "./view/status.js";
-import Full from "./view/full.js";
 import RunHeader from "./view/run.js";
 import * as commands from "./view/commands.js";
 import { windowTask } from "./window.js";
@@ -45,7 +44,6 @@ export function register() {
     home: { name: "Tickets", route: "ticket.list", index: 1 },
   });
   define("route", "ticket.list", { view: List }); // tab "Tickets"
-  define("route", "ticket.view", { view: Full }); // the old detail tab; goes with Task 4
   define("route", "ticket.context", { view: Context }); // the right panel's child "ticket"
   define("route", "ticket.run", { view: RunHeader }); // the run header block "run-header" in the panel
   define("route", "ticket.rail", { view: Rail }); // the rail button

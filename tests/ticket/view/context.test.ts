@@ -43,7 +43,7 @@ async function panel(select = true, extra: Record<string, unknown> = {}) {
 
 test("it follows the selected ticket", async () => {
   const root = (await panel()).render();
-  expect(texts(find(root, "panel-header"))).toEqual(["SHOP-41", "working, frozen"]);
+  expect(texts(find(root, "doc-header")).slice(0, 3)).toEqual(["SHOP-41", "working", "Frozen"]);
 });
 
 test("a leftover ticket tab in front does not move the panel off the selection", async () => {
@@ -51,7 +51,7 @@ test("a leftover ticket tab in front does not move the panel off the selection",
   const copy = await panel();
   env.spaces[0].tabs.push({ id: "t5", name: "SHOP-41 working", index: 2, active: true });
   env.focused = { space: "s1", tab: "t5", pane: "p1" };
-  expect(texts(find(copy.render(), "panel-header"))).toEqual(["SHOP-56", "plan"]);
+  expect(texts(find(copy.render(), "doc-header")).slice(0, 2)).toEqual(["SHOP-56", "plan"]);
 });
 
 test("nothing selected says so", async () => {
@@ -268,11 +268,11 @@ test("Runs are collapsed and expand on click", async () => {
   expect(texts(find(copy.render(), "runs"))).toEqual(["Runs 1", "running", "Claude Code", "1h"]);
 });
 
-test("nothing in the panel repeats the document", async () => {
+test("the panel holds the document: title, description and comments", async () => {
   const t = texts((await panel()).render());
-  expect(t).not.toContain("Checkout fails with an empty cart");
-  expect(t.some((x) => x.includes("Reproduced"))).toBe(false);
-  expect(t).not.toContain("DESCRIPTION");
+  expect(t).toContain("Checkout fails with an empty cart");
+  expect(t).toContain("DESCRIPTION");
+  expect(t.some((x) => x.startsWith("COMMENTS"))).toBe(true);
 });
 
 test("a click on a link opens it with the system's opener", async () => {

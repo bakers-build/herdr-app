@@ -1,15 +1,16 @@
-// ticket/view/full: a ticket as its own tab (frame R2-3), one column of at most 760 px. It loads
-// the ticket (ticket/store.js), maps it with presenter/full, and draws the header, the
-// title and description (or the edit form), the Needs-you card, the comments and the
-// composer (the comment form). Keys: A acts on the card, E edits, G shows the agent, R moves
-// the run; cmd-Enter and Esc belong to the edit form or the composer while they are used.
+// ticket/view/document: one ticket's document in the panel (view/context.js): the header (ID, state
+// pill and its menu, Frozen, the agent line, Edit, Actions, ...), the title or the edit form, the
+// Needs-you card, the description, the comments and the composer (the comment form). Keys: A acts
+// on the card, E edits, G shows the agent, R moves the run; cmd-Enter and Esc belong to the edit
+// form or the composer while they are used. It never takes the focus on its own.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { notify, props, run } from "herdr";
+import { notify, run } from "herdr";
 import { runReason, runTerminal, showAgent } from "../terminal.js";
 import { ticketActions } from "../operations/actions.js";
 import { perform } from "../../core/actions.js";
-import { tokens, UI_FONT } from "../../ui/theme.js";
+import { classify } from "../../core/errors.js";
+import { tokens } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
 import { submit } from "../../form/submit.js";
@@ -22,24 +23,22 @@ import { FormInputs } from "../../ui/form/inputs.js";
 import { markdown } from "../../ui/components/markdown.js";
 import { openMenu } from "../../ui/components/menu.js";
 import { pill } from "../../ui/components/pill.js";
-import { failureView, loading } from "../../ui/components/state.js";
 import { statusLine } from "../../ui/components/status-line.js";
 import { heading, mono } from "../../ui/components/text.js";
-import { classify } from "../../core/errors.js";
 import { getStore, ready } from "../store.js";
 import { commentForm } from "../form/comment.js";
 import { editForm } from "../form/edit.js";
-import { full } from "../presenter/full.js";
 import { moreItems } from "../operations/more.js";
 import { STATE_MENU_FOOTER, stateItems } from "../operations/state.js";
 
 /** A form in place: its definition, state and inputs. */
+/** A form in place: its definition, state and inputs. */
 class Inline {
-  /** @param {any} def @param {() => void} [onType] */
-  constructor(def, onType) {
+  /** @param {any} def */
+  constructor(def) {
     this.def = def;
     this.state = new FormState(def);
-    this.inputs = new FormInputs(def, this.state, onType);
+    this.inputs = new FormInputs(def, this.state);
     this.focused = false;
     /** @type {string | null} */
     this.mode = null;
@@ -53,11 +52,9 @@ class Inline {
   }
 }
 
-export default class TicketTab {
-  /** @type {string} the ticket, from the props; init sets it */
-  id = /** @type {any} */ (null);
-  /** @type {import("gpui-kit").FocusHandle} init sets it before the first render */
-  handle = /** @type {any} */ (null);
+/** One ticket's document: its detail, the open edit form, the composer and the keys. The panel
+ *  (view/context.js) makes one per followed ticket and draws its parts. */
+export class TicketDocument {
   /** @type {any} */
   detail = null;
   /** @type {import("../../core/errors.js").Failure | null} */
@@ -69,21 +66,16 @@ export default class TicketTab {
   /** @type {Inline} the comment form; init makes it */
   composer = /** @type {any} */ (null);
 
-  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
-  init(_props, cx) {
-    this.id = props()?.ticket;
-    this.handle = cx.focus_handle();
-    this.handle.focus();
+  /** @param {string} id @param {() => Promise<void> | void} [reload] the panel's reload after a send */
+  constructor(id, reload) {
+    this.id = id;
+    this.reload = reload ?? (() => this.load());
     this.composer = this.makeComposer("comment");
-    cx.spawn(async (cx) => {
-      await this.load();
-      cx.notify();
-    });
   }
 
   /** @param {"comment" | "answer"} mode @param {string} [text] */
   makeComposer(mode, text = "") {
-    const c = new Inline(commentForm(this.id, mode, text), () => {});
+    const c = new Inline(commentForm(this.id, mode, text));
     c.mode = mode;
     return c;
   }
@@ -130,7 +122,7 @@ export default class TicketTab {
 
   edit() {
     if (this.detail && !this.editor) {
-      this.editor = new Inline(editForm(this.detail.ticket), () => {});
+      this.editor = new Inline(editForm(this.detail.ticket));
       this.editor.inputs.focus("title");
     }
   }
@@ -152,13 +144,13 @@ export default class TicketTab {
         if (r.success) notify({ title: r.success, level: "success" });
         if (f === this.editor) this.editor = null;
         else this.composer = this.makeComposer("comment");
-        await this.load();
+        await this.reload();
       }
       cx.notify();
     });
   }
 
-  /** @param {any} e @param {any} cx */
+  /** The panel's keys; true when one acted. @param {any} e @param {any} cx @returns {boolean} */
   onKey(e, cx) {
     const k = e.keystroke;
     const active = this.editor ?? (this.composer.focused ? this.composer : null);
@@ -168,16 +160,15 @@ export default class TicketTab {
       else if (what === "cancel") {
         if (active === this.editor) this.editor = null;
         else this.plain();
-      } else return;
+      } else return false;
     } else if (k === "a") this.act();
     else if (k === "e") this.edit();
     else {
       const op = this.keyAction(k);
-      if (!op) return;
+      if (!op) return false;
       if (!op.reason && op.action) void perform(op.action, cx);
     }
-    cx.stop_propagation();
-    cx.notify();
+    return true;
   }
 
   /** @param {any} vm */
@@ -245,68 +236,58 @@ export default class TicketTab {
     return callout("needs-card", card, buttons);
   }
 
-  /** @param {any} vm */
-  document(vm) {
-    const t = tokens();
-    const onEdit = (/** @type {any} */ _e, /** @type {any} */ cx) => {
-      this.edit();
-      cx.notify();
-    };
-    const card = this.card(vm.needs);
+  /** The title, or the edit form in its place while editing. @param {any} vm */
+  title(vm) {
     const editor = this.editor;
+    if (editor)
+      return inlineForm("editor", editor.def, editor.inputs, (v, cx) => this.send(editor, v, cx));
+    return div()
+      .id("title")
+      .text_size(18)
+      .font_semibold()
+      .line_height(23)
+      .on_click((_e, cx) => {
+        this.edit();
+        cx.notify();
+      })
+      .child(vm.title);
+  }
+
+  /** Nothing while editing: the edit form holds it. @param {any} vm */
+  description(vm) {
+    if (this.editor) return null;
+    const t = tokens();
     return v_flex()
-      .id("doc")
-      .w_full()
-      .max_w(760)
-      .gap(16)
-      .child(this.header(vm))
-      .when(!this.editor, (el) =>
-        el.child(
-          div()
-            .id("title")
-            .text_size(22)
-            .font_semibold()
-            .line_height(27.5)
-            .on_click(onEdit)
-            .child(vm.title),
-        ),
-      )
-      .when(Boolean(card), (el) => el.child(card ?? ""))
-      .children(
-        editor
-          ? [inlineForm("editor", editor.def, editor.inputs, (v, cx) => this.send(editor, v, cx))]
-          : [],
-      )
-      .when(!this.editor, (el) =>
-        el.child(
-          v_flex()
-            .id("description")
-            .gap(8)
-            .child(heading("Description"))
-            .child(
-              div()
-                .id("description-body")
-                .cursor_text()
-                .on_click(onEdit)
-                .child(markdown(`desc-${vm.id}`, vm.description)),
-            )
-            .child(div().text_size(11).text_color(t.muted).child("Click or E to edit.")),
-        ),
-      )
+      .id("description")
+      .gap(8)
+      .child(heading("Description"))
       .child(
-        v_flex()
-          .id("comments")
-          .gap(10)
-          .child(heading(vm.commentsHeading))
-          .children(
-            vm.comments.map((/** @type {any} */ c) =>
-              entry(c, this.open.has(c.key), (cx) => {
-                if (this.open.has(c.key)) this.open.delete(c.key);
-                else this.open.add(c.key);
-                cx.notify();
-              }),
-            ),
-          ),
+        div()
+          .id("description-body")
+          .cursor_text()
+          .on_click((_e, cx) => {
+            this.edit();
+            cx.notify();
+          })
+          .child(markdown(`desc-${vm.id}`, vm.description)),
+      )
+      .child(div().text_size(11).text_color(t.muted).child("Click or E to edit."));
+  }
+
+  /** @param {any} vm */
+  comments(vm) {
+    return v_flex()
+      .id("comments")
+      .gap(10)
+      .child(heading(vm.commentsHeading))
+      .children(
+        vm.comments.map((/** @type {any} */ c) =>
+          entry(c, this.open.has(c.key), (cx) => {
+            if (this.open.has(c.key)) this.open.delete(c.key);
+            else this.open.add(c.key);
+            cx.notify();
+          }),
+        ),
       );
   }
 
@@ -317,58 +298,18 @@ export default class TicketTab {
       .id("composer")
       .flex_none()
       .justify_center()
-      .px(24)
+      .px(12)
       .py(10)
       .when(answering, (el) => el.border_t_2().border_color(t.accent))
       .when(!answering, (el) => el.border_t(1).border_color(t.border))
       .child(
         v_flex()
           .w_full()
-          .max_w(760)
           .child(
             inlineForm("composer-form", this.composer.def, this.composer.inputs, (v, cx) =>
               this.send(this.composer, v, cx),
             ),
           ),
       );
-  }
-
-  render() {
-    const t = tokens();
-    const root = v_flex()
-      .id("ticket")
-      .size_full()
-      .min_h(0)
-      .bg(t.surface)
-      .font_family(UI_FONT)
-      .text_size(13)
-      .text_color(t.foreground)
-      .track_focus(this.handle)
-      .on_key_down((e, cx) => this.onKey(e, cx));
-    if (!this.detail)
-      return root.child(
-        this.failure
-          ? failureView(this.failure, (_e, cx) =>
-              cx.spawn(async (cx) => {
-                await this.load();
-                cx.notify();
-              }),
-            )
-          : loading(`Loading ${this.id}...`),
-      );
-    const vm = full(this.detail, { terminal: this.terminal(), now: Date.now() });
-    return root
-      .child(
-        h_flex()
-          .id("doc-scroll")
-          .flex_1()
-          .min_h(0)
-          .overflow_y_scrollbar()
-          .px(24)
-          .py(20)
-          .justify_center()
-          .child(this.document(vm)),
-      )
-      .child(this.composerView());
   }
 }

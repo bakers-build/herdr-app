@@ -9,7 +9,6 @@ const { full, needsCard } = await import(`${P}/full.js`);
 const { context } = await import(`${P}/context.js`);
 const { railLabel, statusParts } = await import(`${P}/counts.js`);
 const { notification } = await import(`${P}/notification.js`);
-const { tabName } = await import(`${P}/tab.js`);
 const { search } = await import(`${P}/search.js`);
 const { stateItems } = await import("../../mods/bakers/ticket/operations/state.js");
 
@@ -244,36 +243,6 @@ test("counts: rail and status", () => {
   ).toEqual([{ text: "bakers offline" }]);
 });
 
-test("notification, tab name, search result, state menu", () => {
-  expect(notification("SHOP-41", detail.comments)).toEqual({
-    title: "SHOP-41 asks a question",
-    body: "Redirect or page?",
-    level: "warning",
-    action: { name: "bakers.open:SHOP-41" },
-  });
-  expect(tabName({ id: "SHOP-41", state: "working" })).toBe("SHOP-41 working");
-  expect(tabName({ id: "SHOP-49", state: "done" })).toBe("SHOP-49 closed");
-  expect(search({ identifier: "SHOP-38", title: "Slots", state: "done" })).toEqual({
-    id: "SHOP-38",
-    title: "Slots",
-    state: "done",
-    closed: true,
-  });
-  expect(stateItems("SHOP-56", "plan").map((i: any) => i.label)).toEqual([
-    "Qualification...",
-    "Plan",
-    "Working...",
-    "Review...",
-    "Done...",
-    "Cancelled...",
-  ]);
-  expect(stateItems("SHOP-56", "plan")[2].action).toEqual([
-    "form.open",
-    "state",
-    { ticket: "SHOP-56", from: "plan", to: "working" },
-  ]);
-});
-
 const { ticketActions } = await import("../../mods/bakers/ticket/operations/actions.js");
 const { moreItems } = await import("../../mods/bakers/ticket/operations/more.js");
 const withRuns = (o: any = {}) => ({
@@ -323,4 +292,32 @@ test("moreItems keeps its menu: Freeze, Cancel run (disabled without a run), Cop
   expect(m[1].disabled).toBe(true);
   expect(m[2]).toMatchObject({ separator: true, action: ["copy", "SHOP-41"] });
   expect(moreItems(withRuns({ runs: [{ closed: false }] }))[1].disabled).toBeFalsy();
+});
+
+test("notification, search result, state menu", () => {
+  expect(notification("SHOP-41", detail.comments)).toEqual({
+    title: "SHOP-41 asks a question",
+    body: "Redirect or page?",
+    level: "warning",
+    action: { name: "bakers.open:SHOP-41" },
+  });
+  expect(search({ identifier: "SHOP-38", title: "Slots", state: "done" })).toEqual({
+    id: "SHOP-38",
+    title: "Slots",
+    state: "done",
+    closed: true,
+  });
+  expect(stateItems("SHOP-56", "plan").map((i: any) => i.label)).toEqual([
+    "Qualification...",
+    "Plan",
+    "Working...",
+    "Review...",
+    "Done...",
+    "Cancelled...",
+  ]);
+  expect(stateItems("SHOP-56", "plan")[2].action).toEqual([
+    "form.open",
+    "state",
+    { ticket: "SHOP-56", from: "plan", to: "working" },
+  ]);
 });
