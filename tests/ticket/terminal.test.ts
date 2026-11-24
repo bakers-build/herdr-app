@@ -125,7 +125,13 @@ test("a live run of the selected ticket shows below the panel body, 1:1, focus u
   expect(column).toEqual({ id: "run", type: "column", size: { weight: 1 }, hidden: false });
   expect(children).toEqual([
     HEADER,
-    { id: "run-terminal", type: "block", content: { terminal: "t7" } },
+    {
+      id: "run-stack",
+      type: "stack",
+      size: { weight: 1 },
+      active: "run-terminal",
+      children: [{ id: "run-terminal", type: "block", content: { terminal: "t7" } }],
+    },
   ]);
   // the rest of the tree is as read, the panel widened from the installed width
   const rest = structuredClone(tree);
@@ -202,7 +208,7 @@ test("the header left alone gets a new run's terminal", () => {
   terminal.syncRun();
   expect(runs().map(([c]) => c)).toEqual(["layout.set"]);
   const run = findNode(sets()[0][1].layout, "run");
-  expect(run.children.map((c: any) => c.id)).toEqual(["run-header", "run-terminal"]);
+  expect(run.children.map((c: any) => c.id)).toEqual(["run-header", "run-stack"]);
   expect(findNode(run, "run-terminal").content).toEqual({ terminal: "t8" });
 });
 
@@ -319,6 +325,138 @@ test("the task is registered synchronous, every second", () => {
   const task = registry.get("window.task", "ticket.run");
   expect(task.every).toBe(1000);
   expect(task.run()).toBeUndefined();
+});
+
+// The run stack: the agent's run first, then the ticket's Execute shells, switched with
+// layout.select.
+
+/** A live Execute shell of a ticket, opened at `opened` ms. */
+const shell = (address: string, opened: string, id = "SHOP-41") => ({
+  address,
+  state: "live",
+  labels: { "bakers.exec": id, "bakers.opened": opened },
+});
+const stack = () => findNode(env.layout, "run-stack");
+const kids = (node: any) => node.children.map((c: any) => [c.id, c.content?.terminal]);
+
+test("the run sits in run-stack with the ticket's shells after it, the agent active", () => {
+  select("SHOP-41");
+  env.terminals = [live("t7"), shell("vps/t21", "2000"), shell("t20", "1000")];
+  terminal.syncRun();
+  expect(runs().map(([c]) => c)).toEqual(["layout.set"]);
+  const run = findNode(sets()[0][1].layout, "run");
+  expect(run.children.map((c: any) => c.id)).toEqual(["run-header", "run-stack"]);
+  const s = findNode(run, "run-stack");
+  expect(s.type).toBe("stack");
+  expect(s.size).toEqual({ weight: 1 });
+  expect(s.active).toBe("run-terminal");
+  expect(kids(s)).toEqual([
+    ["run-terminal", "t7"],
+    ["run-x-t20", "t20"],
+    ["run-x-vps-t21", "vps/t21"],
+  ]);
+  expect(terminal.STACK).toBe("run-stack");
+});
+
+test('only the active tab changed: layout.select {stack: "run-stack", child}, no layout.set', () => {
+  select("SHOP-41");
+  env.terminals = [live("t7"), shell("t20", "1000"), shell("vps/t21", "2000")];
+  terminal.syncRun();
+  applies();
+  env.shared["bakers.runTab"] = { "SHOP-41": "2000" };
+  terminal.syncRun();
+  expect(runs()).toEqual([["layout.select", { stack: "run-stack", child: "run-x-vps-t21" }]]);
+  applies();
+  terminal.syncRun();
+  expect(runs()).toEqual([]);
+  env.shared["bakers.runTab"] = {};
+  terminal.syncRun();
+  expect(runs()).toEqual([["layout.select", { stack: "run-stack", child: "run-terminal" }]]);
+});
+
+test("a shell that ended leaves in one layout.set, the agent active again", () => {
+  select("SHOP-41");
+  env.terminals = [live("t7"), shell("t20", "1000"), shell("t21", "2000")];
+  env.shared["bakers.runTab"] = { "SHOP-41": "2000" };
+  terminal.syncRun();
+  applies();
+  expect(stack().active).toBe("run-x-t21");
+  env.terminals = [live("t7"), shell("t20", "1000"), { ...shell("t21", "2000"), state: "exited" }];
+  terminal.syncRun();
+  expect(runs().map(([c]) => c)).toEqual(["layout.set"]);
+  const s = findNode(sets()[0][1].layout, "run-stack");
+  expect(s.active).toBe("run-terminal");
+  expect(kids(s)).toEqual([
+    ["run-terminal", "t7"],
+    ["run-x-t20", "t20"],
+  ]);
+});
+
+test("another ticket's shells never show; its selection stays in bakers.runTab", () => {
+  select("SHOP-56");
+  env.terminals = [live("t7"), live("t9", "SHOP-56"), shell("t20", "1000")];
+  env.shared["bakers.runTab"] = { "SHOP-41": "1000" };
+  terminal.syncRun();
+  applies();
+  expect(kids(stack())).toEqual([["run-terminal", "t9"]]);
+  expect(stack().active).toBe("run-terminal");
+  select("SHOP-41");
+  terminal.syncRun();
+  applies();
+  expect(kids(stack())).toEqual([
+    ["run-terminal", "t7"],
+    ["run-x-t20", "t20"],
+  ]);
+  expect(stack().active).toBe("run-x-t20");
+  expect(env.shared["bakers.runTab"]).toEqual({ "SHOP-41": "1000" });
+});
+
+test("a run column without run-stack is rebuilt once", () => {
+  // the shape HERDRAPP-13 stored: the run terminal directly in the shown column
+  select("SHOP-41");
+  panel().size = { px: 480 };
+  col().hidden = false;
+  col().children = [HEADER, { id: "run-terminal", type: "block", content: { terminal: "t7" } }];
+  env.terminals = [live("t7")];
+  terminal.syncRun();
+  expect(runs().map(([c]) => c)).toEqual(["layout.set"]);
+  applies();
+  expect(col().children.map((c: any) => c.id)).toEqual(["run-header", "run-stack"]);
+  expect(kids(stack())).toEqual([["run-terminal", "t7"]]);
+  terminal.syncRun(Date.now() + 5000);
+  expect(runs()).toEqual([]);
+});
+
+test("the run ends while shells live: the column hides, no terminal.kill", () => {
+  select("SHOP-41");
+  panel().size = { px: 600 };
+  env.terminals = [live("t7"), shell("t20", "1000")];
+  terminal.syncRun();
+  applies();
+  env.terminals = [live("t7", "SHOP-41", { state: "exited" }), shell("t20", "1000")];
+  terminal.syncRun();
+  expect(runs()).toEqual([["layout.hide", { id: "run" }]]);
+  applies();
+  // the next run of the ticket brings the shell back as a tab
+  env.terminals = [live("t8"), shell("t20", "1000")];
+  terminal.syncRun();
+  applies();
+  expect(col().hidden).toBe(false);
+  expect(kids(stack())).toEqual([
+    ["run-terminal", "t8"],
+    ["run-x-t20", "t20"],
+  ]);
+});
+
+test("an unchanged tick with shells writes nothing", () => {
+  select("SHOP-41");
+  env.terminals = [live("t7"), shell("t20", "1000"), shell("vps/t21", "2000")];
+  env.shared["bakers.runTab"] = { "SHOP-41": "1000" };
+  terminal.syncRun();
+  applies();
+  terminal.syncRun();
+  terminal.syncRun(Date.now() + 5000);
+  expect(runs()).toEqual([]);
 });
 
 // Show agent: selects the ticket, shows the panel and the run, and focuses the run.
