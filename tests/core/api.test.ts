@@ -1,5 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
 import { env, fetched, reset } from "../harness";
+import { jsonapiServer } from "../fixtures/jsonapi-server";
 
 const api: any = await import("../../mods/bakers/core/api.js");
 
@@ -233,4 +234,31 @@ test("after falling back to dropsh, later reads ask the CLI for a token no more"
   await api.read("x", "x", "1");
   const auth = env.calls.filter((c) => c.fn === "exec" && (c.args as any[])[1][0] === "auth");
   expect(auth.length).toBe(1);
+});
+
+test("me reads the signed-in user's uuid from the JSON:API index", async () => {
+  cliWithToken();
+  env.fetch = async (url, opts) => jsonapiServer([], "https://bakers.test", "u-me")(url, opts);
+  expect(await api.me()).toBe("u-me");
+  expect(fetched()).toEqual(["https://bakers.test/jsonapi"]);
+});
+
+test("me is null when the index names no user", async () => {
+  cliWithToken();
+  env.fetch = async (url, opts) => jsonapiServer([], "https://bakers.test", null)(url, opts);
+  expect(await api.me()).toBeNull();
+});
+
+test("me is null when the request fails", async () => {
+  cliWithToken();
+  env.fetch = async () => {
+    throw new Error("down");
+  };
+  expect(await api.me()).toBeNull();
+});
+
+test("me is null through bakers dropsh, which has no index", async () => {
+  env.exec = async () => ({ code: 1, stdout: "", stderr: "error: unknown command 'token'" });
+  expect(await api.me()).toBeNull();
+  expect(fetched()).toEqual([]);
 });

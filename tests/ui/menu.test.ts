@@ -32,12 +32,12 @@ test("a menu runs its item's action and closes", async () => {
     view: "menu",
     items: [
       { label: "Refresh", action: ["ticket.refresh"] },
-      { label: "Show closed tickets", action: ["ticket.toggleClosed"] },
+      { label: "Needs me", action: ["ticket.filter", { needsMe: true }] },
     ],
   });
   click(find(copy.render(), "pick-1"));
   await flush();
-  expect(env.shared["bakers.showClosed"]).toBe(true);
+  expect(env.shared["bakers.filter"]).toMatchObject({ needsMe: true, state: "open" });
   expect(closed()).toBe(true);
 });
 
@@ -73,13 +73,13 @@ test("a registry reset and refilled by registerAll() still runs a registered men
   const copy = mount(Bakers, {
     overlay: "overlay-7",
     view: "menu",
-    items: [{ label: "Mine", action: ["ticket.view", "mine"] }],
+    items: [{ label: "Mine", action: ["ticket.filter", { mine: true }] }],
   });
   await flush();
   env.calls.length = 0;
   click(find(copy.render(), "pick-0"));
   await flush();
-  expect(env.shared["bakers.view"]).toBe("mine");
+  expect(env.shared["bakers.filter"]).toMatchObject({ mine: true });
   expect(closed()).toBe(true);
 });
 

@@ -1,12 +1,12 @@
 // ticket/repository: reading tickets and what belongs to them through JSON:API
 // (core/api.js), the only place in the module that reads. Returns model objects.
-import { read, search } from "../core/api.js";
+import { me, read, search } from "../core/api.js";
 import { nameOf, toDetail, toTicket } from "./model.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** @type {[string, string]} */
 const TICKET = ["bb_ticket", "bb_ticket"];
-const LIST_INCLUDE = ["runs", "labels"];
+const LIST_INCLUDE = ["runs", "labels", "ticket_type"];
 const DETAIL_INCLUDE = [
   "comments",
   "runs",
@@ -147,4 +147,20 @@ export async function listConductors(project) {
  */
 export async function query(query) {
   return (await search(...TICKET, { include: LIST_INCLUDE, ...query })).map(toTicket);
+}
+
+/**
+ * The signed-in user: name to show (the display name, else the account name) and names, both
+ * of them, since the tickets' assignee may show either. Null when unknown or unreadable.
+ */
+export async function currentUser() {
+  try {
+    const uuid = await me();
+    if (!uuid) return null;
+    const u = await read("user", "user", uuid);
+    const names = [...new Set([u?.display_name, u?.name].filter(Boolean).map(String))];
+    return names.length ? { uuid, name: names[0], names } : null;
+  } catch {
+    return null;
+  }
 }

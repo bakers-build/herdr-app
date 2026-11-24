@@ -40,10 +40,10 @@ mods/bakers/
                                   conflict warning, steps with partial failures), keys
   list/      framework logic    list engine (like Views): run (filters, derived filters, exposed
                                   filter, sort, group, pager), query (a server list's query),
-                                  lookup (findList: a list by key, also "state:working")
+                                  lookup (findList: a list by key, "id:arg" passes args)
   ui/        framework drawing  generic drawing, knows no entity
-    components/                   button, chip, dot, pill, text, status-line, table, pager,
-                                  callout, entry, nav, markdown, menu, state
+    components/                   button, card, chip, dot, pill, text, status-line, pager,
+                                  callout, entry, markdown, menu, state
     form/                         drawing forms: inputs, the inline form, the dialog frame
     register.js                   the routes menu and dialog, the action form.open
     theme.js                      the wireframe's grays mapped onto Herdr's theme tokens, fonts
@@ -52,7 +52,7 @@ mods/bakers/
   ticket/    module
     register.js                   what the module puts in the registry (see below), among it
                                   the routes ticket.list, ticket.view, ticket.context,
-                                  ticket.run, ticket.rail, ticket.sidebar, ticket.status,
+                                  ticket.run, ticket.rail, ticket.status,
                                   ticket.actions, ticket.label-picker
     model.js                      the Ticket, Run, Comment shapes (JSDoc) and the mapping from
                                   JSON:API entities
@@ -62,15 +62,16 @@ mods/bakers/
     commands.js                   writes (bakers tools): comment, resume, edit, transition,
                                   freeze, cancel run, conductor, create, classify, labels
     store.js                      the window's open tickets in memory, refresh, derived facts
-    state.js                      shared UI state: the chosen list, Show closed
+    filter.js                     the Tickets tab's filter (Needs me, Mine, State, Label,
+                                  Type; shared as bakers.filter), applied to the records
     tabs.js                       the ticket vocabulary over core/tabs: open, pin, close, names
     terminal.js                   a ticket's live run terminal and the run column beside the tabs
     needs.js                      the toast for a ticket that newly asks a question
     window.js                     the window task: refresh, needs count, tab names, toasts
-    presenter/                    view modes, one ticket → props: full, teaser, context,
+    presenter/                    view modes, one ticket → props: full, card, context,
                                   search, notification, tab, counts; field/agent-line
-    list/                         list definitions: needs-me, mine, open, state, closed;
-                                  index (navigation order, counts, view menu, empty text)
+    list/                         list definitions: needs-me, open, closed;
+                                  index (lookup, empty text)
     form/                         form definitions: comment, edit, confirm (state, freeze,
                                   unfreeze, move, cancel), create, section (a panel section
                                   edited in a popup)
@@ -78,16 +79,16 @@ mods/bakers/
                                   "..." menu, the keys G and R and the actions palette), the
                                   state menu, the "..." menu
     view/                         list, full (the full view of one ticket), context, run (the
-                                  run column's header), rail, sidebar, status,
+                                  run column's header), rail, status,
                                   actions (the cmd-K palette, also cmd-shift-O and Move to),
                                   label-picker;
                                   commands (key commands)
-  project/   module             register.js (routes project.picker, project.sidebar-tool),
+  project/   module             register.js (routes project.picker, project.button),
                                   model, repository, state (the window's project),
-                                  presenter/picker, view/ (picker, sidebar-tool)
+                                  presenter/picker, view/ (picker, button)
   shell/     module             the bakers part of Herdr's frame: register.js (routes
-                                  shell.rail, shell.sidebar, shell.tabs, shell.status),
-                                  view/ (the four regions and contributions.js, which
+                                  shell.rail, shell.tabs, shell.status),
+                                  view/ (the three regions and contributions.js, which
                                   draws what modules contribute); knows no other module
 ```
 
@@ -107,13 +108,12 @@ A type is any string. The registry knows none of them. The types the mod uses:
 | type | id | definition | registered by |
 |---|---|---|---|
 | `route` | route name (`ticket.list`, `menu`, …) | `{ view, open? }`: the view class and the route's fixed overlay fields | every module, `ui` (`menu`, `dialog`) |
-| `list` | list id (`needs-me`, `state`, …) | the list definition | `ticket` |
+| `list` | list id (`needs-me`, `open`, `closed`) | the list definition | `ticket` |
 | `form` | form kind (`create`, `state`, …) | `{ build(props) }` | `ticket` |
 | `action` | action name (`ticket.refresh`, `form.open`, …) | `{ run(...args) }` | `ticket`, `project`, `ui` |
 | `tab` | kind (`ticket`) | `{ route, props(key), match, home? }`: a keyed tab of the kind; `match` reads the key (group 1) and the rest of the name (group 2), must accept `<key> <word>` (the key alone is tried as `<key> x`), and the kinds must not overlap; `home` is `{ name, route, index }` | `ticket` |
 | `rail.item` | e.g. `ticket` | `{ order, route }` | `ticket` |
-| `sidebar.section` | e.g. `ticket` | `{ order, title, route }` | `ticket` |
-| `sidebar.tool` | e.g. `project.picker` | `{ section, order, route }`: a button in the section's card | `project` |
+| `header.tool` | e.g. `project.picker` | `{ order, route }`: a button in the Tickets list header | `project` |
 | `status.item` | e.g. `ticket` | `{ order, route }` | `ticket` |
 | `window.task` | `ticket.refresh`, `ticket.run` | `{ every, run() }` | `ticket` |
 | `command` | a key command's name (`goto`, `new`, `tickets`, `panel`, `open`, `actions`) | `{ label?, run(arg, ctx) }`: `arg` is the text after the name, `ctx = { width, left }` (the status bar width, the x of its left edge); a command with a `label` is listed in the actions palette, in registry order | `ticket` |
@@ -124,12 +124,12 @@ A type is any string. The registry knows none of them. The types the mod uses:
 - The router (`main.js`) reads `route` through `viewOf`. `core/actions.js` (`perform`) reads `action`;
   `copy` alone is built in, because it needs the chooser's context. `list/lookup.js`
   (`findList`) reads `list`. `ui/form/dialog.js` reads `form`. `core/tabs.js` reads `tab`.
-- The shell reads the rest. `shell.rail`, `shell.sidebar` and `shell.status` draw `rail.item`,
-  `sidebar.section` (with its `sidebar.tool` buttons) and `status.item`, in order. Each
-  contribution names a route. `shell/view/contributions.js` finds the view with `viewOf`,
+- The shell reads the rest. `shell.rail` and `shell.status` draw `rail.item` and
+  `status.item`, in order. Each contribution names a route. `shell/view/contributions.js` finds the view with `viewOf`,
   makes it once from that route, starts it with `init`, draws it with `render` (an element or
   an array of them) and stops it with `close`. A click on the status block runs the first item
   whose view has `click()`.
+- `ticket/view/list.js` draws the `header.tool` contributions the same way.
 - `shell.status` also starts every `window.task` (now and every `every` ms) and runs the key
   commands through `command`.
 - `shell.tabs` asks every `tabs.decorate` about every tab. The merged result takes the first
@@ -180,11 +180,11 @@ such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu
 | `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket` |
 | `ticket.run` | `ticket/view/run.js` | the header block `run-header` of the run column `run`, right of `main` (written by `ticket/terminal.js`, not by the installer) |
 | `ticket.actions` | `ticket/view/actions.js` | a window Herdr centres (Esc reaches the mod): cmd-K, cmd-shift-O (`page: "tickets"`), Move to (`page: "move"`) |
-| `ticket.rail`, `ticket.sidebar`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail, sidebar and status |
+| `ticket.rail`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail and status |
 | `ticket.label-picker` | `ticket/view/label-picker.js` | a popup |
-| `project.picker` | `project/view/picker.js` | a popup from the sidebar |
-| `project.sidebar-tool` | `project/view/sidebar-tool.js` | the project button in the Tickets card |
-| `shell.rail`, `shell.sidebar`, `shell.tabs`, `shell.status` | `shell/view/…` | layout blocks (`scripts/layout.js`) |
+| `project.picker` | `project/view/picker.js` | a popup from the project button |
+| `project.button` | `project/view/button.js` | the project button in the Tickets list header (kind `header.tool`) |
+| `shell.rail`, `shell.tabs`, `shell.status` | `shell/view/…` | layout blocks (`scripts/layout.js`) |
 | `menu`, `dialog` | `ui/components/menu.js`, `ui/form/dialog.js` | popup menus, form dialogs |
 
 Herdr stores route names in its open tabs and layouts, so a route is never renamed; that is why
@@ -197,17 +197,19 @@ The Tickets list, from Herdr to the pixels:
 1. **Herdr** shows the tab with `props.view = "ticket.list"`.
 2. **`main.js`** looks the route's view up with `viewOf` (the `route` type of the registry) and
    runs `ticket/view/list.js`.
-3. **The view** looks up the chosen list (`ticket/state.js` → `"state:working"`) with
-   `findList` (`list/lookup.js`), which reads the `list` type of the registry: the definition `ticket/list/state.js` with the argument `working`.
+3. **The view** reads the filter (`ticket/filter.js`, shared as `bakers.filter`) and looks up
+   the list it needs (Needs me, open or closed) with `findList` (`list/lookup.js`), which reads
+   the `list` type of the registry.
 4. **The data:**
    - A local list takes the store's open tickets (`ticket/store.js`, loaded by
      `ticket/repository.js` through `core/api.js`).
-   - A server list (Recently closed) loads its pages through `repository.query`, built from
+   - A server list (State: Closed) loads its pages through `repository.query`, built from
      its definition by `list/query.js`.
-5. **`list/run.js`** applies the definition's filters, derived filters, the exposed filter
-   (the filter field), sort, group and pager.
-6. **`ticket/presenter/teaser.js`** turns each record into row props.
-7. **`ui/components/table.js`** and `ui/components/pager.js` draw them.
+5. **`ticket/filter.js`** narrows the records by the filter bar (Needs me, Mine, State, Label,
+   Type), then **`list/run.js`** applies the definition's filters, derived filters, the exposed
+   filter (the filter field), sort, group and pager.
+6. **`ticket/presenter/card.js`** turns each record into card props.
+7. **`ui/components/card.js`** and `ui/components/pager.js` draw them.
 8. **The view** wires Up and Down, Enter, cmd-Enter, N, R and the menus. These go to
    `core/tabs` (preview, pin), to forms (`ui/form/dialog.js` with
    `ticket/form/create.js`) and to registered actions.
@@ -232,7 +234,6 @@ defineList({
   load: query,                            // ticket/repository.js
   exposed: { fields: ["id", "title"] },   // the filter field of the screen
   pager: { type: "more", limit: 50 },     // "Show 50 more"
-  row: { mode: "teaser" },
   empty: "No other closed tickets.",
   count: false,
 });
@@ -242,10 +243,11 @@ The other parts a definition may have:
 - `filters`: local conditions;
 - `derived`: conditions on derived facts, such as who needs you;
 - `sort` and `group`;
-- `args`: through the key, `state:working`;
-- `sub`, `api`, `disabled`, `dim`: for the navigation.
+- `args`: through the key (`id:arg`), handed to the definition (label, query, filters); the
+  engine supports them, though no current list takes any;
+- `exposed`, `empty`, `count`: the filter field, the empty text and whether the list counts.
 
-The open lists filter the store's open tickets locally, because the sidebar, the rail and the
+The open lists filter the store's open tickets locally, because the filter bar, the rail and the
 status need their counts anyway. Only closed tickets are loaded page by page from the server.
 
 ## A form
@@ -319,12 +321,12 @@ updates.
 
 ## Where state lives
 
-- **Per window, in memory:** the project (`project/state.js`), the open tickets
-  (`ticket/store.js`) and the token (`core/api.js`). All are created on first use, never at
-  module top level (Herdr's `AGENTS.md`).
+- **Per window, in memory:** the project (`project/state.js`), the open tickets and the
+  signed-in user (`ticket/store.js`) and the token (`core/api.js`). All are created on first
+  use, never at module top level (Herdr's `AGENTS.md`).
 - **Shared between copies (`setShared`):** identifiers, counts and flags only
-  (`bakers.project`, `bakers.view`, `bakers.selected`, `bakers.preview`, `bakers.needs`,
-  `bakers.showClosed`). No ticket content.
+  (`bakers.project`, `bakers.filter`, `bakers.selected`, `bakers.preview`, `bakers.needs`).
+  No ticket content.
 - **Per copy:** a view's own state, such as the selection, the page, a form's values and
   the open comment folds.
 

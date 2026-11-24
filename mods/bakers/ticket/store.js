@@ -20,6 +20,27 @@ export function createStore(api, options = {}) {
   const details = new Map();
   /** @type {Map<string, any>} uuid -> derived facts from the list */
   const facts = new Map();
+  /** @type {Promise<void> | null} the user read under way; at most one at a time */
+  let readingUser = null;
+  /** Reads the signed-in user while there is none; a read that ends after a project switch is dropped. */
+  const readUser = () => {
+    if (store.user || readingUser) return readingUser;
+    const project = store.project;
+    readingUser = (async () => {
+      /** @type {any} */
+      let user = null;
+      try {
+        user = (await api.currentUser?.()) ?? null;
+      } catch {
+        user = null;
+      }
+      readingUser = null;
+      if (!user || store.project !== project) return;
+      store.user = user;
+      for (const fn of listeners) fn(store);
+    })();
+    return readingUser;
+  };
   /** @type {any} */
   const store = {
     project: null,
@@ -27,6 +48,8 @@ export function createStore(api, options = {}) {
     error: null,
     loading: false,
     updated: null,
+    /** @type {{ uuid: string, name: string, names: string[] } | null} the signed-in user */
+    user: null,
 
     /** @param {string} project */
     async load(project) {
@@ -34,11 +57,13 @@ export function createStore(api, options = {}) {
         store.tickets = [];
         details.clear();
         facts.clear();
+        store.user = null;
       }
       store.project = project;
       await store.refresh();
     },
 
+    /** Reads the open tickets, then the signed-in user while it is unknown (a failed read is retried). */
     async refresh() {
       if (!store.project) return;
       store.loading = true;
@@ -62,6 +87,7 @@ export function createStore(api, options = {}) {
         store.loading = false;
       }
       for (const fn of listeners) fn(store);
+      await readUser();
     },
 
     /** Reads one ticket with everything a tab or the panel shows. @param {string} id @param {boolean} [byUuid] */
@@ -112,6 +138,7 @@ export function createStore(api, options = {}) {
         machine: t.claim_machine ?? null,
         conductor: t.conductor ?? null,
         assignee: t.assignee ?? null,
+        type: t.type ?? null,
         comments: d?.comments ?? [],
         closed,
         closedDate: t.closed_date ?? null,

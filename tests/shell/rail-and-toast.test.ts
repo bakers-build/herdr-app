@@ -38,7 +38,13 @@ test("rail: 56 px column with the bakers button 36x36 labelled b 2", async () =>
   expect(b.calls.border_color).toEqual(["accent"]);
   expect(b.calls.accessibility_label).toEqual(["bakers, 2 tickets need you"]);
   click(b);
-  expect(env.shared["bakers.view"]).toBe("needs-me");
+  expect(env.shared["bakers.filter"]).toEqual({
+    needsMe: true,
+    mine: false,
+    state: "open",
+    label: null,
+    type: null,
+  });
   expect(runs()).toContainEqual(["tab.select", { id: "t0" }]);
   click(find(root, "rail-spaces"));
   expect(runs()).toContainEqual(["layout.toggle", { id: "sidebar" }]);
@@ -78,4 +84,23 @@ test("a toast click opens its own ticket's tab, not the newest toast's, and neve
     { mod: "bakers", props: { view: "ticket.view", ticket: "SHOP-41" }, name: "SHOP-41 working" },
   ]);
   expect(runs().some((r) => String(r[0]).startsWith("pane.focus"))).toBe(false);
+});
+
+test("the rail draws registered contributions only", async () => {
+  const Bakers = await load("bakers/main.js");
+  const { define, _resetForTests } = await import("../../mods/bakers/core/registry.js");
+  const { register } = await import("../../mods/bakers/shell/register.js");
+  const { div } = await import("gpui-kit");
+  _resetForTests();
+  register();
+  class Y {
+    render() {
+      return div().id("rail-y").child("y");
+    }
+  }
+  define("route", "test.y", { view: Y });
+  define("rail.item", "y", { order: 0, route: "test.y" });
+  const rail = mount(Bakers, { view: "shell.rail" }).render();
+  expect(texts(rail)).toContain("y");
+  expect(texts(rail)).not.toContain("Tickets");
 });

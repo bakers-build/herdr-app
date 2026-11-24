@@ -50,17 +50,29 @@ test("a 56 px rail block is the first child of root", () => {
   });
 });
 
-test("the sidebar is 220 px and hidden, with the bakers section after agents", () => {
+test("the sidebar is 220 px and hidden, and carries no bakers box", () => {
   const l = bakersLayout(main);
   const sidebar = find(l, "sidebar");
   expect(sidebar.size).toEqual({ px: 220 });
   expect(sidebar.hidden).toBe(true);
-  const list = parentOf(l, "agents");
+  expect(find(l, "bakers-sidebar")).toBeNull();
+});
+
+test("a layout that already carries the bakers box loses it; other blocks stay", () => {
+  const withBox = structuredClone(main);
+  const list = parentOf(withBox, "agents");
   const i = list.children.findIndex((c: any) => c.id === "agents");
-  expect(list.children[i + 1]).toMatchObject({
+  list.children.splice(i + 1, 0, {
     id: "bakers-sidebar",
+    type: "block",
+    size: { weight: 1 },
+    min: 200,
     content: { mod: "bakers", props: { view: "shell.sidebar" } },
   });
+  const l = bakersLayout(withBox);
+  expect(find(l, "bakers-sidebar")).toBeNull();
+  expect(ids(l)).toEqual(ids(bakersLayout(main)));
+  expect(l).toEqual(bakersLayout(main));
 });
 
 test("the tab bar is the bakers view tabs at 40 px", () => {

@@ -13,10 +13,9 @@ test("bakers routes each placement to its view by props().view", async () => {
   expect([...names].sort()).toEqual([
     "dialog",
     "menu",
+    "project.button",
     "project.picker",
-    "project.sidebar-tool",
     "shell.rail",
-    "shell.sidebar",
     "shell.status",
     "shell.tabs",
     "ticket.actions",
@@ -25,7 +24,6 @@ test("bakers routes each placement to its view by props().view", async () => {
     "ticket.list",
     "ticket.rail",
     "ticket.run",
-    "ticket.sidebar",
     "ticket.status",
     "ticket.view",
   ]);
@@ -52,11 +50,18 @@ test('an unknown view draws "bakers: unknown view"', async () => {
 test("registerAll fills lists, forms and actions", () => {
   _resetForTests();
   registerAll();
-  const ids = all("list").map((d: any) => d.id);
-  for (const id of ["needs-me", "mine", "open", "state", "closed"]) expect(ids).toContain(id);
+  expect(all("list").map((d: any) => d.id)).toEqual(["needs-me", "open", "closed"]);
   expect(get("form", "create")).toBeTruthy();
   expect(get("form", "cancel")).toBeTruthy();
   expect(get("action", "project.choose")).toBeTruthy();
   expect(get("action", "form.open")).toBeTruthy();
   expect(get("action", "tabs.closeAll")).toBeTruthy();
+});
+
+test("the project button is a header.tool; the sidebar kinds are gone", () => {
+  _resetForTests();
+  registerAll();
+  expect(all("header.tool")).toEqual([{ id: "project.picker", order: 0, route: "project.button" }]);
+  expect(all("sidebar.section")).toEqual([]);
+  expect(all("sidebar.tool")).toEqual([]);
 });

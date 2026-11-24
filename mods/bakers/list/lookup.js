@@ -1,5 +1,5 @@
-// list/lookup: finds a registered list by key. A key is the list's id, or its id and an
-// argument: "state:working" runs the list "state" with args ["working"].
+// list/lookup: finds a registered list by key. A key is the list's id, or its id and
+// arguments: "id:a:b" runs the list "id" with args ["a", "b"] (no current list takes any).
 import { all } from "../core/registry.js";
 
 /** @param {string} key @returns {{ def: any, args: string[], label: string } | null} */

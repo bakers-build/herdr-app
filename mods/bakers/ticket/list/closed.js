@@ -16,7 +16,6 @@ export default {
   load: query,
   exposed: { fields: ["id", "title"] },
   pager: { type: "more", limit: 50 },
-  row: { mode: "teaser" },
   empty: "No other closed tickets.",
   count: false,
 };

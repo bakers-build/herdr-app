@@ -8,7 +8,7 @@ ticket's state next to the agent terminals, so a developer does not switch to th
 The layout with the Tickets list (frame R2-4) and a ticket in its own tab (frame R2-3) are
 built as one mod, `bakers`. Herdr places it in several blocks, tabs and overlays; each copy
 gets a route (`ticket.list`, `ticket.view`, `ticket.context`, `ticket.actions`,
-`shell.sidebar`, ...), and the router runs that route's view. The code is split into a
+`project.button`, ...), and the router runs that route's view. The code is split into a
 small framework (logic: `core`, `form`, `list`; drawing: `ui`) and modules (`ticket`, `project`,
 `shell`), each with its model, repository, commands, store, lists, view modes, forms,
 operations, views and routes. See [docs/architecture.md](docs/architecture.md).
@@ -59,13 +59,13 @@ It never overwrites a key you already use; it prints the ones it kept.
 
 | Key | What it does |
 |---|---|
-| cmd-B | sidebar with the bakers section |
+| cmd-B | Herdr's sidebar (Spaces and Agents; the mod adds no box to it) |
 | cmd-shift-T | Ticket panel (the context of the focused ticket tab or the selected row); Edit... on Description, Acceptance and Summary opens a popup: cmd-Enter saves, Esc cancels |
 | cmd-shift-O | Go to ticket |
 | cmd-shift-B | Tickets tab |
 | cmd-shift-N | New ticket |
 | cmd-K | Actions of the ticket in front, or of the selected row on the Tickets tab, and the bakers commands |
-| Tickets tab | Up/Down select, Enter preview tab, cmd-Enter pinned tab, `/` filter, N new ticket, R refresh |
+| Tickets tab | Up/Down select, Enter preview tab, cmd-Enter pinned tab, `/` filter, N new ticket, R refresh; the filter bar narrows the list: Needs me, Mine, State, Label, Type, Clear |
 | Ticket tab | A acts on the Needs-you card, E edits, G shows the agent, R moves the run; cmd-Enter sends or saves, Esc cancels |
 
 Every change of state, freeze, move or cancel asks first; Esc writes nothing.
@@ -78,7 +78,8 @@ after a 401. With an older CLI it reads through `bakers dropsh` instead. Writes 
 answer, edit, state, freeze, move, cancel, classify, labels) go through `bakers tools`.
 The mod puts no ticket content into Herdr's shared state.
 
-Still shown with the "API" chip: Mine (the mod does not know the signed-in user yet) and the
+Mine is the tickets assigned to you: the mod reads the signed-in user from the API. Only when
+that fails is Mine disabled and shown with the "API" chip. Still shown with the chip: the
 allowed transitions (the state menu lists every state; the server refuses what the workflow
 forbids). Assignee, reviewers, the closing date, the conductor list, the machine and activity
 come from JSON:API.
