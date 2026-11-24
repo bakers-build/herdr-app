@@ -41,6 +41,7 @@ export default class RunHeader {
     const id = selectedTicket();
     const mine = id && term ? shells(id) : [];
     const shown = id && term ? shownShell(id) : null;
+    const shownKey = shown ? tabKey(shown) : null;
     const showing = shown ?? term;
     const run = id ? runTerminal(id) : undefined;
     return h_flex()
@@ -71,7 +72,7 @@ export default class RunHeader {
               return tab(
                 `run-tab-${key}`,
                 `Shell ${i + 1}`,
-                shown === shell,
+                shownKey === key,
                 () => {
                   selectTab(/** @type {string} */ (id), key);
                   syncRun();

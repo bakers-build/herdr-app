@@ -175,3 +175,44 @@ test("the header names the shown shell's address and machine; Hide still hides",
   click(find(copy.render(), "run-hide"));
   expect(runs()).toEqual([["layout.hide", { id: "run" }]]);
 });
+
+/** The active tab colour, read from the theme after the harness has mocked herdr. */
+async function selected() {
+  const { tokens } = await import("../../../mods/bakers/ui/theme.js");
+  return tokens().selected;
+}
+
+/** terminals() answers fresh copies on every read, as Herdr's host call may: no two reads share
+ *  an object, so a tab must be matched by its key, never by identity. */
+function freshReads(list: any[]) {
+  let base = list;
+  Object.defineProperty(env, "terminals", {
+    configurable: true,
+    enumerable: true,
+    get: () => base.map((t) => ({ ...t, labels: { ...t.labels } })),
+    set: (v) => {
+      base = v;
+    },
+  });
+}
+
+test("the shown shell's tab is active when terminals() returns fresh objects", async () => {
+  stack();
+  env.shared["bakers.runTab"] = { "SHOP-41": "2000" };
+  freshReads([live("t7", "SHOP-41", { cwd: "/w" }), shell("t20", "1000"), shell("t21", "2000")]);
+  const tree = (await header()).render();
+  const active = await selected();
+  expect(find(tree, "run-tab-2000").calls.bg).toEqual([active]);
+  expect(find(tree, "run-tab-2000").calls.font_semibold).toBeDefined();
+  expect(find(tree, "run-tab-1000").calls.bg).not.toEqual([active]);
+  expect(find(tree, "run-tab-agent").calls.bg).not.toEqual([active]);
+});
+
+test("with no shell shown the agent's tab is active when terminals() returns fresh objects", async () => {
+  stack();
+  freshReads([live("t7", "SHOP-41", { cwd: "/w" }), shell("t20", "1000")]);
+  const tree = (await header()).render();
+  const active = await selected();
+  expect(find(tree, "run-tab-agent").calls.bg).toEqual([active]);
+  expect(find(tree, "run-tab-1000").calls.bg).not.toEqual([active]);
+});
