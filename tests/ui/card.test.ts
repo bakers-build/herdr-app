@@ -45,20 +45,26 @@ test("a card without a why, labels or assignee leaves those out", () => {
   ]);
 });
 
+const titleNode = () => {
+  let hit: any;
+  const go = (n: any) => {
+    if (n?.nodes) {
+      if (n.nodes.includes(vm.title)) hit = n;
+      n.nodes.forEach(go);
+    }
+  };
+  go(ticketCard(vm, () => {}));
+  return hit;
+};
+
 test("the title is clamped to two lines", () => {
-  const title = (() => {
-    let hit: any;
-    const go = (n: any) => {
-      if (n?.nodes) {
-        if (n.nodes.includes(vm.title)) hit = n;
-        n.nodes.forEach(go);
-      }
-    };
-    go(ticketCard(vm, () => {}));
-    return hit;
-  })();
+  const title = titleNode();
   expect(title.calls.max_h).toEqual([36]);
   expect(title.calls.overflow_hidden).toBeDefined();
+});
+
+test("the title sets no line height: a bare number is not pixels in Herdr", () => {
+  expect(titleNode().calls.line_height).toBeUndefined();
 });
 
 test("a click selects; the selected card is outlined in accent, every card with the same border width", () => {

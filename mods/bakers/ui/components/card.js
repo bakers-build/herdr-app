@@ -10,6 +10,8 @@ import { pill } from "./pill.js";
 import { statusLine } from "./status-line.js";
 
 const TITLE_SIZE = 13;
+// The title is capped at two lines by a height of 2 x 18 px. It sets no line_height: in Herdr a
+// bare number there is not pixels, and the line box then outgrows the cap and clips the text.
 const TITLE_LINE = 18;
 
 /**
@@ -42,11 +44,10 @@ export function ticketCard(vm, onClick) {
           .child(div().flex_1())
           .child(div().text_size(12).text_color(t.muted).child(vm.age)),
       )
-      // The elements have no line_clamp: two lines is a fixed line height with a height cap.
+      // The elements have no line_clamp: two lines is a height cap of 2 x 18 px, no line_height.
       .child(
         div()
           .text_size(TITLE_SIZE)
-          .line_height(TITLE_LINE)
           .max_h(TITLE_LINE * 2)
           .overflow_hidden()
           .font_semibold()

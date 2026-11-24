@@ -3174,11 +3174,6 @@ exports[`golden: ticket.list R2-4 1`] = `
                 "font_semibold": [
                   [],
                 ],
-                "line_height": [
-                  [
-                    18,
-                  ],
-                ],
                 "max_h": [
                   [
                     36,
@@ -3595,11 +3590,6 @@ exports[`golden: ticket.list R2-4 1`] = `
               "calls": {
                 "font_semibold": [
                   [],
-                ],
-                "line_height": [
-                  [
-                    18,
-                  ],
                 ],
                 "max_h": [
                   [
