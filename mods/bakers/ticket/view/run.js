@@ -11,6 +11,7 @@ import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { mono } from "../../ui/components/text.js";
 import { closeShell, selectTab, shells, shownShell, startShell, tabKey } from "../exec.js";
+import { getStore } from "../store.js";
 import { selectedTicket } from "../tabs.js";
 import { hideRun, runTerminal, syncRun, TERMINAL } from "../terminal.js";
 
@@ -43,7 +44,7 @@ export default class RunHeader {
     const shown = id && term ? shownShell(id) : null;
     const shownKey = shown ? tabKey(shown) : null;
     const showing = shown ?? term;
-    const run = id ? runTerminal(id) : undefined;
+    const run = id ? runTerminal(id, getStore().byId(id)?.uuid) : undefined;
     return h_flex()
       .id("run-header")
       .size_full()

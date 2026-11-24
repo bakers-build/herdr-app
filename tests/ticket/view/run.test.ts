@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { live, resetMod } from "../../fixtures/shop";
+import { live, resetMod, ticketPanel } from "../../fixtures/shop";
 import { click, env, find, flush, load, mount, reset, runs, texts } from "../../harness";
 
 beforeEach(() => {
@@ -215,4 +215,11 @@ test("with no shell shown the agent's tab is active when terminals() returns fre
   const active = await selected();
   expect(find(tree, "run-tab-agent").calls.bg).toEqual([active]);
   expect(find(tree, "run-tab-1000").calls.bg).not.toEqual([active]);
+});
+
+test("a run labelled with the ticket's UUID offers Execute", async () => {
+  await ticketPanel();
+  stack();
+  env.terminals = [live("t7", "u41", { cwd: "/w" })];
+  expect(find((await header()).render(), "run-execute")).toBeTruthy();
 });
