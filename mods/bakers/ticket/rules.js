@@ -46,6 +46,14 @@ export function question(comments) {
   return [...list].reverse().find((c) => c.type === "question") ?? list[list.length - 1] ?? null;
 }
 
+/** The size limits of the panel's editable sections, in UTF-8 bytes of the text sent. */
+export const SECTION_LIMITS = { description: 6144, acceptance: 3072, summary: 3072 };
+
+/** The newest comment of a type (comments are oldest first), or null. @param {any[] | undefined} comments @param {string} type */
+export function newest(comments, type) {
+  return [...(comments ?? [])].reverse().find((c) => c.type === type) ?? null;
+}
+
 /** The fingerprint the edit form compares to warn about changes made meanwhile. @param {any} tk */
 export const stamp = (tk) =>
   JSON.stringify([tk?.revision ?? tk?.changed ?? null, tk?.title ?? "", tk?.description ?? ""]);

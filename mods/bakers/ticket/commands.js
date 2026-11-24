@@ -4,9 +4,14 @@
 import { call } from "../core/cli.js";
 import { refresh } from "./store.js";
 
+/** A new comment of a type (comments are create-only). @param {string} ticket @param {string} type @param {string} body */
+export const publish = (ticket, type, body) =>
+  call("bakers_comment_publish", { ticket, type, body });
 /** @param {string} ticket @param {string} body */
-export const comment = (ticket, body) =>
-  call("bakers_comment_publish", { ticket, type: "comment", body });
+export const comment = (ticket, body) => publish(ticket, "comment", body);
+/** Replaces the description whole (no revision check in the API). @param {string} ticket @param {string} description */
+export const describe = (ticket, description) =>
+  call("bakers_ticket_update", { ticket, description });
 /** After an answer: unfreeze and remove the label Question. @param {string} ticket */
 export const resume = (ticket) =>
   call("bakers_ticket_update", { ticket, frozen: false, labels_remove: ["Question"] });
