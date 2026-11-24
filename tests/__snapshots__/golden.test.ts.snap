@@ -1630,36 +1630,6 @@ exports[`golden: shell.tabs R2-4 1`] = `
                 "SHOP-41 working",
               ],
             },
-            {
-              "arg": undefined,
-              "calls": {
-                "bg": [
-                  [
-                    "blocked",
-                  ],
-                ],
-                "flex_none": [
-                  [],
-                ],
-                "id": [
-                  [
-                    "dot-t5",
-                  ],
-                ],
-                "rounded": [
-                  [
-                    3,
-                  ],
-                ],
-                "size": [
-                  [
-                    6,
-                  ],
-                ],
-              },
-              "kind": "div",
-              "nodes": [],
-            },
           ],
         },
         {
@@ -1766,36 +1736,6 @@ exports[`golden: shell.tabs R2-4 1`] = `
               "nodes": [
                 "SHOP-56 plan",
               ],
-            },
-            {
-              "arg": undefined,
-              "calls": {
-                "bg": [
-                  [
-                    "blocked",
-                  ],
-                ],
-                "flex_none": [
-                  [],
-                ],
-                "id": [
-                  [
-                    "dot-t6",
-                  ],
-                ],
-                "rounded": [
-                  [
-                    3,
-                  ],
-                ],
-                "size": [
-                  [
-                    6,
-                  ],
-                ],
-              },
-              "kind": "div",
-              "nodes": [],
             },
           ],
         },
@@ -2595,36 +2535,6 @@ exports[`golden: shell.tabs R2-3 1`] = `
               "nodes": [
                 "SHOP-41 working",
               ],
-            },
-            {
-              "arg": undefined,
-              "calls": {
-                "bg": [
-                  [
-                    "blocked",
-                  ],
-                ],
-                "flex_none": [
-                  [],
-                ],
-                "id": [
-                  [
-                    "dot-t5",
-                  ],
-                ],
-                "rounded": [
-                  [
-                    3,
-                  ],
-                ],
-                "size": [
-                  [
-                    6,
-                  ],
-                ],
-              },
-              "kind": "div",
-              "nodes": [],
             },
           ],
         },
@@ -3976,7 +3886,7 @@ exports[`golden: ticket.list R2-4 1`] = `
               },
               "kind": "div",
               "nodes": [
-                "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the Ticket panel, when shown, follows it.",
+                "Enter or a double click shows the ticket in the panel, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the panel, when shown, follows it.",
               ],
             },
           ],
@@ -5660,14 +5570,16 @@ exports[`golden calls: new 1`] = `
 exports[`golden calls: open:SHOP-41 1`] = `
 [
   [
-    "tab.new",
+    "layout.select",
     {
-      "mod": "bakers",
-      "name": "SHOP-41 working",
-      "props": {
-        "ticket": "SHOP-41",
-        "view": "ticket.view",
-      },
+      "child": "ticket",
+      "stack": "panel-body",
+    },
+  ],
+  [
+    "layout.show",
+    {
+      "id": "panel",
     },
   ],
 ]

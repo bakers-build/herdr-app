@@ -44,8 +44,8 @@ test("planComments reads the plans of open tickets only", async () => {
   );
 });
 
-test("the store's refresh passes the identifiers of the open ticket tabs", async () => {
-  env.spaces[0].tabs.push({ id: "t5", name: "SHOP-49 closed", index: 2, active: false });
+test("the store's refresh also reads the selected ticket, a closed one included", async () => {
+  env.shared["bakers.selected"] = "SHOP-49";
   await ready();
   expect(getStore().byId("SHOP-49")?.closed).toBe(true);
 });

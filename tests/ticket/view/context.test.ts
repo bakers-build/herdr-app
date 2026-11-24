@@ -27,11 +27,12 @@ beforeEach(() => {
   resetMod();
 });
 
-async function panel(focusTicket = true, extra: Record<string, unknown> = {}) {
+/** The panel on the selected ticket, SHOP-41 unless a test selected another; none when select is false. */
+async function panel(select = true, extra: Record<string, unknown> = {}) {
   activeSpace();
   backend({ bakers_ticket_update: {}, bakers_ticket_classify: {}, ...extra });
-  env.spaces[0].tabs.push({ id: "t5", name: "SHOP-41 working", index: 2, active: focusTicket });
-  env.focused = { space: "s1", tab: focusTicket ? "t5" : "t0", pane: "p1" };
+  if (select) env.shared["bakers.selected"] ??= "SHOP-41";
+  env.focused = { space: "s1", tab: "t0", pane: "p1" };
   const Bakers = await load("bakers/main.js");
   const copy = mount(Bakers, { view: "ticket.context" });
   await flush();
@@ -40,14 +41,16 @@ async function panel(focusTicket = true, extra: Record<string, unknown> = {}) {
   return copy;
 }
 
-test("it follows the focused ticket tab", async () => {
+test("it follows the selected ticket", async () => {
   const root = (await panel()).render();
   expect(texts(find(root, "panel-header"))).toEqual(["SHOP-41", "working, frozen"]);
 });
 
-test("without a focused ticket tab it follows the selected list row", async () => {
+test("a leftover ticket tab in front does not move the panel off the selection", async () => {
   env.shared["bakers.selected"] = "SHOP-56";
-  const copy = await panel(false);
+  const copy = await panel();
+  env.spaces[0].tabs.push({ id: "t5", name: "SHOP-41 working", index: 2, active: true });
+  env.focused = { space: "s1", tab: "t5", pane: "p1" };
   expect(texts(find(copy.render(), "panel-header"))).toEqual(["SHOP-56", "plan"]);
 });
 
@@ -55,6 +58,13 @@ test("nothing selected says so", async () => {
   const copy = await panel(false);
   expect(texts(copy.render())).toEqual(["No ticket selected"]);
 });
+
+/** Herdr's layout with the panel shown on its ticket child. */
+function onTicket() {
+  env.layout = bakersLayout(main);
+  findNode(env.layout, "panel").hidden = false;
+  findNode(env.layout, "panel-body").active = "ticket";
+}
 
 test("Agent and conductor: the line, three actions and the key hint", async () => {
   env.terminals = [live("t7")];
@@ -73,40 +83,44 @@ test("Agent and conductor: the line, three actions and the key hint", async () =
     expect(find(s, id).calls.h).toEqual([24]);
     expect(find(s, id).calls.text_size).toEqual([11]);
   }
-  env.layout = bakersLayout(main);
+  onTicket();
   env.calls.length = 0;
   click(find(s, "show-agent"));
-  expect(runs().map(([c]) => c)).toEqual(["layout.set", "pane.focus"]);
-  expect(runs()[1]).toEqual(["pane.focus", { terminal: "t7" }]);
+  expect(runs().map(([c]) => c)).toEqual([
+    "layout.select",
+    "layout.show",
+    "layout.set",
+    "pane.focus",
+  ]);
+  expect(runs()[3]).toEqual(["pane.focus", { terminal: "t7" }]);
 });
 
-test("on the Tickets tab Show agent opens the ticket, then focuses its run once the tab is in front", async () => {
+test("Show agent never opens a tab; the run is focused once the panel shows it", async () => {
   env.shared["bakers.selected"] = "SHOP-56";
   env.terminals = [live("t9", "SHOP-56")];
-  const copy = await panel(false);
+  const copy = await panel();
   env.layout = bakersLayout(main);
   env.calls.length = 0;
   click(find(copy.render(), "show-agent"));
-  expect(runs().map(([c]) => c)).toEqual(["tab.new"]);
-  expect((runs()[0][1] as any).props).toMatchObject({ view: "ticket.view", ticket: "SHOP-56" });
-  env.spaces[0].tabs.push({ id: "t6", name: "SHOP-56 plan", index: 3, active: true });
-  env.focused = { space: "s1", tab: "t6", pane: "p1" };
+  expect(runs().some(([c]) => c === "tab.new")).toBe(false);
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([]);
+  onTicket();
   terminal.syncRun();
   expect(runs().filter(([c]) => c === "pane.focus")).toEqual([["pane.focus", { terminal: "t9" }]]);
   expect(env.shared["bakers.runFocus"]).toBe(null);
 });
 
-test("Show agent after Hide shows the column again", async () => {
+test("Show agent after Hide shows the run again", async () => {
   env.terminals = [live("t7")];
   const copy = await panel();
-  env.layout = bakersLayout(main);
+  onTicket();
   terminal.syncRun();
   env.layout = (runs()[0][1] as any).layout;
   findNode(env.layout, "run").hidden = true;
   env.shared["bakers.runHidden"] = true;
   env.calls.length = 0;
   click(find(copy.render(), "show-agent"));
-  expect(runs()).toEqual([
+  expect(runs().slice(2)).toEqual([
     ["layout.show", { id: "run" }],
     ["pane.focus", { terminal: "t7" }],
   ]);

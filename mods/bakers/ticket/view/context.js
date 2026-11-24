@@ -9,7 +9,7 @@ import { perform } from "../../core/actions.js";
 import { openRoute } from "../../core/router.js";
 import { classify } from "../../core/errors.js";
 import { runReason, runTerminal, showAgent } from "../terminal.js";
-import { focusedTicket } from "../tabs.js";
+import { selectedTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { chip } from "../../ui/components/chip.js";
@@ -56,7 +56,7 @@ export default class Panel {
   }
 
   following() {
-    return focusedTicket() ?? /** @type {string | null} */ (shared("bakers.selected")) ?? null;
+    return selectedTicket();
   }
 
   /** Reloads when the followed ticket or the last refresh changed; no call otherwise. @param {import("gpui-kit").Context} cx */

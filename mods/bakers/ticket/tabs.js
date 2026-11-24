@@ -1,66 +1,47 @@
-// ticket/tabs: the ticket vocabulary over core/tabs, for the kind "ticket" (registered in
-// ticket/register.js).
-import { focused, shared } from "herdr";
-import {
-  closeWhere,
-  focusedKey,
-  homeTab,
-  keyedTabs,
-  open,
-  openHome,
-  pin,
-  syncNames,
-} from "../core/tabs.js";
+// ticket/tabs: which ticket the window is on. A ticket opens in the right panel, never as a tab:
+// the selection (shared "bakers.selected") is the one source, and the panel's child "ticket"
+// follows it. The tab kind "ticket" (ticket/register.js) only keeps the home tab "Tickets" and
+// recognises leftover ticket tabs of older versions, which the window task closes.
+import { focused, layout, run, setShared, shared } from "herdr";
+import { findNode } from "../core/herdr.js";
+import { closeWhere, homeTab, openHome } from "../core/tabs.js";
 
 const KIND = "ticket";
 
-/**
- * Opens a ticket as the preview tab, or pinned; an open ticket is only selected.
- * The name comes from the ticket presenter (ticket/presenter/tab.js).
- * @param {string} id @param {string} name @param {{ pin?: boolean }} [opts]
- */
-export function openTicket(id, name, opts = {}) {
-  open(KIND, id, name, opts);
+/** The selected ticket's identifier, or null. @returns {string | null} */
+export function selectedTicket() {
+  return /** @type {string | null} */ (shared("bakers.selected")) ?? null;
 }
 
-/** Pins the preview tab when it shows this ticket. @param {string} id */
-export function pinTicket(id) {
-  pin(KIND, id);
+/** Selects a ticket and shows it in the panel, unhiding the panel. @param {string} id */
+export function selectTicket(id) {
+  setShared("bakers.selected", id);
+  run("layout.select", { stack: "panel-body", child: "ticket" });
+  run("layout.show", { id: "panel" });
 }
 
 export function ensureTicketsTab() {
   openHome(KIND);
 }
 
-/** The identifier of the focused ticket tab, or null. */
-export function focusedTicket() {
-  return focusedKey(KIND);
+/** Whether the panel is shown on its child "ticket". */
+export function panelShowsTicket() {
+  const root = layout();
+  const panel = findNode(root, "panel");
+  return Boolean(panel && !panel.hidden && findNode(root, "panel-body")?.active === "ticket");
 }
 
-/** The ticket the window is on: the focused ticket tab (also while its run block has the focus),
- *  on the Tickets tab its selected row, else null. @returns {string | null} */
+/** The ticket the window is on: the selected ticket while the Tickets tab is focused or the panel
+ *  shows it (also while its run has the focus), else null. @returns {string | null} */
 export function frontTicket() {
-  const id = focusedTicket();
-  if (id) return id;
+  const id = selectedTicket();
+  if (!id) return null;
   const home = homeTab(KIND);
-  if (!home || home.id !== focused()?.tab) return null;
-  return /** @type {string | null} */ (shared("bakers.selected")) ?? null;
+  if (home && home.id === focused()?.tab) return id;
+  return panelShowsTicket() ? id : null;
 }
 
-/** @returns {string[]} */
-export function openTicketIds() {
-  return keyedTabs(KIND).map((o) => o.key);
-}
-
-/** @param {(id: string) => string | null} nameOf the presenter's tab name, null when unknown */
-export function syncTicketNames(nameOf) {
-  syncNames(KIND, nameOf);
-}
-
-export function closeFinished() {
-  closeWhere(KIND, (t) => t.rest === "closed");
-}
-
+/** Closes every ticket tab left from versions that opened tickets as tabs; never "Tickets". */
 export function closeAll() {
   closeWhere(KIND, () => true);
 }

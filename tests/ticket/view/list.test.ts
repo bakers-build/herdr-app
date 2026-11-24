@@ -97,7 +97,12 @@ test("the selected row has the accent outline, the selected background and its s
   expect(env.shared["bakers.selected"]).toBe("SHOP-41");
 });
 
-test("Down moves the selection and the panel follows; Enter opens the preview", async () => {
+const PANEL_SHOW = [
+  ["layout.select", { stack: "panel-body", child: "ticket" }],
+  ["layout.show", { id: "panel" }],
+];
+
+test("Down moves the selection and the panel follows; Enter shows the ticket in the panel", async () => {
   const copy = await list();
   key(copy.render(), "down");
   expect(env.shared["bakers.selected"]).toBe("SHOP-56");
@@ -105,32 +110,29 @@ test("Down moves the selection and the panel follows; Enter opens the preview", 
   expect(env.shared["bakers.selected"]).toBe("SHOP-41");
   env.calls.length = 0;
   key(copy.render(), "enter");
-  expect(runs()).toEqual([
-    [
-      "tab.new",
-      { mod: "bakers", props: { view: "ticket.view", ticket: "SHOP-41" }, name: "SHOP-41 working" },
-    ],
-  ]);
-  expect(env.shared["bakers.preview"]).toEqual({ id: "SHOP-41", index: null });
+  expect(runs()).toEqual(PANEL_SHOW);
+  expect(env.shared["bakers.preview"]).toBeUndefined();
 });
 
-test("cmd-Enter and double-click open a pinned tab", async () => {
+test("cmd-Enter and double-click show the ticket in the panel, no tab", async () => {
   const copy = await list();
   key(copy.render(), "cmd-enter");
-  expect(env.shared["bakers.preview"]).toBeUndefined();
-  expect(runs()[0]).toEqual([
-    "tab.new",
-    { mod: "bakers", props: { view: "ticket.view", ticket: "SHOP-41" }, name: "SHOP-41 working" },
-  ]);
+  expect(runs()).toEqual(PANEL_SHOW);
   env.calls.length = 0;
   click(find(copy.render(), "row-SHOP-56"), { click_count: 2 });
-  expect(runs()).toEqual([
-    [
-      "tab.new",
-      { mod: "bakers", props: { view: "ticket.view", ticket: "SHOP-56" }, name: "SHOP-56 plan" },
-    ],
-  ]);
-  expect(env.shared["bakers.preview"]).toBeUndefined();
+  expect(env.shared["bakers.selected"]).toBe("SHOP-56");
+  expect(runs()).toEqual(PANEL_SHOW);
+  expect(runs().some((r) => r[0] === "tab.new")).toBe(false);
+});
+
+test("a selection made outside the list (goto, create) survives a refresh of its rows", async () => {
+  const copy = await list();
+  env.shared["bakers.selected"] = "SHOP-70";
+  copy.render();
+  expect(env.shared["bakers.selected"]).toBe("SHOP-70");
+  expect(copy.inner.selected).toBe("SHOP-70");
+  key(copy.render(), "down");
+  expect(env.shared["bakers.selected"]).toBe("SHOP-56");
 });
 
 test("a single click selects a row", async () => {
@@ -177,7 +179,7 @@ test("letters typed into the filter do not act as keys", async () => {
   expect(env.calls.find((c) => c.fn === "openOverlay")).toBeUndefined();
 });
 
-test("the ... menu lists the four items in order and each one acts", async () => {
+test("the ... menu lists Refresh and Show closed tickets and each one acts", async () => {
   const copy = await list();
   env.calls.length = 0;
   click(find(copy.render(), "list-menu"));
@@ -188,31 +190,13 @@ test("the ... menu lists the four items in order and each one acts", async () =>
     width: 220,
     props: { view: "menu" },
   });
-  expect(spec.props.items.map((i: any) => i.label)).toEqual([
-    "Refresh",
-    "Show closed tickets",
-    "Close finished ticket tabs",
-    "Close all ticket tabs",
-  ]);
-  env.spaces[0].tabs.push(
-    { id: "t5", name: "SHOP-41 working", index: 2 },
-    { id: "t6", name: "SHOP-49 closed", index: 3 },
-  );
+  expect(spec.props.items.map((i: any) => i.label)).toEqual(["Refresh", "Show closed tickets"]);
   env.calls.length = 0;
-  const [refresh, closed, finished, all] = spec.props.items;
+  const [refresh, closed] = spec.props.items;
   await actions.perform(refresh.action);
   expect(fetched().some((u) => u.includes("/jsonapi/bb_ticket/bb_ticket?"))).toBe(true);
   await actions.perform(closed.action);
   expect(env.shared["bakers.showClosed"]).toBe(true);
-  env.calls.length = 0;
-  await actions.perform(finished.action);
-  expect(runs()).toEqual([["tab.close", { id: "t6" }]]);
-  env.calls.length = 0;
-  await actions.perform(all.action);
-  expect(runs()).toEqual([
-    ["tab.close", { id: "t5" }],
-    ["tab.close", { id: "t6" }],
-  ]);
 });
 
 test("Show closed tickets lists done tickets in Open by state", async () => {
@@ -280,7 +264,7 @@ test("empty hint and key hint as drawn", async () => {
   ).toBeDefined();
   const hint = findText(
     root,
-    "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the Ticket panel, when shown, follows it.",
+    "Enter or a double click shows the ticket in the panel, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the panel, when shown, follows it.",
   );
   expect(hint.calls.text_size).toEqual([11]);
 });

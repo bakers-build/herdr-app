@@ -4,6 +4,7 @@ import { bakersLayout } from "../../../scripts/layout.js";
 import { click, closest, env, find, findText, key, reset, runs, texts, walk } from "../../harness";
 
 const main = await Bun.file(new URL("../../fixtures/herdr-main.json", import.meta.url)).json();
+const { findNode }: any = await import("../../../mods/bakers/core/herdr.js");
 
 beforeEach(() => {
   reset();
@@ -146,7 +147,8 @@ test("Answer in the run and G show and focus the run", async () => {
   env.terminals = [live("t7")];
   const copy = await ticketTab();
   env.layout = bakersLayout(main);
-  env.focused = { space: "s1", tab: "t5", pane: "p1" };
+  findNode(env.layout, "panel").hidden = false;
+  findNode(env.layout, "panel-body").active = "ticket";
   env.shared["bakers.runHidden"] = true;
   env.calls.length = 0;
   click(find(copy.render(), "answer-in-run"));

@@ -47,13 +47,9 @@ test("New ticket creates with the project and an existing ticket's workflow, the
       },
     ],
   ]);
-  expect(runs()).toContainEqual([
-    "tab.new",
-    {
-      mod: "bakers",
-      props: { view: "ticket.view", ticket: "SHOP-70" },
-      name: "SHOP-70 qualification",
-    },
-  ]);
+  expect(env.shared["bakers.selected"]).toBe("SHOP-70");
+  expect(runs()).toContainEqual(["layout.select", { stack: "panel-body", child: "ticket" }]);
+  expect(runs()).toContainEqual(["layout.show", { id: "panel" }]);
+  expect(runs().some((r: any) => r[0] === "tab.new")).toBe(false);
   expect(closed()).toBe(true);
 });

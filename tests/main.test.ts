@@ -58,5 +58,7 @@ test("registerAll fills lists, forms and actions", () => {
   expect(get("form", "cancel")).toBeTruthy();
   expect(get("action", "project.choose")).toBeTruthy();
   expect(get("action", "form.open")).toBeTruthy();
-  expect(get("action", "tabs.closeAll")).toBeTruthy();
+  expect(get("action", "ticket.showAgent")).toBeTruthy();
+  expect(get("action", "tabs.closeAll")).toBeNull();
+  expect(get("action", "tabs.closeFinished")).toBeNull();
 });

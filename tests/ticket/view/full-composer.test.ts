@@ -125,14 +125,6 @@ test("a retried answer after a failed unfreeze posts the comment once", async ()
   expect(toast.title).toBe("Answered SHOP-41, the run continues");
 });
 
-test("the first keystroke in the composer pins the preview tab", async () => {
-  env.shared["bakers.preview"] = { id: "SHOP-41", index: null };
-  const copy = await ticketTab("SHOP-41");
-  env.shared["bakers.preview"] = { id: "SHOP-41", index: null };
-  copy.inner.composer.inputs.input("body").type("H");
-  expect(env.shared["bakers.preview"]).toBe(null);
-});
-
 test("a plain comment from comment mode", async () => {
   const copy = await ticketTab("SHOP-58", { bakers_comment_publish: { id: "c9" } });
   copy.inner.composer.inputs.input("body").type("Looks good");

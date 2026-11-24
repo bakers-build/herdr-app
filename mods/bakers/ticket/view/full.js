@@ -6,8 +6,7 @@
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { notify, props, run } from "herdr";
-import { runReason, runTerminal, showRun } from "../terminal.js";
-import { pinTicket } from "../tabs.js";
+import { runReason, runTerminal, showAgent } from "../terminal.js";
 import { ticketActions } from "../operations/actions.js";
 import { perform } from "../../core/actions.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
@@ -84,7 +83,7 @@ export default class TicketTab {
 
   /** @param {"comment" | "answer"} mode @param {string} [text] */
   makeComposer(mode, text = "") {
-    const c = new Inline(commentForm(this.id, mode, text), () => pinTicket(this.id));
+    const c = new Inline(commentForm(this.id, mode, text), () => {});
     c.mode = mode;
     return c;
   }
@@ -108,7 +107,7 @@ export default class TicketTab {
   }
 
   showAgent() {
-    if (this.terminal()) showRun(this.id);
+    if (this.terminal()) showAgent(this.id);
   }
 
   /** The ticket action a single key (G, R) runs, from the one list of actions. @param {string} k */
@@ -131,7 +130,7 @@ export default class TicketTab {
 
   edit() {
     if (this.detail && !this.editor) {
-      this.editor = new Inline(editForm(this.detail.ticket), () => pinTicket(this.id));
+      this.editor = new Inline(editForm(this.detail.ticket), () => {});
       this.editor.inputs.focus("title");
     }
   }

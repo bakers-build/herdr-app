@@ -2,13 +2,13 @@
 // list definition (ticket/list) with the list engine over the store's open tickets, or over
 // the pages a server list loads, maps each row with the teaser view mode and draws the header,
 // the table, the pager and the hints. Keys: Up and Down select (the panel follows),
-// Enter opens the preview tab, cmd-Enter or a double click a pinned tab, / the filter,
+// Enter, cmd-Enter or a double click show the ticket in the panel (no tab), / the filter,
 // N a new ticket, R refreshes.
 import { div } from "gpui-kit";
 import { h_flex, Input, InputState, v_flex } from "gpui-base";
 import { setShared, shared } from "herdr";
 import { classify } from "../../core/errors.js";
-import { openTicket } from "../tabs.js";
+import { selectTicket, selectedTicket } from "../tabs.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 import { button } from "../../ui/components/button.js";
 import { pager } from "../../ui/components/pager.js";
@@ -19,7 +19,6 @@ import { failureView } from "../../ui/components/state.js";
 import { tableHeader, tableRow } from "../../ui/components/table.js";
 import { getStore, loadError, ready, refresh } from "../store.js";
 import { currentView, showClosed } from "../state.js";
-import { tabName } from "../presenter/tab.js";
 import { columns, KEY_HINT, teaser } from "../presenter/teaser.js";
 import { emptyText, listFor, menuItems } from "../list/index.js";
 import { toQuery } from "../../list/query.js";
@@ -142,9 +141,10 @@ export default class TicketList {
     return this.result().rows;
   }
 
-  /** Keeps a selection that still shows, else the first row; the panel follows it. @param {any[]} records */
+  /** Follows the shared selection, also one made outside the list (goto, create) that is not
+   *  among the rows; only without one the first row is selected. @param {any[]} records */
   syncSelection(records) {
-    const next = records.find((r) => r.id === this.selected)?.id ?? records[0]?.id ?? null;
+    const next = selectedTicket() ?? records[0]?.id ?? null;
     this.selected = next;
     if (shared("bakers.selected") !== next) setShared("bakers.selected", next);
   }
@@ -161,21 +161,15 @@ export default class TicketList {
     setShared("bakers.selected", this.selected);
   }
 
-  /** @param {any} record @param {boolean} pin */
-  open(record, pin) {
-    if (record) openTicket(record.id, tabName(record), { pin });
-  }
-
-  selectedRecord() {
-    return this.records().find((r) => r.id === this.selected);
+  /** Shows the selected ticket in the panel. */
+  open() {
+    if (this.selected) selectTicket(this.selected);
   }
 
   menu() {
     openMenu([
       { label: "Refresh", action: ["ticket.refresh"] },
       { label: "Show closed tickets", action: ["ticket.toggleClosed"], current: showClosed() },
-      { label: "Close finished ticket tabs", action: ["tabs.closeFinished"], separator: true },
-      { label: "Close all ticket tabs", action: ["tabs.closeAll"] },
     ]);
   }
 
@@ -191,8 +185,7 @@ export default class TicketList {
   onKey(e, cx) {
     const k = e.keystroke;
     if (k === "down" || k === "up") this.move(k === "down" ? 1 : -1);
-    else if (k === "enter" || k === "cmd-enter")
-      this.open(this.selectedRecord(), k === "cmd-enter");
+    else if (k === "enter" || k === "cmd-enter") this.open();
     else if (this.filterFocused && k === "escape") {
       this.filter.set_value("");
       this.filterFocused = false;
@@ -292,7 +285,7 @@ export default class TicketList {
                 (e, cx) => {
                   this.selected = r.id;
                   setShared("bakers.selected", r.id);
-                  if (e.click_count === 2) this.open(r, true);
+                  if (e.click_count === 2) this.open();
                   cx.notify();
                 },
               ),

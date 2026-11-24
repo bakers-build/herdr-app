@@ -15,10 +15,9 @@ import { all, get } from "../../core/registry.js";
 import { ticketActions } from "../operations/actions.js";
 import { STATE_MENU_FOOTER, stateItems } from "../operations/state.js";
 import { search } from "../presenter/search.js";
-import { tabName } from "../presenter/tab.js";
 import { listConductors, searchTickets } from "../repository.js";
 import { getStore, ready } from "../store.js";
-import { openTicket } from "../tabs.js";
+import { selectTicket } from "../tabs.js";
 import { runReason, runTerminal } from "../terminal.js";
 import { openForm } from "../../ui/form/dialog.js";
 import { pill } from "../../ui/components/pill.js";
@@ -274,7 +273,7 @@ export default class Actions {
         ticket: { id: t.id, title: t.title ?? "", state: t.state ?? "" },
         run: () => {
           this.close();
-          openTicket(t.id, tabName(t), { pin: true });
+          selectTicket(t.id);
         },
       }));
   }

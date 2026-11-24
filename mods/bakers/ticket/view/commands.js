@@ -1,13 +1,12 @@
 // ticket/view/commands: the key commands the ticket module answers (keys.json:
-// bakers.goto, .tickets, .panel, .new, .open:<id>, .actions). They open overlays and tabs, so they
-// live with the views. A command with a label is listed in the actions palette.
-import { layout, run } from "herdr";
-import { findNode } from "../../core/herdr.js";
+// bakers.goto, .tickets, .panel, .new, .open:<id>, .actions). They open overlays, the Tickets tab
+// and the panel, so they live with the views. A command with a label is listed in the actions
+// palette.
+import { run } from "herdr";
 import { openRoute } from "../../core/router.js";
 import { openForm } from "../../ui/form/dialog.js";
-import { tabName } from "../presenter/tab.js";
 import { getStore, ready } from "../store.js";
-import { ensureTicketsTab, frontTicket, openTicket } from "../tabs.js";
+import { ensureTicketsTab, frontTicket, panelShowsTicket, selectTicket } from "../tabs.js";
 
 /** cmd-shift-O: the actions palette on its tickets page; a text (goto:<text>) fills its field. */
 export const goto = {
@@ -34,10 +33,7 @@ export const tickets = { label: "Tickets", run: () => ensureTicketsTab() };
 export const panel = {
   label: "Ticket panel",
   run() {
-    const root = layout();
-    const p = findNode(root, "panel");
-    if (p && !p.hidden && findNode(root, "panel-body")?.active === "ticket")
-      run("layout.hide", { id: "panel" });
+    if (panelShowsTicket()) run("layout.hide", { id: "panel" });
     else {
       run("layout.select", { stack: "panel-body", child: "ticket" });
       run("layout.show", { id: "panel" });
@@ -47,7 +43,7 @@ export const panel = {
 
 export const create = { label: "New ticket", run: () => openForm("create") };
 
-/** Opens a ticket's tab, pinned (a toast click, open:<id>). */
+/** Shows a ticket in the panel (a toast click, open:<id>). */
 export const open = {
   /** @param {string} id */
   async run(id) {
@@ -57,8 +53,8 @@ export const open = {
     let t = store.byId(id);
     if (!t) {
       const d = await store.ticket(id).catch(() => null);
-      t = d ? { id: d.ticket.identifier, state: d.ticket.state, closed: d.ticket.closed } : null;
+      t = d ? { id: d.ticket.identifier } : null;
     }
-    if (t) openTicket(t.id, tabName(t), { pin: true });
+    if (t) selectTicket(t.id);
   },
 };

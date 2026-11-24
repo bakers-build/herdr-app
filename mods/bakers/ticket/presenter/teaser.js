@@ -4,7 +4,7 @@ import { age } from "../../core/format.js";
 import { agentLine } from "./field/agent-line.js";
 
 export const KEY_HINT =
-  "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the Ticket panel, when shown, follows it.";
+  "Enter or a double click shows the ticket in the panel, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the panel, when shown, follows it.";
 
 /** @param {boolean} reason the list shows why a ticket needs you (Needs me) instead of its state */
 export function columns(reason) {

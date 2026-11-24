@@ -26,8 +26,22 @@ async function command(c: string, focused: any, shared: Record<string, unknown> 
   return env.calls.filter((x) => x.fn === "openOverlay").map((x) => x.args[0] as any);
 }
 
-test("actions on a ticket tab opens the palette for that ticket, centred by Herdr as one window", async () => {
-  expect(await command("actions", { tab: "t5" })).toEqual([
+const PANEL = {
+  id: "root",
+  type: "row",
+  children: [
+    { id: "work-body", type: "row", children: [{ id: "main", type: "tabs" }] },
+    {
+      id: "panel",
+      type: "column",
+      children: [{ id: "panel-body", type: "stack", active: "ticket", children: [] }],
+    },
+  ],
+};
+
+test("actions while the panel shows a ticket opens the palette for it, centred by Herdr as one window", async () => {
+  env.layout = PANEL;
+  expect(await command("actions", { tab: "t6" }, { "bakers.selected": "SHOP-41" })).toEqual([
     {
       mod: "bakers",
       props: { view: "ticket.actions", ticket: "SHOP-41" },
@@ -39,8 +53,13 @@ test("actions on a ticket tab opens the palette for that ticket, centred by Herd
   ]);
 });
 
-test("actions with the run block focused targets the ticket in front", async () => {
-  const [o] = await command("actions", { tab: "t5", pane: null, terminal: "t7" });
+test("actions with the run focused targets the ticket the panel shows", async () => {
+  env.layout = PANEL;
+  const [o] = await command(
+    "actions",
+    { tab: "t6", pane: null, terminal: "t7" },
+    { "bakers.selected": "SHOP-41" },
+  );
   expect(o.props.ticket).toBe("SHOP-41");
 });
 
@@ -59,7 +78,8 @@ test("actions on any other tab targets no ticket", async () => {
 });
 
 test("goto opens the palette on its tickets page, with a text when given", async () => {
-  const [o] = await command("goto:deliv", { tab: "t5" });
+  env.layout = PANEL;
+  const [o] = await command("goto:deliv", { tab: "t6" }, { "bakers.selected": "SHOP-41" });
   expect(o).toEqual({
     mod: "bakers",
     props: { view: "ticket.actions", ticket: "SHOP-41", page: "tickets", query: "deliv" },

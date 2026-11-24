@@ -1,16 +1,16 @@
 // ticket/store: the tickets of the window's project, in memory, shared by every copy of the
 // mod (created on first use, never at module top level, AGENTS.md). A refresh reads the open
-// tickets with those of the open tabs, and the open tickets' plan comments, and derives who
-// needs you from them.
+// tickets with the selected one (also when closed), and the open tickets' plan comments, and
+// derives who needs you from them.
 import { setShared } from "herdr";
-import { openTicketIds } from "./tabs.js";
+import { selectedTicket } from "./tabs.js";
 import { ensureProject, projectError } from "../project/state.js";
 import * as repository from "./repository.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
 /**
  * @param {any} api the loaders (listOpen, planComments, readTicket)
- * @param {{ now?: () => number, tabs?: () => string[] }} [options] tabs: identifiers of the open ticket tabs
+ * @param {{ now?: () => number, tabs?: () => string[] }} [options] tabs: identifiers read with the open tickets (the selected one)
  */
 export function createStore(api, options = {}) {
   const now = options.now ?? (() => Date.now());
@@ -153,7 +153,8 @@ export function _resetForTests() {
 }
 
 export function getStore() {
-  if (!store) store = createStore(repository, { tabs: () => openTicketIds() });
+  if (!store)
+    store = createStore(repository, { tabs: () => [selectedTicket() ?? ""].filter(Boolean) });
   return store;
 }
 
