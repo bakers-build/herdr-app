@@ -117,6 +117,20 @@ test("startShell selects the new shell; a failed hc toasts and selects nothing",
   expect(await exec.startShell("SHOP-41", { address: "t7", cwd: "" })).toBe(false);
 });
 
+test("startShell toasts once and writes nothing when hc rejects", async () => {
+  env.shared = {};
+  env.hc = () => Promise.reject(new Error("hc unreachable"));
+  expect(await exec.startShell("SHOP-41", { address: "t7", cwd: "/w/shop-41" })).toBe(false);
+  const toasts = env.calls.filter((c) => c.fn === "notify") as any[];
+  expect(toasts).toHaveLength(1);
+  expect(toasts[0].args[0]).toEqual({
+    title: "Execute failed",
+    body: "hc unreachable",
+    level: "error",
+  });
+  expect(env.shared[exec.TAB]).toBeUndefined();
+});
+
 test("closeShell kills the shell and drops the selection only when it was shown", () => {
   const a = shell("t1", "1000");
   const b = shell("t2", "2000");

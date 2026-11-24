@@ -54,7 +54,11 @@ export type Env = {
     args: string[],
     opts?: unknown,
   ) => Promise<{ code: number; stdout: string; stderr: string }>;
-  hc: (args: string[]) => { code: number; stdout: string; stderr: string };
+  hc: (
+    args: string[],
+  ) =>
+    | { code: number; stdout: string; stderr: string }
+    | Promise<{ code: number; stdout: string; stderr: string }>;
   fetch: (url: string, opts?: any) => Promise<any>;
   spaces: any[];
   panes: any[];

@@ -72,9 +72,18 @@ export async function startShell(id, run) {
   const now = Date.now();
   const args = shellArgs(id, run, now);
   if (!args) return false;
-  const r = await hc(args);
-  if (r.code !== 0) {
-    notify({ title: "Execute failed", body: r.stderr, level: "error" });
+  try {
+    const r = await hc(args);
+    if (r.code !== 0) {
+      notify({ title: "Execute failed", body: r.stderr, level: "error" });
+      return false;
+    }
+  } catch (e) {
+    notify({
+      title: "Execute failed",
+      body: String(/** @type {any} */ (e)?.message ?? e),
+      level: "error",
+    });
     return false;
   }
   selectTab(id, String(now));
