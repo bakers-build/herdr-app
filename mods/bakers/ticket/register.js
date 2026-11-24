@@ -19,10 +19,8 @@ import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./for
 import { createForm } from "./form/create.js";
 import { sectionForm } from "./form/section.js";
 import closed from "./list/closed.js";
-import mine from "./list/mine.js";
 import needsMe from "./list/needs-me.js";
 import open from "./list/open.js";
-import state from "./list/state.js";
 import { setFilter } from "./filter.js";
 import { refresh } from "./store.js";
 import { shared } from "herdr";
@@ -76,7 +74,7 @@ export function register() {
   define("command", "panel", commands.panel);
   define("command", "open", commands.open);
   define("command", "actions", commands.actions);
-  for (const list of [needsMe, mine, open, state, closed]) define("list", list.id, list);
+  for (const list of [needsMe, open, closed]) define("list", list.id, list);
   define("form", "create", { build: createForm });
   define("form", "state", { build: stateForm });
   define("form", "freeze", { build: freezeForm });

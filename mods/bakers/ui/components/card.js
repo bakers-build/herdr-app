@@ -1,6 +1,7 @@
 // ui/components/card: one card of a list, four rows: id (mono), state pill, type, age at
 // the right / title, at most two lines / why, only when it needs you / label pills, assignee,
-// agent status. The selected card has the accent outline on the selected color.
+// agent status. Every card has a 2 px border, so selecting one moves nothing; the selected card
+// has it in accent, on the selected color.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 
@@ -24,7 +25,7 @@ export function ticketCard(vm, onClick) {
       .px(12)
       .py(10)
       .rounded(6)
-      .border(vm.selected ? 2 : 1)
+      .border(2)
       .border_color(vm.selected ? t.accent : t.border)
       .when(vm.selected, (el) => el.bg(t.selected))
       .selected(vm.selected)

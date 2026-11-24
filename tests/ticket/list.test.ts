@@ -39,12 +39,6 @@ test("Open by state: grouped in workflow order", () => {
   ]);
 });
 
-test("a state list takes the state as its argument", () => {
-  expect(listFor("state:working").label).toBe("Working");
-  expect(run("state:working").rows.map((r: any) => r.id)).toEqual(["SHOP-41", "SHOP-58"]);
-  expect(emptyText(listFor("state:review"), "")).toBe("No other tickets in review.");
-});
-
 test("the exposed filter matches identifier or title, case-insensitive", () => {
   expect(run("open", { exposed: "shop-56" }).rows.map((r: any) => r.id)).toEqual(["SHOP-56"]);
   expect(emptyText(listFor("open"), " deliv ")).toBe('Nothing else matches "deliv".');
@@ -64,8 +58,8 @@ test("Recently closed is a server list: closed tickets of the project, newest fi
   });
 });
 
-test("Mine stays empty with the API chip; an unknown key falls back to Needs me", () => {
-  expect(run("mine").rows).toEqual([]);
-  expect(listFor("mine").def).toMatchObject({ api: true, disabled: true });
+test("an unknown key falls back to Needs me; Mine and the state lists are gone", () => {
   expect(listFor("nope").def.id).toBe("needs-me");
+  expect(listFor("mine").def.id).toBe("needs-me");
+  expect(listFor("state:working").def.id).toBe("needs-me");
 });

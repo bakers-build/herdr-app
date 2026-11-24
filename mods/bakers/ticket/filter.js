@@ -73,11 +73,12 @@ export function counts(records, user) {
   };
 }
 
-/** The labels and types present, for the menus. @param {any[]} records */
+/** The labels and types present in the open records, for the menus. @param {any[]} records */
 export function choices(records) {
+  const open = records.filter((r) => !r.closed);
   const sorted = (/** @type {Iterable<string>} */ v) => [...new Set(v)].sort();
   return {
-    labels: sorted(records.flatMap((r) => r.labels ?? [])),
-    types: sorted(records.map((r) => r.type).filter(Boolean)),
+    labels: sorted(open.flatMap((r) => r.labels ?? [])),
+    types: sorted(open.map((r) => r.type).filter(Boolean)),
   };
 }

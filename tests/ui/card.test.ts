@@ -61,7 +61,7 @@ test("the title is clamped to two lines", () => {
   expect(title.calls.overflow_hidden).toBeDefined();
 });
 
-test("a click selects; the selected card is outlined in accent", () => {
+test("a click selects; the selected card is outlined in accent, every card with the same border width", () => {
   let clicked = 0;
   const card = ticketCard({ ...vm, selected: true }, () => {
     clicked++;
@@ -71,5 +71,8 @@ test("a click selects; the selected card is outlined in accent", () => {
   expect(card.calls.border).toEqual([2]);
   click(find(card, "row-SHOP-41"));
   expect(clicked).toBe(1);
-  expect(ticketCard(vm, () => {}).calls.border).toEqual([1]);
+  const plain = ticketCard(vm, () => {});
+  expect(plain.calls.border).toEqual([2]);
+  expect(plain.calls.border_color).toEqual(["border"]);
+  expect(card.calls.border_color).toEqual(["accent"]);
 });

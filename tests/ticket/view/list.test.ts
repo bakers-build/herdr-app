@@ -34,12 +34,9 @@ async function list(patch: any = { needsMe: true }) {
   return copy;
 }
 
-test("header: view menu, filter, ... and New ticket as drawn", async () => {
+test("header: filter, ... and New ticket as drawn; the filter bar below", async () => {
   const root = (await list()).render();
-  const menu = find(root, "view-menu");
-  expect(texts(menu)).toEqual(["Needs me"]);
-  expect(menu.calls.h).toEqual([28]);
-  expect(menu.calls.font_semibold).toBeDefined();
+  expect(find(root, "view-menu")).toBeUndefined();
   const filter = find(root, "filter");
   expect(filter.calls.w).toEqual([220]);
   expect(filter.calls.h).toEqual([28]);
@@ -50,22 +47,33 @@ test("header: view menu, filter, ... and New ticket as drawn", async () => {
   expect(texts(create)).toEqual(["New ticket"]);
   expect(create.calls.bg).toEqual(["solid"]);
   expect(create.calls.px).toEqual([12]);
+  expect(texts(find(root, "filter-bar"))).toEqual([
+    "Needs me",
+    "2",
+    "Mine",
+    "0",
+    "State: Open",
+    "Label: any",
+    "Type: any",
+    "Clear",
+  ]);
 });
 
-test("columns and rows of Needs me as drawn", async () => {
+test("cards of Needs me as drawn, 8 px apart, no table columns", async () => {
   const root = (await list()).render();
-  const head = find(root, "columns");
-  expect(texts(head)).toEqual(["TICKET", "TITLE", "WHY", "AGENT", "AGE"]);
-  expect(head.calls.text_size).toEqual([11]);
-  expect(head.nodes.map((n: any) => n.calls.w?.[0] ?? "flex")).toEqual([76, "flex", 170, 150, 44]);
-  expect(head.calls.gap).toEqual([12]);
+  expect(find(root, "columns")).toBeUndefined();
+  expect(find(root, "rows").calls.gap).toEqual([8]);
   const r41 = find(root, "row-SHOP-41");
   expect(texts(r41)).toEqual([
     "SHOP-41",
+    "working",
+    "bug",
+    "35m",
     "Checkout fails with an empty cart",
     "Asked a question",
+    "Question",
+    "checkout",
     "Claude Code needs you",
-    "35m",
   ]);
   expect(r41.calls.px).toEqual([12]);
   expect(r41.calls.py).toEqual([10]);
@@ -74,20 +82,29 @@ test("columns and rows of Needs me as drawn", async () => {
   expect(why.calls.font_semibold).toBeDefined();
   expect(texts(find(root, "row-SHOP-56"))).toEqual([
     "SHOP-56",
+    "plan",
+    "",
+    "12m",
     "Show delivery date on the product page",
     "Plan ready for approval",
     "No active run, no conductor",
-    "12m",
   ]);
 });
 
-test("WHY becomes STATE outside Needs me", async () => {
+test("in every view a card shows its why only while the ticket needs you", async () => {
   const root = (await list({})).render();
-  expect(texts(find(root, "columns"))).toEqual(["TICKET", "TITLE", "STATE", "AGENT", "AGE"]);
-  expect(texts(find(root, "row-SHOP-57"))[2]).toBe("qualification");
+  expect(texts(find(root, "row-SHOP-41"))).toContain("Asked a question");
+  expect(texts(find(root, "row-SHOP-57"))).toEqual([
+    "SHOP-57",
+    "qualification",
+    "",
+    "",
+    "Q one",
+    "No active run, no conductor",
+  ]);
 });
 
-test("the selected row has the accent outline, the selected background and its selection state", async () => {
+test("the selected card has the accent outline, the selected background and its selection state", async () => {
   const root = (await list()).render();
   const r41 = find(root, "row-SHOP-41");
   expect(r41.calls.border_color).toEqual(["accent"]);

@@ -85,3 +85,22 @@ test("a toast click opens its own ticket's tab, not the newest toast's, and neve
   ]);
   expect(runs().some((r) => String(r[0]).startsWith("pane.focus"))).toBe(false);
 });
+
+test("the rail draws registered contributions only", async () => {
+  const Bakers = await load("bakers/main.js");
+  const { define, _resetForTests } = await import("../../mods/bakers/core/registry.js");
+  const { register } = await import("../../mods/bakers/shell/register.js");
+  const { div } = await import("gpui-kit");
+  _resetForTests();
+  register();
+  class Y {
+    render() {
+      return div().id("rail-y").child("y");
+    }
+  }
+  define("route", "test.y", { view: Y });
+  define("rail.item", "y", { order: 0, route: "test.y" });
+  const rail = mount(Bakers, { view: "shell.rail" }).render();
+  expect(texts(rail)).toContain("y");
+  expect(texts(rail)).not.toContain("Tickets");
+});

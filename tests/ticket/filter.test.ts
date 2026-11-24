@@ -145,6 +145,11 @@ test("T3.7 choices: distinct values, sorted", () => {
   });
 });
 
+test("choices consider only the open records", () => {
+  const done = rec("SHOP-49", "done", { closed: true, labels: ["old"], type: "spike" });
+  expect(choices([...records, done])).toEqual(choices(records));
+});
+
 test("the empty text names the filters while one is active", () => {
   const l = listForFilter({ ...DEFAULT_FILTER, mine: true });
   expect(emptyText(l, "", true)).toBe("Nothing matches these filters.");
