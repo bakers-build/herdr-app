@@ -364,6 +364,7 @@ export default class Panel {
       .text_size(12)
       .text_color(t.foreground)
       .track_focus(this.handle)
+      .on_mouse_down("left", () => this.handle.focus())
       .on_key_down((e, cx) => {
         if (!this.doc?.onKey(e, cx)) return;
         cx.stop_propagation();

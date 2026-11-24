@@ -95,7 +95,7 @@ test("Agent and conductor: the line, three actions and the key hint", async () =
   expect(runs()[3]).toEqual(["pane.focus", { terminal: "t7" }]);
 });
 
-test("Show agent never opens a tab; the run is focused once the panel shows it", async () => {
+test("Show agent never opens a tab; it shows the panel with the run and focuses it", async () => {
   env.shared["bakers.selected"] = "SHOP-56";
   env.terminals = [live("t9", "SHOP-56")];
   const copy = await panel();
@@ -103,9 +103,9 @@ test("Show agent never opens a tab; the run is focused once the panel shows it",
   env.calls.length = 0;
   click(find(copy.render(), "show-agent"));
   expect(runs().some(([c]) => c === "tab.new")).toBe(false);
-  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([]);
-  onTicket();
-  terminal.syncRun();
+  const set: any = runs().find(([c]) => c === "layout.set")?.[1];
+  expect(findNode(set.layout, "panel").hidden).toBe(false);
+  expect(findNode(set.layout, "panel-body").active).toBe("ticket");
   expect(runs().filter(([c]) => c === "pane.focus")).toEqual([["pane.focus", { terminal: "t9" }]]);
   expect(env.shared["bakers.runFocus"]).toBe(null);
 });

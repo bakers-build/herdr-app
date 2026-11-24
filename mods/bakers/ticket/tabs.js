@@ -16,6 +16,7 @@ export function selectedTicket() {
 /** Selects a ticket and shows it in the panel, unhiding the panel. @param {string} id */
 export function selectTicket(id) {
   setShared("bakers.selected", id);
+  setShared("bakers.panelAt", Date.now());
   run("layout.select", { stack: "panel-body", child: "ticket" });
   run("layout.show", { id: "panel" });
 }
@@ -41,7 +42,8 @@ export function frontTicket() {
   return panelShowsTicket() ? id : null;
 }
 
-/** Closes every ticket tab left from versions that opened tickets as tabs; never "Tickets". */
+/** Closes the ticket tabs left from versions that opened tickets as tabs: a tab named like one
+ *  that holds one pane and no agent; never "Tickets", never a tab with a terminal or a run. */
 export function closeAll() {
-  closeWhere(KIND, () => true);
+  closeWhere(KIND, ({ tab }) => (tab.panes ?? 1) <= 1 && tab.status == null);
 }

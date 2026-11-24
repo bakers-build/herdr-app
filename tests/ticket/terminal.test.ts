@@ -330,17 +330,19 @@ test("Show agent selects the ticket, shows the panel and its run and focuses it"
   env.shared["bakers.runHidden"] = true;
   terminal.showAgent("SHOP-41");
   expect(env.shared["bakers.selected"]).toBe("SHOP-41");
-  expect(runs().slice(0, 2)).toEqual([
-    ["layout.select", { stack: "panel-body", child: "ticket" }],
-    ["layout.show", { id: "panel" }],
+  // before Herdr applies the select, the same tick writes the run into the shown panel
+  expect(runs().map(([c]) => c)).toEqual([
+    "layout.select",
+    "layout.show",
+    "layout.set",
+    "pane.focus",
   ]);
+  expect(runs()[3]).toEqual(["pane.focus", { terminal: "t7" }]);
   expect(env.shared["bakers.runHidden"]).toBe(false);
-  // Herdr applies the select a moment later; the next tick shows the run and focuses it
-  applies();
-  terminal.syncRun();
-  expect(runs().map(([c]) => c)).toEqual(["layout.set", "pane.focus"]);
-  expect(runs()[1]).toEqual(["pane.focus", { terminal: "t7" }]);
   expect(env.shared["bakers.runFocus"]).toBe(null);
+  applies();
+  expect(findNode(env.layout, "panel").hidden).toBe(false);
+  expect(col().hidden).toBe(false);
 });
 
 test("Show, Hide, then Show agent within 2 s shows the run again (F1)", () => {
@@ -381,4 +383,20 @@ test("a selection moved elsewhere drops the request without focusing", () => {
   terminal.syncRun();
   expect(runs().filter(([c]) => c === "pane.focus")).toEqual([]);
   expect(env.shared["bakers.runFocus"]).toBe(null);
+});
+
+test("Show agent with the panel hidden: the same tick's layout.set never hides it again", () => {
+  shown();
+  terminal.hideRun();
+  applies();
+  terminal.syncRun();
+  applies(); // the width goes back to 368 through layout.set
+  findNode(env.layout, "panel").hidden = true; // cmd-shift-T
+  env.shared["bakers.runHidden"] = true;
+  terminal.showAgent("SHOP-41");
+  // Herdr applies the queued commands in order
+  applies();
+  expect(findNode(env.layout, "panel").hidden).toBe(false);
+  expect(findNode(env.layout, "panel-body").active).toBe("ticket");
+  expect(col().hidden).toBe(false);
 });

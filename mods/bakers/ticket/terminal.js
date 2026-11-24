@@ -119,7 +119,11 @@ export function syncRun(now = Date.now()) {
   const panel = findNode(root, PANEL);
   const body = findNode(panel, PANEL_BODY);
   if (!panel || !body) return;
-  const want = shared("bakers.runHidden") || body.active !== "ticket" ? null : selectedRun();
+  // A selection shown in the panel this moment (selectTicket) may not be in layout() yet: the
+  // write keeps the panel shown on its ticket child instead of copying the stale tree back.
+  const fresh = now - Number(shared("bakers.panelAt") ?? 0) < 2000;
+  const onTicket = body.active === "ticket" || fresh;
+  const want = shared("bakers.runHidden") || !onTicket ? null : selectedRun();
   const col = findNode(root, RUN);
   if (!col && !want) return settleFocus(want, now);
   const placed = (panel.children ?? []).some((/** @type {any} */ c) => c.id === RUN);
@@ -138,6 +142,10 @@ export function syncRun(now = Date.now()) {
       if (size) p.size = size;
       const b = findNode(p, PANEL_BODY);
       if (!b.size) b.size = { weight: 1 };
+      if (fresh) {
+        p.hidden = false;
+        b.active = "ticket";
+      }
       write("layout.set", { layout: next }, now);
     }
   } else if (want && col.hidden) write("layout.show", { id: RUN }, now);

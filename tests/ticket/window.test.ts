@@ -32,3 +32,16 @@ test("the window task closes leftover ticket tabs once, never the Tickets tab", 
   expect(closes()).toEqual([]);
   expect(runs().some((r) => r[0] === "tab.rename")).toBe(false);
 });
+
+test("the sweep leaves a tab with an agent or more than one pane, whatever its name", async () => {
+  activeSpace();
+  backend();
+  env.spaces[0].tabs.push(
+    { id: "t5", name: "SHOP-41 working", index: 2, panes: 1, status: null },
+    { id: "t7", name: "ABC-12 notes", index: 3, panes: 2, status: null },
+    { id: "t8", name: "SHOP-56 plan", index: 4, panes: 1, status: "working" },
+  );
+  await windowTask().run();
+  await flush();
+  expect(runs().filter((r) => r[0] === "tab.close")).toEqual([["tab.close", { id: "t5" }]]);
+});

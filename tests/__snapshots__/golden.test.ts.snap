@@ -3926,6 +3926,12 @@ exports[`golden: ticket.context, the whole ticket in the panel 1`] = `
         "[fn]",
       ],
     ],
+    "on_mouse_down:left": [
+      [
+        "left",
+        "[fn]",
+      ],
+    ],
     "size_full": [
       [],
     ],

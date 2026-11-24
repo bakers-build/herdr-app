@@ -272,3 +272,11 @@ test("a new selection loads that ticket and never takes the focus", async () => 
   expect(env.calls.filter((c) => c.fn === "focus")).toEqual([]);
   expect(copy.inner.handle.focused).toBeFalsy();
 });
+
+test("a click into the panel focuses it, so its keys reach it", async () => {
+  const copy = await ticketPanel();
+  const root = copy.render();
+  expect(copy.inner.handle.focused).toBeFalsy();
+  root.calls["on_mouse_down:left"][1]({}, { stop_propagation() {} });
+  expect(copy.inner.handle.focused).toBe(true);
+});
