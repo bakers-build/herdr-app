@@ -12,6 +12,7 @@ export const BAKERS_KEYS = {
   "cmd-shift-o": "bakers.goto",
   "cmd-shift-b": "bakers.tickets",
   "cmd-shift-n": "bakers.new",
+  "cmd-k": "bakers.actions",
 };
 
 /** @param {any} node @param {string} id @returns {any} */

@@ -57,11 +57,10 @@ test("status: global keys open Go to ticket, the Tickets tab and the ticket pane
   const overlay = env.calls.find((c) => c.fn === "openOverlay")?.args[0] as any;
   expect(overlay).toMatchObject({
     mod: "bakers",
-    props: { view: "ticket.search" },
-    kind: "popup",
+    props: { view: "ticket.actions", page: "tickets" },
+    kind: "window",
     width: 480,
   });
-  expect(overlay.at.y).toBe(120);
   expect(runs()).toContainEqual(["tab.select", { id: "t0" }]);
   expect(runs()).toContainEqual(["layout.select", { stack: "panel-body", child: "ticket" }]);
   expect(runs()).toContainEqual(["layout.show", { id: "panel" }]);
@@ -181,23 +180,4 @@ test("a contribution naming an unregistered route is skipped; the valid one stil
   click(view.render());
   expect(ran).toContain("task");
   expect(ran).toContain("ok");
-});
-
-test("goto keeps its x with the sidebar shown and hidden", async () => {
-  for (const [hidden, x] of [
-    [false, 728],
-    [true, 508],
-  ] as const) {
-    reset();
-    resetMod();
-    const Bakers = await load("bakers/main.js");
-    activeSpace();
-    backend();
-    env.layout = sidebarLayout(hidden);
-    env.commands.push("goto");
-    mount(Bakers, { view: "shell.status" });
-    await flush();
-    const overlay = env.calls.find((c) => c.fn === "openOverlay")?.args[0] as any;
-    expect(overlay.at).toEqual({ x, y: 120 });
-  }
 });

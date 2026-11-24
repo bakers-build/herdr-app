@@ -280,7 +280,7 @@ test("empty hint and key hint as drawn", async () => {
   ).toBeDefined();
   const hint = findText(
     root,
-    "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes. Up and down move the selection; the Ticket panel, when shown, follows it.",
+    "Enter opens the preview tab, cmd-Enter a pinned tab, N a new ticket, / the filter, R refreshes, cmd-K the actions of the selected ticket. Up and down move the selection; the Ticket panel, when shown, follows it.",
   );
   expect(hint.calls.text_size).toEqual([11]);
 });

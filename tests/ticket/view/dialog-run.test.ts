@@ -40,31 +40,6 @@ async function open(props: any, extra: Record<string, unknown> = {}) {
 
 const closed = () => env.calls.some((c) => c.fn === "closeOverlay" && c.args[0] === "overlay-7");
 
-test("Move to: the conductor picker lists the project's bb_conductor entities, then the dialog", async () => {
-  const copy = await open(
-    { view: "ticket.conductor-picker", ticket: "SHOP-41" },
-    {
-      jsonapi: {
-        conductors: [{ id: "k2", label: "ci-box", machine: "build-vps", status: "online" }],
-      },
-    },
-  );
-  const root = copy.render();
-  expect(texts(find(root, "pick-k2"))).toEqual(["ci-box", "build-vps"]);
-  click(find(root, "pick-k2"));
-  expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
-    props: { view: "dialog", form: "move", ticket: "SHOP-41", conductor: "k2", name: "ci-box" },
-  });
-});
-
-test("Move to in a project without conductors says so", async () => {
-  const copy = await open(
-    { view: "ticket.conductor-picker", ticket: "SHOP-41" },
-    { jsonapi: { conductors: [] } },
-  );
-  expect(texts(copy.render())).toEqual(["No conductor in this project."]);
-});
-
 test("Move to dialog: cancel the run, then set the conductor", async () => {
   const copy = await open({
     view: "dialog",

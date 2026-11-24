@@ -10,7 +10,7 @@ beforeEach(() => {
   resetMod();
 });
 
-test("header: identifier, state pill, Frozen, agent line, Edit and ...", async () => {
+test("header: identifier, state pill, Frozen, agent line, Edit, Actions and ...", async () => {
   env.terminals = [live("studio-mac/t7")];
   const root = (await ticketTab()).render();
   const head = find(root, "doc-header");
@@ -20,6 +20,7 @@ test("header: identifier, state pill, Frozen, agent line, Edit and ...", async (
     "Frozen",
     "Claude Code needs you on studio-mac, 35m",
     "Edit",
+    "Actions",
     "...",
   ]);
   const id = findText(head, "SHOP-41");
@@ -193,17 +194,26 @@ test("the state pill opens the state menu", async () => {
   expect(spec.props.items[2]).toMatchObject({ current: true, disabled: true });
 });
 
-test("R starts Move to... with the conductor picker", async () => {
+test("R starts Move to... on the palette's conductors page", async () => {
   const copy = await ticketTab();
   env.calls.length = 0;
   key(copy.render(), "r");
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
-    props: { view: "ticket.conductor-picker", ticket: "SHOP-41" },
+    props: { view: "ticket.actions", ticket: "SHOP-41", page: "move" },
   });
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toEqual({
     mod: "bakers",
-    props: { view: "ticket.conductor-picker", ticket: "SHOP-41" },
-    kind: "popup",
-    width: 220,
+    props: { view: "ticket.actions", ticket: "SHOP-41", page: "move" },
+    kind: "window",
+    key: "bakers.actions",
+    width: 480,
+    height: 490,
   });
+});
+
+test("the Actions button opens the actions palette as cmd-K does", async () => {
+  const copy = await ticketTab();
+  env.calls.length = 0;
+  click(find(copy.render(), "actions"));
+  expect(runs()).toEqual([["bakers.actions"]]);
 });

@@ -203,12 +203,14 @@ test("Unfreeze..., Move to... and Cancel run... ask first and send nothing", asy
   const opened = env.calls.filter((c) => c.fn === "openOverlay").map((c: any) => c.args[0].props);
   expect(opened[0]).toMatchObject({ view: "dialog", form: "unfreeze", ticket: "SHOP-41" });
   expect(opened[1]).toMatchObject({ view: "dialog", form: "cancel", ticket: "SHOP-41" });
-  expect(opened[2]).toMatchObject({ view: "ticket.conductor-picker", ticket: "SHOP-41" });
+  expect(opened[2]).toMatchObject({ view: "ticket.actions", ticket: "SHOP-41", page: "move" });
   expect(env.calls.filter((c) => c.fn === "openOverlay")[2].args[0]).toEqual({
     mod: "bakers",
-    props: { view: "ticket.conductor-picker", ticket: "SHOP-41" },
-    kind: "popup",
-    width: 220,
+    props: { view: "ticket.actions", ticket: "SHOP-41", page: "move" },
+    kind: "window",
+    key: "bakers.actions",
+    width: 480,
+    height: 490,
   });
   expect(writes()).toEqual([]);
 });

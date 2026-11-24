@@ -1,19 +1,19 @@
 // ticket/register: what the ticket module contributes to the registry: its routes, lists,
 // forms and the actions its menus run.
 import { define } from "../core/registry.js";
-import ConductorPicker from "./view/conductor-picker.js";
+import Actions from "./view/actions.js";
 import Context from "./view/context.js";
 import LabelPicker from "./view/label-picker.js";
 import List from "./view/list.js";
 import Rail from "./view/rail.js";
-import Search from "./view/search.js";
 import Sidebar from "./view/sidebar.js";
 import Status from "./view/status.js";
 import Full from "./view/full.js";
 import RunHeader from "./view/run.js";
 import * as commands from "./view/commands.js";
 import { windowTask } from "./window.js";
-import { syncRun } from "./terminal.js";
+import { showAgent, syncRun } from "./terminal.js";
+import { openRoute } from "../core/router.js";
 import { closeAll, closeFinished } from "./tabs.js";
 import { classify, labels } from "./commands.js";
 import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./form/confirm.js";
@@ -54,11 +54,12 @@ export function register() {
   define("route", "ticket.rail", { view: Rail }); // the rail button
   define("route", "ticket.sidebar", { view: Sidebar }); // the Tickets card in the sidebar
   define("route", "ticket.status", { view: Status }); // the status block's item
-  define("route", "ticket.search", { view: Search, open: { kind: "popup", width: 480 } }); // popup, cmd-shift-O
-  define("route", "ticket.conductor-picker", {
-    view: ConductorPicker,
-    open: { kind: "popup", width: 220 },
-  }); // popup, props.ticket
+  // window, cmd-K: centred by Herdr (mods get no window size), and Esc reaches the palette, which
+  // goes back a page (Herdr closes a dialog or popup on Esc itself); the key keeps it one window
+  define("route", "ticket.actions", {
+    view: Actions,
+    open: { kind: "window", key: "bakers.actions", width: 480, height: 490 },
+  });
   define("route", "ticket.label-picker", {
     view: LabelPicker,
     open: { kind: "popup", width: 220 },
@@ -70,11 +71,13 @@ export function register() {
   define("tabs.decorate", "ticket", { decorate });
   define("window.task", "ticket.refresh", windowTask());
   define("window.task", "ticket.run", { every: 1000, run: () => syncRun() }); // the run column follows the front ticket tab
+  // In this order in the actions palette.
   define("command", "goto", commands.goto);
+  define("command", "new", commands.create);
   define("command", "tickets", commands.tickets);
   define("command", "panel", commands.panel);
-  define("command", "new", commands.create);
   define("command", "open", commands.open);
+  define("command", "actions", commands.actions);
   for (const list of [needsMe, mine, open, state, closed]) define("list", list.id, list);
   define("form", "create", { build: createForm });
   define("form", "state", { build: stateForm });
@@ -85,6 +88,10 @@ export function register() {
   define("action", "ticket.classify", { run: classify });
   define("action", "ticket.labels", { run: labels });
   define("action", "ticket.refresh", { run: () => refresh() });
+  define("action", "ticket.showAgent", { run: (/** @type {string} */ id) => showAgent(id) });
+  define("action", "ticket.move", {
+    run: (/** @type {string} */ id) => openRoute("ticket.actions", { ticket: id, page: "move" }),
+  });
   define("action", "ticket.view", { run: (/** @type {string} */ view) => setView(view) });
   define("action", "ticket.toggleClosed", {
     run: () => setShared("bakers.showClosed", !showClosed()),

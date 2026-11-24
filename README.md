@@ -7,7 +7,7 @@ ticket's state next to the agent terminals, so a developer does not switch to th
 
 The layout with the Tickets list (frame R2-4) and a ticket in its own tab (frame R2-3) are
 built as one mod, `bakers`. Herdr places it in several blocks, tabs and overlays; each copy
-gets a route (`ticket.list`, `ticket.view`, `ticket.context`, `ticket.search`,
+gets a route (`ticket.list`, `ticket.view`, `ticket.context`, `ticket.actions`,
 `shell.sidebar`, ...), and the router runs that route's view. The code is split into a
 small framework (logic: `core`, `form`, `list`; drawing: `ui`) and modules (`ticket`, `project`,
 `shell`), each with its model, repository, commands, store, lists, view modes, forms,
@@ -64,6 +64,7 @@ It never overwrites a key you already use; it prints the ones it kept.
 | cmd-shift-O | Go to ticket |
 | cmd-shift-B | Tickets tab |
 | cmd-shift-N | New ticket |
+| cmd-K | Actions of the ticket in front, or of the selected row on the Tickets tab, and the bakers commands |
 | Tickets tab | Up/Down select, Enter preview tab, cmd-Enter pinned tab, `/` filter, N new ticket, R refresh |
 | Ticket tab | A acts on the Needs-you card, E edits, G shows the agent, R moves the run; cmd-Enter sends or saves, Esc cancels |
 
