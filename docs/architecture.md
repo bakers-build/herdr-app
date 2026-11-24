@@ -214,11 +214,14 @@ per shell, the address with `/` as `-`), 1:1, so Herdr's divider between them is
   with a close control, Execute (only with a live run with a known cwd) and Hide. It shows the
   shown terminal's address and machine. `run-stack`'s `active` is the shown tab.
   `shared("bakers.runTab")` is `{[identifier]: tab key}`, the shell's `bakers.opened` label,
-  else its address; absent means the agent's tab. `syncRun` calls `layout.set` only when the
-  children, the width or the visibility change, and `layout.select` when only the active tab
-  changes; a column without the stack (an older install) is rebuilt once.
+  else its address; absent means the agent's tab. The stack's child ids are `run-x-<address>`
+  (the address with `/` as `-`), while `bakers.runTab` and the header's element ids
+  (`run-tab-<key>`, `run-close-<key>`) use the tab key. `syncRun` calls `layout.set` only when
+  the children (or the column's place) or the width change, `layout.show`/`layout.hide` for
+  visibility, and `layout.select` when only the active tab changes; a column without the stack
+  (an older install) is rebuilt once.
 - **Execute** (`ticket/exec.js`) starts the machine's own shell with
-  `hc run --bg --no-parent --cwd <run cwd> [--on <machine>]`, labelled `bakers.exec=<id>` and
+  `hc run --json --bg --no-parent --cwd <run cwd> [--on <machine>]`, labelled `bakers.exec=<id>` and
   `bakers.opened=<ms>`, and changes no focus; a failure toasts. Shells are found by label,
   ordered by opened. They belong to their ticket, survive ticket switches and leave when they
   end. When the run ends they keep running unseen and come back with the next run; Close or
