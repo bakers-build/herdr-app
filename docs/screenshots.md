@@ -14,14 +14,14 @@ Ticketbearbeitung (Wireframes)".
 4. Switch layouts: `herdr-app do layout.switch --name bakers` (or cmd-shift-L).
 5. Size the window to 1440 x 900 logical pixels at zoom 1 (`app.zoom_reset`).
 6. Open a space whose folder holds the project's `.bakers/project.config.js`, so the mods
-   pick that project (or choose it in the sidebar's project picker).
+   pick that project (or choose it with the project button in the list header).
 
 Take each shot with `herdr-app shot r2-4.png` and `herdr-app shot r2-3.png`.
 
 ## R2-4: Tickets tab
 
 - Sidebar closed (cmd-B), Ticket panel closed.
-- cmd-shift-B opens the Tickets tab; the view menu says Needs me.
+- cmd-shift-B opens the Tickets tab; the filter bar shows Needs me.
 - Select the first row; press Enter once, so a preview tab (italic) is open; go back with cmd-1.
 - Open the "..." menu.
 - Press cmd-shift-O and type `deliv` (the popup is drawn open).
@@ -59,7 +59,7 @@ the reader and are not built. Colors follow the Herdr theme, not the wireframe's
 
 - Herdr draws a pane header on every pane of the main area, so the Tickets tab has one too
   (R2-4 draws the list without it).
-- Only Mine and the allowed states keep the "API" chip. Assignee, Reviewers and Recently
+- Only the allowed states keep the "API" chip (Mine too, when the signed-in user is unknown). Assignee, Reviewers and Recently
   closed show data from JSON:API, where the frames draw "-" and the chip.
 - The agent line in the list names the claiming machine ("needs you, studio-mac"); in the
   ticket header and the panel the machine comes from the run's terminal when Herdr shows it.
