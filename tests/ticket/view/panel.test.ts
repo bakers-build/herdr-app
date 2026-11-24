@@ -85,16 +85,15 @@ test("no card when nothing needs you", async () => {
   expect(find(root, "needs-card")).toBeUndefined();
 });
 
-test("the description renders Markdown, then the edit hint", async () => {
+test("the description renders Markdown under its heading and Edit...", async () => {
   const root = (await ticketPanel()).render();
-  const section = find(root, "description");
-  expect(texts(section)[0]).toBe("DESCRIPTION");
+  const section = find(root, "section-description");
+  expect(texts(section).slice(0, 2)).toEqual(["DESCRIPTION", "Edit..."]);
   let md: any;
   walk(section, (n) => {
     if (n.kind === "markdown") md = n;
   });
   expect(md.arg.text).toContain("**Acceptance**");
-  expect(findText(section, "Click or E to edit.").calls.text_size).toEqual([11]);
 });
 
 test("comments in order with author, type and age; plan, spec and summary fold to their first line", async () => {
@@ -244,8 +243,10 @@ test("the panel draws the whole ticket in order, the composer pinned below the s
     "title",
     "needs-card",
     "agent-section",
-    "description",
     "properties",
+    "section-description",
+    "section-acceptance",
+    "section-summary",
     "comments",
     "activity",
     "runs",

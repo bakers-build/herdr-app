@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
 import { read, ticketPanel, resetMod } from "../../fixtures/shop";
-import { click, env, find, findText, flush, key, reset, tools } from "../../harness";
+import { env, findText, flush, key, reset, tools } from "../../harness";
 
 const writes = () => tools().filter(([t]) => !/_(read|list|search)$/.test(t));
 
@@ -33,9 +33,9 @@ test("E edits title and description; cmd-Enter saves both", async () => {
   expect(copy.inner.doc.editor).toBe(null);
 });
 
-test("a click on the description edits too; Esc cancels without a write", async () => {
+test("Esc cancels the edit without a write", async () => {
   const copy = await ticketPanel("SHOP-41", { bakers_ticket_update: {} });
-  click(find(copy.render(), "description-body"));
+  key(copy.render(), "e");
   expect(copy.inner.doc.editor).not.toBe(null);
   env.calls.length = 0;
   key(copy.render(), "escape");

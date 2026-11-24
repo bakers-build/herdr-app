@@ -1,11 +1,12 @@
 import { beforeEach, expect, test } from "bun:test";
 import { bakersLayout } from "../../../scripts/layout.js";
-import { activeSpace, backend, list, live, resetMod } from "../../fixtures/shop";
+import { activeSpace, backend, list, live, read, resetMod } from "../../fixtures/shop";
 import {
   click,
   env,
   find,
   findText,
+  fireTimers,
   flush,
   load,
   mount,
@@ -13,6 +14,7 @@ import {
   runs,
   texts,
   tools,
+  walk,
 } from "../../harness";
 
 const actions: any = await import("../../../mods/bakers/core/actions.js");
@@ -273,6 +275,72 @@ test("the panel holds the document: title, description and comments", async () =
   expect(t).toContain("Checkout fails with an empty cart");
   expect(t).toContain("DESCRIPTION");
   expect(t.some((x) => x.startsWith("COMMENTS"))).toBe(true);
+});
+
+const markdownOf = (node: any) => {
+  let text: string | undefined;
+  walk(node, (n: any) => {
+    if (text === undefined && n.kind === "markdown") text = n.arg?.text;
+  });
+  return text;
+};
+
+test("Description, Acceptance and Summary sit between Properties and the comments, each with Edit...", async () => {
+  const root = (await panel()).render();
+  const body = find(root, "panel-scroll");
+  const ids = body.nodes.map((n: any) => n.calls.id?.[0]);
+  const at = (id: string) => ids.indexOf(id);
+  expect(at("properties")).toBeGreaterThan(-1);
+  expect([
+    at("section-description"),
+    at("section-acceptance"),
+    at("section-summary"),
+    at("comments"),
+  ]).toEqual([1, 2, 3, 4].map((i) => at("properties") + i));
+  expect(texts(find(root, "section-acceptance"))).toEqual(["ACCEPTANCE", "Edit...", "None yet."]);
+  expect(texts(find(root, "section-summary"))).toEqual(["SUMMARY", "Edit...", "None yet."]);
+  expect(texts(find(root, "section-description")).slice(0, 2)).toEqual(["DESCRIPTION", "Edit..."]);
+  expect(markdownOf(find(root, "section-description"))).toBe(read.u41.description);
+  const edit = find(root, "edit-acceptance");
+  expect(edit.calls.h).toEqual([20]);
+  expect(edit.calls.text_size).toEqual([11]);
+});
+
+test("Edit... opens the section popup 640 wide and writes nothing", async () => {
+  const copy = await panel();
+  env.calls.length = 0;
+  click(find(copy.render(), "edit-acceptance"));
+  const spec: any = env.calls.find((c) => c.fn === "openOverlay")?.args[0];
+  expect(spec).toMatchObject({
+    props: { view: "dialog", form: "section", ticket: "SHOP-41", section: "acceptance" },
+    kind: "dialog",
+    width: 640,
+  });
+  expect(writes()).toEqual([]);
+});
+
+test("AC4: after a save and the refresh, the panel shows the newest acceptance", async () => {
+  const copy = await panel();
+  expect(texts(find(copy.render(), "section-acceptance"))).toContain("None yet.");
+  const before = read.u41.comments;
+  read.u41.comments = [
+    ...before,
+    {
+      id: "a9",
+      type: "acceptance",
+      author: "pg",
+      created: new Date().toISOString(),
+      body: "Saved.",
+    },
+  ];
+  try {
+    env.shared["bakers.needs"] = { count: 0, ids: [], updated: Date.now() };
+    fireTimers();
+    await flush();
+    expect(markdownOf(find(copy.render(), "section-acceptance"))).toBe("Saved.");
+  } finally {
+    read.u41.comments = before;
+  }
 });
 
 test("a click on a link opens it with the system's opener", async () => {

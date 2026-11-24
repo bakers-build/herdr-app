@@ -74,7 +74,8 @@ mods/bakers/
     list/                         list definitions: needs-me, mine, open, state, closed;
                                   index (navigation order, counts, view menu, empty text)
     form/                         form definitions: comment, edit, confirm (state, freeze,
-                                  unfreeze, move, cancel), create
+                                  unfreeze, move, cancel), create, section (a panel section
+                                  edited in a popup)
     operations/                   what one can do with a ticket: its actions (one list for the
                                   "..." menu, the keys G and R and the actions palette), the
                                   state menu, the "..." menu
@@ -280,7 +281,7 @@ A form has three parts, each existing once:
 |---|---|---|
 | Definition | `ticket/form/*.js` | fields, texts, buttons; steps, each one command with its `done`/`failed` words |
 | Handling | `form/` | values, validation, a conflict warning given once, steps in order, partial failures ("Comment posted; unfreezing failed: …"), keys |
-| Drawing | `ui/form/` | fields, the inline form, the dialog frame |
+| Drawing | `ui/form/` | fields, the inline form, the dialog frame (a definition with `keys: "inline"` saves on cmd-Enter, Esc cancels, Enter types) |
 
 ## Reading and writing
 

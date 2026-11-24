@@ -27,6 +27,16 @@ export function firstLine(text) {
   return (line ?? "").replace(/^#+\s*/, "");
 }
 
+/** The UTF-8 bytes of a text, counted by code point (no TextEncoder in Herdr's runtime). @param {string} s */
+export function utf8Bytes(s) {
+  let n = 0;
+  for (const ch of String(s ?? "")) {
+    const c = /** @type {number} */ (ch.codePointAt(0));
+    n += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
+  }
+  return n;
+}
+
 /** What a person reads for an agent name from a run. @param {string} agent */
 export function agentName(agent) {
   /** @type {Record<string, string>} */

@@ -1,9 +1,10 @@
 // ticket/view/context: the right panel's ticket child (route ticket.context, 368 px, 480 px while
 // a run shows below it; cmd-shift-T), the ticket's work area. It follows the selected ticket
 // (shared bakers.selected), loads it and its activity and draws, top to bottom: the document's
-// header, title, Needs-you card, Agent and conductor, Description, Properties, Comments, Activity
-// and Runs in the scroll, the composer pinned below. The document part and its keys (A, E, G, R)
-// are view/document.js. The panel never takes the focus; its keys work once clicked into.
+// header, title, Needs-you card, Agent and conductor, Properties, Description, Acceptance and
+// Summary (each with Edit..., a popup: ticket/form/section), Comments, Activity and Runs in the
+// scroll, the composer pinned below. The document part and its keys (A, E, G, R) are
+// view/document.js. The panel never takes the focus; its keys work once clicked into.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { exec, shared, window } from "herdr";
@@ -20,6 +21,7 @@ import { chip } from "../../ui/components/chip.js";
 import { openForm } from "../../ui/form/dialog.js";
 import { chevron, chevronRight } from "../../ui/components/icon.js";
 import { openMenu } from "../../ui/components/menu.js";
+import { markdown } from "../../ui/components/markdown.js";
 import { failureView, loading } from "../../ui/components/state.js";
 import { statusLine } from "../../ui/components/status-line.js";
 import { heading, mono } from "../../ui/components/text.js";
@@ -298,6 +300,39 @@ export default class Panel {
       );
   }
 
+  /** Description, Acceptance and Summary: heading, Edit... (a popup) and the Markdown. @param {any} vm */
+  sections(vm) {
+    const t = tokens();
+    return vm.sections.map((/** @type {any} */ s) =>
+      v_flex()
+        .id(`section-${s.key}`)
+        .gap(6)
+        .child(
+          h_flex()
+            .gap(8)
+            .items_center()
+            .child(div().flex_1().child(heading(s.title)))
+            .child(
+              button(
+                `edit-${s.key}`,
+                "Edit...",
+                s.reason
+                  ? null
+                  : () => openForm("section", { ticket: vm.id, section: s.key }, { width: 640 }),
+                s.reason
+                  ? { h: 20, px: 6, size: 11, disabled: true, reason: s.reason }
+                  : { h: 20, px: 6, size: 11 },
+              ).rounded(4),
+            ),
+        )
+        .child(
+          s.empty
+            ? div().text_color(t.muted).child(s.empty)
+            : markdown(`section-md-${s.key}`, s.body),
+        ),
+    );
+  }
+
   /** @param {any} vm */
   history(vm) {
     const t = tokens();
@@ -388,7 +423,6 @@ export default class Panel {
     });
     const page = full(d, { terminal, now });
     const card = doc.card(page.needs);
-    const description = doc.description(page);
     return root
       .child(
         v_flex()
@@ -402,8 +436,8 @@ export default class Panel {
           .child(doc.title(page))
           .when(Boolean(card), (el) => el.child(card ?? ""))
           .child(this.agentSection(vm))
-          .when(Boolean(description), (el) => el.child(description ?? ""))
           .child(this.properties(vm))
+          .children(this.sections(vm))
           .child(doc.comments(page))
           .children(this.history(vm)),
       )

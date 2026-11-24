@@ -1,8 +1,17 @@
 // ticket/presenter/context: a ticket as the right panel shows it (R2-3): the header, Agent and
-// conductor, Properties, Activity and Runs. Nothing here repeats the full view.
+// conductor, Properties, the editable Markdown sections (Description, Acceptance, Summary),
+// Activity and Runs. The panel draws them beside the document (view/document.js).
 import { age, agentName, toMs } from "../../core/format.js";
-import { activeRun } from "../rules.js";
+import { sectionText } from "../form/section.js";
+import { activeRun, isClosed } from "../rules.js";
 import { agentLine } from "./field/agent-line.js";
+
+/** @type {[import("../form/section.js").Section, string][]} */
+const SECTIONS = [
+  ["description", "Description"],
+  ["acceptance", "Acceptance"],
+  ["summary", "Summary"],
+];
 
 /** What happened, in words: bb_activity's kind with its states. @param {any} a */
 export function activityText(a) {
@@ -56,6 +65,16 @@ export function context(detail, o) {
       parent: tk.parent ? String(tk.parent) : null,
       link: link ? { title: link.title ?? link.uri, uri: link.uri } : null,
     },
+    sections: SECTIONS.map(([key, title]) => {
+      const body = sectionText(tk, detail.comments, key).text;
+      return {
+        key,
+        title,
+        body,
+        empty: body.trim() ? null : "None yet.",
+        reason: isClosed(tk) ? "A closed ticket cannot be changed any more." : null,
+      };
+    }),
     activity: {
       api: !o.activityServed,
       items: (o.activity ?? []).map((/** @type {any} */ a) => ({

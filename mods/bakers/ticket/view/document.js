@@ -1,6 +1,6 @@
 // ticket/view/document: one ticket's document in the panel (view/context.js): the header (ID, state
 // pill and its menu, Frozen, the agent line, Edit, Actions, ...), the title or the edit form, the
-// Needs-you card, the description, the comments and the composer (the comment form). Keys: A acts
+// Needs-you card, the comments and the composer (the comment form). Keys: A acts
 // on the card, E edits, G shows the agent, R moves the run; cmd-Enter and Esc belong to the edit
 // form or the composer while they are used. It never takes the focus on its own.
 import { div } from "gpui-kit";
@@ -20,7 +20,6 @@ import { entry } from "../../ui/components/entry.js";
 import { openForm } from "../../ui/form/dialog.js";
 import { inlineForm } from "../../ui/form/inline.js";
 import { FormInputs } from "../../ui/form/inputs.js";
-import { markdown } from "../../ui/components/markdown.js";
 import { openMenu } from "../../ui/components/menu.js";
 import { pill } from "../../ui/components/pill.js";
 import { statusLine } from "../../ui/components/status-line.js";
@@ -251,27 +250,6 @@ export class TicketDocument {
         cx.notify();
       })
       .child(vm.title);
-  }
-
-  /** Nothing while editing: the edit form holds it. @param {any} vm */
-  description(vm) {
-    if (this.editor) return null;
-    const t = tokens();
-    return v_flex()
-      .id("description")
-      .gap(8)
-      .child(heading("Description"))
-      .child(
-        div()
-          .id("description-body")
-          .cursor_text()
-          .on_click((_e, cx) => {
-            this.edit();
-            cx.notify();
-          })
-          .child(markdown(`desc-${vm.id}`, vm.description)),
-      )
-      .child(div().text_size(11).text_color(t.muted).child("Click or E to edit."));
   }
 
   /** @param {any} vm */

@@ -321,3 +321,26 @@ test("notification, search result, state menu", () => {
     { ticket: "SHOP-56", from: "plan", to: "working" },
   ]);
 });
+
+test("context: Description, Acceptance and Summary, each editable while the ticket is open", () => {
+  const o = { terminal: null, reason: null, now: NOW, activity: null, activityServed: true };
+  const withAcceptance = {
+    ...detail,
+    comments: [
+      ...detail.comments,
+      { id: "a1", type: "acceptance", author: "pg", created: "1", body: "Old" },
+      { id: "a2", type: "acceptance", author: "pg", created: "2", body: "New" },
+    ],
+  };
+  expect(context(withAcceptance, o).sections).toEqual([
+    { key: "description", title: "Description", body: "D", empty: null, reason: null },
+    { key: "acceptance", title: "Acceptance", body: "New", empty: null, reason: null },
+    { key: "summary", title: "Summary", body: "", empty: "None yet.", reason: null },
+  ]);
+  const closed = { ...detail, ticket: { ...detail.ticket, state: "done" } };
+  expect(context(closed, o).sections.map((s: any) => s.reason)).toEqual([
+    "A closed ticket cannot be changed any more.",
+    "A closed ticket cannot be changed any more.",
+    "A closed ticket cannot be changed any more.",
+  ]);
+});
