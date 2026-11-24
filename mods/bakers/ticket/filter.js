@@ -30,7 +30,13 @@ export const setFilter = (patch) => setShared("bakers.filter", { ...currentFilte
 
 export const clearFilter = () => setShared("bakers.filter", { ...DEFAULT_FILTER });
 
-/** Mine is disabled without a signed-in user, so it neither filters nor counts as active. @param {Filter} f @param {{ name: string } | null} user */
+/** @typedef {{ name: string, names?: string[] }} User the signed-in user; names: every name the assignee may show */
+
+/** Whether a record is assigned to the user, by any of the user's names. @param {any} r @param {User} user */
+const assignedTo = (r, user) =>
+  r.assignee != null && (user.names ?? [user.name]).includes(r.assignee);
+
+/** Mine is disabled without a signed-in user, so it neither filters nor counts as active. @param {Filter} f @param {User | null} user */
 export const isActive = (f, user) =>
   f.needsMe ||
   (f.mine && user != null) ||
@@ -46,13 +52,13 @@ export function listForFilter(f) {
 
 /**
  * The records every part of the filter lets through.
- * @param {any[]} records @param {Filter} f @param {{ user: { name: string } | null }} o
+ * @param {any[]} records @param {Filter} f @param {{ user: User | null }} o
  */
 export function applyFilter(records, f, { user }) {
   return records.filter(
     (r) =>
       (!f.needsMe || r.why !== null) &&
-      (!f.mine || user == null || r.assignee === user.name) &&
+      (!f.mine || user == null || assignedTo(r, user)) &&
       (f.state === "open" || f.state === "closed" || r.state === f.state) &&
       (f.label === null || (r.labels ?? []).includes(f.label)) &&
       (f.type === null || r.type === f.type),
@@ -61,13 +67,13 @@ export function applyFilter(records, f, { user }) {
 
 /**
  * The counts next to the controls, over the open records and ignoring the other filters.
- * @param {any[]} records @param {{ name: string } | null} user
+ * @param {any[]} records @param {User | null} user
  */
 export function counts(records, user) {
   const open = records.filter((r) => !r.closed);
   return {
     needsMe: open.filter((r) => r.why !== null).length,
-    mine: user ? open.filter((r) => r.assignee === user.name).length : null,
+    mine: user ? open.filter((r) => assignedTo(r, user)).length : null,
     open: open.length,
     states: Object.fromEntries(STATES.map((s) => [s, open.filter((r) => r.state === s).length])),
   };

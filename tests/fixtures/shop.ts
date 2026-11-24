@@ -252,7 +252,7 @@ export function resources(
     out.push({
       type: "user--user",
       id: u.id,
-      attributes: { display_name: u.display_name },
+      attributes: { display_name: u.display_name, ...(u.name ? { name: u.name } : {}) },
     });
   return out;
 }

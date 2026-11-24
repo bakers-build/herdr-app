@@ -127,8 +127,10 @@ export default class TicketList {
       this.page = 0;
       cx.notify();
     }
-    if (!server) return;
-    const skey = `${server.def.id}:${server.args.join(":")}`;
+    // The rows belong to a project: a switch starts over, and nothing loads before there is one.
+    const project = currentProject()?.uuid;
+    if (!server || !project) return;
+    const skey = `${project}:${server.def.id}:${server.args.join(":")}`;
     if (this.server.key !== skey) this.server = { key: skey, rows: [], more: false, page: -1 };
     const page = list === server ? this.page : 0;
     if (this.server.page >= page || this.server.loading) return;
@@ -136,13 +138,9 @@ export default class TicketList {
     const at = this.server;
     cx.spawn(async (cx) => {
       try {
-        const p = await ready();
+        await ready();
         const def = server.def;
-        const q = toQuery(
-          def,
-          { project: p?.uuid ?? currentProject()?.uuid, args: server.args },
-          at.page + 1,
-        );
+        const q = toQuery(def, { project, args: server.args }, at.page + 1);
         const rows = (await def.load(q)).map((/** @type {any} */ t) => getStore().row(t));
         at.rows = [...at.rows, ...rows];
         at.more = rows.length === def.pager?.limit;

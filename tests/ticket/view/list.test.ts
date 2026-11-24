@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, resetMod } from "../../fixtures/shop";
+import { activeSpace, backend, list as shop, resetMod } from "../../fixtures/shop";
 import {
   click,
   env,
@@ -13,6 +13,8 @@ import {
   runs,
   texts,
   fetched,
+  fireTimers,
+  walk,
 } from "../../harness";
 
 const actions: any = await import("../../../mods/bakers/core/actions.js");
@@ -234,6 +236,61 @@ test("the closed state lists the server's closed tickets", async () => {
   const root = copy.render();
   expect(find(root, "row-SHOP-49")).toBeDefined();
   expect(find(root, "row-SHOP-41")).toBeUndefined();
+});
+
+test("a closed ticket open as a tab is not in the Open list and shows once when closed", async () => {
+  activeSpace();
+  env.spaces[0].tabs.push({ id: "t6", name: "SHOP-49 closed", index: 2 });
+  backend();
+  env.shared["bakers.filter"] = { ...DEFAULT };
+  const Bakers = await load("bakers/main.js");
+  const copy = mount(Bakers, { view: "ticket.list" });
+  await flush();
+  const { getStore } = await import("../../../mods/bakers/ticket/store.js");
+  expect(getStore().byId("SHOP-49")?.closed).toBe(true); // the store holds the tab's ticket
+  expect(find(copy.render(), "row-SHOP-49")).toBeUndefined();
+  env.shared["bakers.filter"] = { ...DEFAULT, state: "closed" };
+  fireTimers();
+  await flush();
+  let rows = 0;
+  walk(copy.render(), (n: any) => {
+    if (n?.calls?.id?.[0] === "row-SHOP-49") rows++;
+  });
+  expect(rows).toBe(1);
+});
+
+test("the closed list follows a project switch", async () => {
+  activeSpace();
+  backend({
+    jsonapi: {
+      projects: [
+        { id: "p1", name: "acme-shop", key: "ACMESHOP" },
+        { id: "p2", name: "other", key: "OTHER" },
+      ],
+      tickets: [
+        ...shop,
+        {
+          id: "u90",
+          identifier: "OTHER-1",
+          title: "Old",
+          state: "done",
+          closed: true,
+          project: "p2",
+        },
+      ],
+    },
+  });
+  env.shared["bakers.filter"] = { ...DEFAULT, state: "closed" };
+  const Bakers = await load("bakers/main.js");
+  const copy = mount(Bakers, { view: "ticket.list" });
+  await flush();
+  expect(find(copy.render(), "row-SHOP-49")).toBeDefined();
+  await actions.perform(["project.choose", "p2", "other"]);
+  fireTimers();
+  await flush();
+  const root = copy.render();
+  expect(find(root, "row-SHOP-49")).toBeUndefined();
+  expect(find(root, "row-OTHER-1")).toBeDefined();
 });
 
 test("filters narrow the rows; with nothing left the hint says so", async () => {

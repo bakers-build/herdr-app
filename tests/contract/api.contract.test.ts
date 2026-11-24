@@ -115,6 +115,23 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     const user = await tickets.currentUser();
     expect(user?.uuid).toBe(uuid);
     expect(typeof user?.name).toBe("string");
+    // Mine matches the list's assignee_name against the user's names: the seeded world assigns
+    // tickets to the contract user (fixture-agent), found by the assignee reference.
+    const account = await api.read("user", "user", uuid);
+    expect(user.names).toContain(account.name);
+    const assigned = await api.search("bb_ticket", "bb_ticket", {
+      filter: [["assignee_user_id.id", "=", uuid]],
+      limit: 50,
+    });
+    expect(assigned.length).toBeGreaterThan(0);
+    for (const t of assigned) expect(user.names).toContain(t.assignee_name);
+    const { applyFilter, DEFAULT_FILTER } = await import("../../mods/bakers/ticket/filter.js");
+    const mine = applyFilter(
+      assigned.map((t: any) => ({ id: t.identifier, assignee: t.assignee_name, why: null })),
+      { ...DEFAULT_FILTER, mine: true },
+      { user },
+    );
+    expect(mine).toHaveLength(assigned.length);
   });
 
   test("projects: the list and one project", async () => {

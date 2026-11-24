@@ -76,3 +76,19 @@ test("a click selects; the selected card is outlined in accent, every card with 
   expect(plain.calls.border_color).toEqual(["border"]);
   expect(card.calls.border_color).toEqual(["accent"]);
 });
+
+test("hover fills a plain card and keeps the selected card's fill", () => {
+  const hoverBg = (card: any) => {
+    const bg: string[] = [];
+    const style: any = {
+      bg: (c: string) => {
+        bg.push(c);
+        return style;
+      },
+    };
+    card.calls.hover[0](style);
+    return bg;
+  };
+  expect(hoverBg(ticketCard(vm, () => {}))).toEqual(["hover"]);
+  expect(hoverBg(ticketCard({ ...vm, selected: true }, () => {}))).toEqual([]);
+});

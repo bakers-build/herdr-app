@@ -285,3 +285,54 @@ test("a failing user read leaves the user null and loading intact", async () => 
   expect(store.user).toBeNull();
   expect(store.tickets.length).toBeGreaterThan(0);
 });
+
+test("a refresh retries a failed user read until a user is set, never two at once", async () => {
+  let reads = 0;
+  let fail = true;
+  let release = () => {};
+  const api = fakeApi({
+    currentUser: async () => {
+      reads++;
+      if (fail) throw new Error("transient");
+      await new Promise<void>((r) => (release = r));
+      return { uuid: "me", name: "Pascal Glass", names: ["Pascal Glass"] };
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  let notified = 0;
+  store.onChange(() => notified++);
+  await store.load("p1");
+  expect(store.user).toBeNull();
+  expect(reads).toBe(1);
+  fail = false;
+  const first = store.refresh();
+  const second = store.refresh(); // while the retry is still reading
+  await new Promise((r) => setTimeout(r, 0));
+  expect(reads).toBe(2);
+  release();
+  await Promise.all([first, second]);
+  expect(store.user).toEqual({ uuid: "me", name: "Pascal Glass", names: ["Pascal Glass"] });
+  const before = notified;
+  await store.refresh();
+  expect(reads).toBe(2); // set for the project: no more reads
+  expect(notified).toBe(before + 1);
+});
+
+test("a user read finishing after a project switch is not kept for the new project", async () => {
+  const pending: ((u: any) => void)[] = [];
+  const api = fakeApi({
+    currentUser: () => new Promise((r) => pending.push(r)),
+  });
+  const store = createStore(api, { now: () => NOW });
+  const first = store.load("p1");
+  await new Promise((r) => setTimeout(r, 0));
+  const second = store.load("p2");
+  await new Promise((r) => setTimeout(r, 0));
+  const p1 = pending.shift(); // the read started for p1
+  for (const r of pending) r(null);
+  await new Promise((r) => setTimeout(r, 0));
+  p1?.({ uuid: "me", name: "Old", names: ["Old"] });
+  await Promise.all([first, second]);
+  expect(store.project).toBe("p2");
+  expect(store.user).toBeNull();
+});

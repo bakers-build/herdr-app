@@ -61,7 +61,7 @@ const ids = (rows: any[]) => rows.map((r) => r.id);
 const run = (patch: any, u: any = user) =>
   ids(applyFilter(records, { ...DEFAULT_FILTER, ...patch }, { user: u }));
 
-test("T3.1 each filter alone", () => {
+test("each filter alone", () => {
   expect(run({})).toEqual(["SHOP-41", "SHOP-56", "SHOP-57", "SHOP-58", "SHOP-60"]);
   expect(run({ needsMe: true })).toEqual(["SHOP-41", "SHOP-56", "SHOP-60"]);
   expect(run({ mine: true })).toEqual(["SHOP-41", "SHOP-57", "SHOP-60"]);
@@ -71,7 +71,7 @@ test("T3.1 each filter alone", () => {
   expect(run({ type: "feature" })).toEqual(["SHOP-56", "SHOP-57"]);
 });
 
-test("T3.2 filters AND each other and the / text", () => {
+test("filters AND each other and the / text", () => {
   expect(run({ needsMe: true, mine: true })).toEqual(["SHOP-41", "SHOP-60"]);
   expect(run({ needsMe: true, mine: true, state: "review" })).toEqual(["SHOP-60"]);
   expect(run({ label: "auto", type: "bug" })).toEqual(["SHOP-41"]);
@@ -80,7 +80,7 @@ test("T3.2 filters AND each other and the / text", () => {
   expect(ids(runList(l.def, rows, { args: l.args, exposed: "shop-60" }).rows)).toEqual(["SHOP-60"]);
 });
 
-test("T3.3 isActive and clearFilter", () => {
+test("isActive and clearFilter", () => {
   expect(currentFilter()).toEqual(DEFAULT_FILTER);
   expect(DEFAULT_FILTER).toEqual({
     needsMe: false,
@@ -107,7 +107,7 @@ test("T3.3 isActive and clearFilter", () => {
   expect(currentFilter()).toEqual(DEFAULT_FILTER);
 });
 
-test("T3.4 counts: Needs me, Mine, Open and each state", () => {
+test("counts: Needs me, Mine, Open and each state", () => {
   expect(counts(records, user)).toEqual({
     needsMe: 3,
     mine: 3,
@@ -116,7 +116,7 @@ test("T3.4 counts: Needs me, Mine, Open and each state", () => {
   });
 });
 
-test("T3.5 closed runs the server list: 50 per page, newest closing first", () => {
+test("closed runs the server list: 50 per page, newest closing first", () => {
   const l = listForFilter({ ...DEFAULT_FILTER, state: "closed" });
   expect(typeof l.def.load).toBe("function");
   expect(toQuery(l.def, { project: "p1", args: [] }, 1)).toMatchObject({
@@ -133,14 +133,14 @@ test("T3.5 closed runs the server list: 50 per page, newest closing first", () =
   ).toEqual(["SHOP-49"]);
 });
 
-test("T3.6 without the signed-in user Mine counts null and does not filter", () => {
+test("without the signed-in user Mine counts null and does not filter", () => {
   expect(counts(records, null).mine).toBeNull();
   expect(run({ mine: true }, null)).toEqual(run({}, null));
   expect(isActive({ ...DEFAULT_FILTER, mine: true }, null)).toBe(false);
   expect(isActive({ ...DEFAULT_FILTER, mine: true }, user)).toBe(true);
 });
 
-test("T3.7 choices: distinct values, sorted", () => {
+test("choices: distinct values, sorted", () => {
   expect(choices(records)).toEqual({
     labels: ["Question", "auto", "ui"].sort(),
     types: ["bug", "chore", "feature"],
@@ -166,4 +166,17 @@ test("the ticket.filter action patches the filter; the status click shows Needs 
   const Status = (await import("../../mods/bakers/ticket/view/status.js")).default;
   new Status().click();
   expect(currentFilter()).toEqual({ ...DEFAULT_FILTER, needsMe: true });
+});
+
+test("Mine matches the assignee by either of the user's names", () => {
+  // The list's assignee is the account name ("pg"); the profile may show a display name.
+  const byAccount = { uuid: "u1", name: "Pascal Glass", names: ["Pascal Glass", "pg"] };
+  expect(run({ mine: true }, byAccount)).toEqual(["SHOP-41", "SHOP-57", "SHOP-60"]);
+  expect(counts(records, byAccount).mine).toBe(3);
+  const byDisplay = { uuid: "u2", name: "jo", names: ["jo", "Jo Doe"] };
+  const withDisplay = [...records, rec("SHOP-61", "plan", { assignee: "Jo Doe" })];
+  expect(
+    ids(applyFilter(withDisplay, { ...DEFAULT_FILTER, mine: true }, { user: byDisplay })),
+  ).toEqual(["SHOP-56", "SHOP-61"]);
+  expect(counts(withDisplay, byDisplay).mine).toBe(2);
 });

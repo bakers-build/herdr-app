@@ -30,7 +30,7 @@ export function ticketCard(vm, onClick) {
       .when(vm.selected, (el) => el.bg(t.selected))
       .selected(vm.selected)
       .cursor_pointer()
-      .hover((s) => s.bg(t.hover))
+      .hover((s) => (vm.selected ? s : s.bg(t.hover))) // the selected card keeps its fill
       .on_click(onClick)
       .child(
         h_flex()

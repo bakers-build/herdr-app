@@ -149,14 +149,17 @@ export async function query(query) {
   return (await search(...TICKET, { include: LIST_INCLUDE, ...query })).map(toTicket);
 }
 
-/** The signed-in user, by the name the tickets' assignee shows; null when unknown or unreadable. */
+/**
+ * The signed-in user: name to show (the display name, else the account name) and names, both
+ * of them, since the tickets' assignee may show either. Null when unknown or unreadable.
+ */
 export async function currentUser() {
   try {
     const uuid = await me();
     if (!uuid) return null;
     const u = await read("user", "user", uuid);
-    const name = u?.display_name ?? u?.name;
-    return name ? { uuid, name: String(name) } : null;
+    const names = [...new Set([u?.display_name, u?.name].filter(Boolean).map(String))];
+    return names.length ? { uuid, name: names[0], names } : null;
   } catch {
     return null;
   }

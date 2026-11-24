@@ -59,7 +59,20 @@ test("the list carries each ticket's type, read with the list", async () => {
 });
 
 test("currentUser reads the signed-in user's uuid and display name", async () => {
-  expect(await repository.currentUser()).toEqual({ uuid: "u-me", name: "Pascal Glass" });
+  expect(await repository.currentUser()).toEqual({
+    uuid: "u-me",
+    name: "Pascal Glass",
+    names: ["Pascal Glass"],
+  });
+});
+
+test("currentUser keeps the display name for showing and both names for matching", async () => {
+  backend({ jsonapi: { users: [{ id: "u-me", display_name: "Pascal Glass", name: "pg" }] } });
+  expect(await repository.currentUser()).toEqual({
+    uuid: "u-me",
+    name: "Pascal Glass",
+    names: ["Pascal Glass", "pg"],
+  });
 });
 
 test("currentUser is null when the user cannot be read", async () => {
