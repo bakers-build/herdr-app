@@ -1,8 +1,10 @@
 // ui/form/dialog: the dialog frame (frames 4, R3-2) for any form definition
 // registered under props().form (core/registry.js): the title, from and to in pills, the consequence, the
 // fields, the message, then the buttons. The primary names the action and its target,
-// the other names what stays and is the default. Keys follow form/keys (a key never
-// writes in a dialog); sending follows form/submit (steps, partial failures, conflict).
+// the other names what stays and is the default. Keys follow form/keys: a key never writes
+// in a dialog, unless the definition sets keys: "inline" (an editor in a popup), where
+// cmd-Enter sends like the primary button, Esc closes and Enter types a newline. Sending
+// follows form/submit (steps, partial failures, conflict).
 // On success: close, a toast with the definition's text, then its after().
 import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
@@ -17,9 +19,12 @@ import { button } from "../components/button.js";
 import { pill } from "../components/pill.js";
 import { field, FormInputs, message } from "./inputs.js";
 
-/** @param {string} form a registered form kind @param {Record<string, unknown>} p */
-export function openForm(form, p = {}) {
-  return openRoute("dialog", { form, ...p });
+/**
+ * @param {string} form a registered form kind @param {Record<string, unknown>} p
+ * @param {Record<string, unknown>} [extra] overlay fields for this call, such as the width
+ */
+export function openForm(form, p = {}, extra = {}) {
+  return openRoute("dialog", { form, ...p }, extra);
 }
 
 export default class Dialog {
@@ -73,12 +78,22 @@ export default class Dialog {
       .text_size(13)
       .text_color(t.foreground);
     // init sets the handle; def, state and inputs are set together, without an await between.
-    if (!this.def || !this.state || !this.inputs || !this.handle)
-      return root.p(20).child(
-        div()
-          .text_color(this.error ? t.blocked : t.muted)
-          .child(this.error ?? "..."),
-      );
+    const handle = this.handle;
+    if (!this.def || !this.state || !this.inputs || !handle)
+      // Loading or failed: Esc still closes, so a failed form never traps the user.
+      return root
+        .p(20)
+        .when(Boolean(handle), (el) => el.track_focus(/** @type {any} */ (handle)))
+        .on_key_down((e, cx) => {
+          if (formKey(e.keystroke, "inline") !== "cancel") return;
+          this.close();
+          cx.stop_propagation();
+        })
+        .child(
+          div()
+            .text_color(this.error ? t.blocked : t.muted)
+            .child(this.error ?? "..."),
+        );
     const d = this.def;
     const keep = button(
       "secondary",
@@ -97,10 +112,12 @@ export default class Dialog {
     return root
       .p(d.size === 15 ? 16 : 20)
       .gap(12)
-      .track_focus(this.handle)
+      .track_focus(handle)
       .on_key_down((e, cx) => {
-        if (formKey(e.keystroke, "dialog") !== "cancel") return;
-        this.close();
+        const k = formKey(e.keystroke, d.keys === "inline" ? "inline" : "dialog");
+        if (k === "submit") this.send(cx);
+        else if (k === "cancel") this.close();
+        else return;
         cx.stop_propagation();
       })
       .child(

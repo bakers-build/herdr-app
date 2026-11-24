@@ -60,7 +60,7 @@ It never overwrites a key you already use; it prints the ones it kept.
 | Key | What it does |
 |---|---|
 | cmd-B | sidebar with the bakers section |
-| cmd-shift-T | Ticket panel (the context of the focused ticket tab or the selected row) |
+| cmd-shift-T | Ticket panel (the context of the focused ticket tab or the selected row); Edit... on Description, Acceptance and Summary opens a popup: cmd-Enter saves, Esc cancels |
 | cmd-shift-O | Go to ticket |
 | cmd-shift-B | Tickets tab |
 | cmd-shift-N | New ticket |
