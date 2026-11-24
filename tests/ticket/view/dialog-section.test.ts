@@ -228,6 +228,19 @@ test("AC7: a failed save keeps the popup, the text and says it was not saved", a
   expect(texts(find(root, "form-message"))[0]).toStartWith("Not saved:");
 });
 
+test("AC7: a failed conflict-check read keeps the popup, the text and says it was not saved", async () => {
+  const copy = await section("summary");
+  env.fetch = async () => {
+    throw new Error("network down");
+  };
+  await typeAndSave(copy, "My summary");
+  const root = copy.render();
+  expect(closed()).toBe(false);
+  expect(body(copy).value()).toBe("My summary");
+  expect(texts(find(root, "form-message"))[0]).toStartWith("Not saved:");
+  expect(writes()).toEqual([]);
+});
+
 test("AC8: a newer acceptance since opening warns once; the second cmd-Enter saves", async () => {
   await withAcceptance(async () => {
     const copy = await section("acceptance");

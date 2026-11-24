@@ -4,7 +4,7 @@
 // definition's words ("Comment posted; unfreezing failed: <why>"), the values stay and the
 // form stays open; a retry skips the steps that already finished, unless a field the step
 // posts (uses) was edited since: then it runs again with the edited text. A second submit
-// while one runs does nothing.
+// while one runs does nothing. A failed check sends nothing and says so like a failed step.
 import { classify } from "../core/errors.js";
 
 /**
@@ -30,7 +30,19 @@ export async function submit(def, state) {
   state.message = null;
   try {
     if (def.check && !state.warned) {
-      const warning = await def.check(state.values);
+      let warning;
+      try {
+        warning = await def.check(state.values);
+      } catch (e) {
+        // The check itself failed (e.g. the re-read): nothing was sent, say so in the
+        // first step's words.
+        const f = classify(e) ?? { kind: "failed", message: String(e) };
+        state.message = {
+          kind: f.kind,
+          message: `${def.steps[0]?.failed ?? "Not sent"}: ${f.message}`,
+        };
+        return { ok: false };
+      }
       if (warning) {
         state.warned = true;
         state.message = { kind: "conflict", message: warning };
