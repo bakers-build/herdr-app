@@ -5,6 +5,7 @@ import "../harness";
 const P = "../../mods/bakers/ticket/presenter";
 const { agentLine } = await import(`${P}/field/agent-line.js`);
 const { teaser, columns } = await import(`${P}/teaser.js`);
+const { card, KEY_HINT } = await import(`${P}/card.js`);
 const { full, needsCard } = await import(`${P}/full.js`);
 const { context } = await import(`${P}/context.js`);
 const { railLabel, statusParts } = await import(`${P}/counts.js`);
@@ -45,6 +46,69 @@ test("agent line: asking, working, no run", () => {
   expect(agentLine({ run: null, why: null, since: null, conductor: "c1" }, null, NOW).text).toBe(
     "No active run",
   );
+});
+
+const base = {
+  id: "SHOP-41",
+  title: "Checkout fails with an empty cart",
+  state: "working",
+  type: "bug",
+  labels: ["auto", "ui"],
+  assignee: "pg",
+  why: null,
+  since: min(120),
+  run: null,
+  conductor: "c1",
+};
+
+test("card: the fields in the order of the rows", () => {
+  const vm = card(
+    { ...base, why: "Asked a question", since: min(35), run: running },
+    { selected: true, now: NOW },
+  );
+  expect(Object.keys(vm)).toEqual([
+    "key",
+    "selected",
+    "id",
+    "state",
+    "type",
+    "age",
+    "title",
+    "why",
+    "labels",
+    "assignee",
+    "agent",
+  ]);
+  expect(vm).toEqual({
+    key: "SHOP-41",
+    selected: true,
+    id: "SHOP-41",
+    state: "working",
+    type: "bug",
+    age: "35m",
+    title: "Checkout fails with an empty cart",
+    why: "Asked a question",
+    labels: ["auto", "ui"],
+    assignee: "pg",
+    agent: { tone: "blocked", ring: false, text: "Claude Code needs you" },
+  });
+});
+
+test("card: why only when it needs you; the agent text names the machine", () => {
+  const quiet = card(base, { selected: false, now: NOW });
+  expect(quiet.why).toBeNull();
+  expect(quiet.agent).toEqual({ tone: "muted", ring: true, text: "No active run" });
+  expect(quiet.age).toBe("2h");
+  const r = { ...base, run: running, machine: "studio-mac" };
+  expect(card(r, { selected: false, now: NOW }).agent).toEqual({
+    tone: "working",
+    ring: false,
+    text: "Claude Code working, studio-mac",
+  });
+  expect(
+    card({ ...base, since: null, type: null, assignee: null }, { selected: false, now: NOW }),
+  ).toMatchObject({ age: "", type: "", assignee: "" });
+  expect(KEY_HINT).toContain("The filter bar narrows the list");
 });
 
 test("teaser: the agent cell names the claiming machine, as drawn", () => {
