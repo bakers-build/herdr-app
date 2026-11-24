@@ -13,7 +13,11 @@ export type Resource = {
 
 export const ref = (type: string, id: string) => ({ type, id });
 
-export function jsonapiServer(resources: Resource[], base = "https://bakers.test") {
+export function jsonapiServer(
+  resources: Resource[],
+  base = "https://bakers.test",
+  me: string | null = null,
+) {
   const byKey = new Map(resources.map((r) => [`${r.type}:${r.id}`, r]));
   const get = (x: any) => (x ? byKey.get(`${x.type}:${x.id}`) : undefined);
 
@@ -92,6 +96,14 @@ export function jsonapiServer(resources: Resource[], base = "https://bakers.test
       };
     const u = new URL(url);
     if (!url.startsWith(base)) throw new Error(`fake server: unknown host ${url}`);
+    if (u.pathname === "/jsonapi")
+      return ok({
+        jsonapi: { version: "1.1" },
+        data: [],
+        meta: {
+          links: me ? { me: { href: `${base}/jsonapi/user/user/${me}`, meta: { id: me } } } : {},
+        },
+      });
     const [, , entity, bundle, uuid] = u.pathname.split("/");
     const type = `${entity}--${bundle}`;
     const p = u.searchParams;

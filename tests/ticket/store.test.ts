@@ -248,3 +248,40 @@ test("ticket(id) returns the detail with why and agent", async () => {
   expect(d.runs.length).toBe(1);
   expect(d.since).toBe(NOW - 35 * 60000);
 });
+
+test("a record carries the ticket's type", async () => {
+  const api = fakeApi({
+    listOpen: async () => [{ ...rows[0], type: "bug", runs: [] }],
+  });
+  const store = createStore(api, { now: () => NOW });
+  await store.load("p1");
+  expect(store.records()[0].type).toBe("bug");
+});
+
+test("load reads the signed-in user once per project, after the first refresh", async () => {
+  const calls: string[] = [];
+  const api = fakeApi({
+    currentUser: async () => {
+      calls.push("user");
+      return { uuid: "me", name: "Pascal Glass" };
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  expect(store.user).toBeNull();
+  await store.load("p1");
+  await store.load("p1");
+  expect(store.user).toEqual({ uuid: "me", name: "Pascal Glass" });
+  expect(calls).toEqual(["user"]);
+});
+
+test("a failing user read leaves the user null and loading intact", async () => {
+  const api = fakeApi({
+    currentUser: async () => {
+      throw new Error("no");
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  await store.load("p1");
+  expect(store.user).toBeNull();
+  expect(store.tickets.length).toBeGreaterThan(0);
+});

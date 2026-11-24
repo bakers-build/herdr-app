@@ -7,9 +7,9 @@
  * @typedef {{ id: string, identifier: string, title: string, state: string, labels: string[],
  *   frozen: boolean, frozen_at: string | null, closed: boolean, closed_date: string | null,
  *   changed: string | null, assignee: string | null, claim_machine: string | null,
- *   conductor: string | null, runs: Run[] }} Ticket
+ *   conductor: string | null, type: string | null, runs: Run[] }} Ticket
  * @typedef {Ticket & { workflow: string | null, description: string, branch_name: string | null,
- *   links: any[], type: string | null, recipe: string | null, parent: string | null,
+ *   links: any[], recipe: string | null, parent: string | null,
  *   reviewers: string[], conductorInfo: any, comments: Comment[] }} TicketDetail
  */
 
@@ -48,6 +48,7 @@ export function toTicket(t) {
     closed_date: t.closed_date ?? null,
     changed: t.changed ?? null,
     assignee: t.assignee_name ?? null,
+    type: nameOf(t.ticket_type),
     claim_machine: t.claim_machine ?? null,
     conductor: t.conductor_id?.id ?? null,
     runs: (t.runs ?? []).filter((/** @type {any} */ r) => r.state).map(toRun),
@@ -63,7 +64,6 @@ export function toDetail(t) {
     description: t.description ?? "",
     branch_name: t.branch_name ?? null,
     links: t.links ?? [],
-    type: nameOf(t.ticket_type),
     recipe: nameOf(t.recipe),
     parent: t.parent_id?.identifier ?? null,
     reviewers: (t.reviewers ?? []).map(nameOf).filter(Boolean),

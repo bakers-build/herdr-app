@@ -109,6 +109,14 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     expect(Array.isArray(conductors)).toBe(true);
   });
 
+  test("me names the signed-in user, whom currentUser reads", async () => {
+    const uuid = await api.me();
+    expect(typeof uuid).toBe("string");
+    const user = await tickets.currentUser();
+    expect(user?.uuid).toBe(uuid);
+    expect(typeof user?.name).toBe("string");
+  });
+
   test("projects: the list and one project", async () => {
     const list = await projects.listProjects();
     expect(list.map((p: any) => p.id)).toContain(PROJECT);

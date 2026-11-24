@@ -20,6 +20,8 @@ export function createStore(api, options = {}) {
   const details = new Map();
   /** @type {Map<string, any>} uuid -> derived facts from the list */
   const facts = new Map();
+  /** @type {string | null} the project the user was read for */
+  let userFor = null;
   /** @type {any} */
   const store = {
     project: null,
@@ -27,6 +29,8 @@ export function createStore(api, options = {}) {
     error: null,
     loading: false,
     updated: null,
+    /** @type {{ uuid: string, name: string } | null} the signed-in user */
+    user: null,
 
     /** @param {string} project */
     async load(project) {
@@ -34,9 +38,20 @@ export function createStore(api, options = {}) {
         store.tickets = [];
         details.clear();
         facts.clear();
+        store.user = null;
+        userFor = null;
       }
       store.project = project;
       await store.refresh();
+      if (userFor !== project) {
+        userFor = project;
+        try {
+          store.user = (await api.currentUser?.()) ?? null;
+        } catch {
+          store.user = null;
+        }
+        if (store.user) for (const fn of listeners) fn(store);
+      }
     },
 
     async refresh() {
@@ -112,6 +127,7 @@ export function createStore(api, options = {}) {
         machine: t.claim_machine ?? null,
         conductor: t.conductor ?? null,
         assignee: t.assignee ?? null,
+        type: t.type ?? null,
         comments: d?.comments ?? [],
         closed,
         closedDate: t.closed_date ?? null,

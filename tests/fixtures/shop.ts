@@ -124,7 +124,13 @@ const iso = (ms: number) => new Date(ms).toISOString();
  * @param o tickets, activity, conductors or projects to use instead of the defaults
  */
 export function resources(
-  o: { tickets?: any[]; activity?: any[]; conductors?: any[]; projects?: any[] } = {},
+  o: {
+    tickets?: any[];
+    activity?: any[];
+    conductors?: any[];
+    projects?: any[];
+    users?: any[];
+  } = {},
 ): Resource[] {
   const tickets = o.tickets ?? list;
   const out: Resource[] = [];
@@ -242,6 +248,12 @@ export function resources(
         actor: { data: null },
       },
     });
+  for (const u of o.users ?? [{ id: "u-me", display_name: "Pascal Glass" }])
+    out.push({
+      type: "user--user",
+      id: u.id,
+      attributes: { display_name: u.display_name },
+    });
   return out;
 }
 
@@ -253,7 +265,8 @@ export function backend(extra: Record<string, any> = {}) {
   const { jsonapi, ...tools } = extra;
   cli(tools);
   // Built per request, so a test may change the data between requests.
-  env.fetch = (url: string, opts?: any) => jsonapiServer(resources(jsonapi ?? {}))(url, opts);
+  env.fetch = (url: string, opts?: any) =>
+    jsonapiServer(resources(jsonapi ?? {}), undefined, "u-me")(url, opts);
 }
 
 export function activeSpace(folder = "/work/acme-shop") {
