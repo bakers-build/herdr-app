@@ -25,6 +25,8 @@ import { mono } from "../../ui/components/text.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 
 const DEBOUNCE_MS = 200;
+/** When the palette focuses its field again after opening, as Herdr's picker does. */
+const REFOCUS_MS = 600;
 const MAX_TICKETS = 8;
 const MAX_PAGE_TICKETS = 50;
 const TITLES = { state: "Change state", move: "Move to", tickets: "Go to ticket" };
@@ -79,6 +81,8 @@ export default class Actions {
   remote = [];
   /** Counts keystrokes; a server search answers only if no newer keystroke came. */
   seq = 0;
+  /** True once the palette closed; a late refocus then does nothing. */
+  closed = false;
 
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
@@ -88,7 +92,7 @@ export default class Actions {
     this.stack = [{ page: "root", id, input: this.field("root") }];
     if (p.page === "tickets" || (p.page === "move" && id))
       this.stack.push({ page: p.page, id, input: this.field(p.page) });
-    this.input.focus();
+    this.takeKeyboard();
     if (p.query) {
       this.input.set_value(p.query);
       this.schedule(cx);
@@ -97,8 +101,17 @@ export default class Actions {
     if (this.top().page === "move") this.loadConductors(cx);
     cx.spawn(async (cx) => {
       await ready().catch(() => null);
+      this.takeKeyboard();
       cx.notify();
     });
+    cx.timer.after(REFOCUS_MS, () => this.takeKeyboard());
+  }
+
+  /** Focuses the front page's field. A window does not take the keyboard when it opens, and a
+   *  focus before its first frame lands on nothing, so init calls this again once mounted, as
+   *  Herdr's picker does; Esc reaches the palette only through its focused field. */
+  takeKeyboard() {
+    if (!this.closed) this.input.focus();
   }
 
   /** A page's field: typing re-filters and, after a pause, searches the server.
@@ -207,6 +220,7 @@ export default class Actions {
   }
 
   close() {
+    this.closed = true;
     closeOverlay(/** @type {any} */ (props())?.overlay);
   }
 

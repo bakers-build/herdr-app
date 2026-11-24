@@ -207,6 +207,40 @@ test("a conflict check warns once; the second submit writes", async () => {
   expect(ran).toEqual(["save"]);
 });
 
+test("a failing conflict check sends nothing, says why in the first step's words, and runs again", async () => {
+  const ran: string[] = [];
+  let checks = 0;
+  const d = def([{ run: async () => ran.push("save"), failed: "Not saved" }], {
+    check: async () => {
+      checks++;
+      if (checks === 1) throw new Error("network down");
+      return null;
+    },
+  });
+  const s = new FormState(d);
+  const r = await submit(d, s);
+  expect(r.ok).toBe(false);
+  expect(s.message?.message).toStartWith("Not saved: ");
+  expect(s.message?.message).toContain("network down");
+  expect(s.busy).toBe(false);
+  expect(s.warned).toBeFalsy();
+  expect(ran).toEqual([]);
+  expect((await submit(d, s)).ok).toBe(true);
+  expect(checks).toBe(2);
+  expect(ran).toEqual(["save"]);
+});
+
+test("a failing conflict check without a step's word says Not sent", async () => {
+  const d = def([{ run: async () => {} }], {
+    check: async () => {
+      throw new Error("network down");
+    },
+  });
+  const s = new FormState(d);
+  await submit(d, s);
+  expect(s.message?.message).toStartWith("Not sent: ");
+});
+
 test("a second submit while busy does nothing", async () => {
   let n = 0;
   let release: () => void = () => {};

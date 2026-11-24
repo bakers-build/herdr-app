@@ -388,3 +388,39 @@ test("a press on the palette does not drag the window", async () => {
   find(root, "actions").calls["on_mouse_down:left"][1]({}, c);
   expect(c.stopped).toBe(true);
 });
+
+// A Herdr window does not take the keyboard when it opens, and a focus call before its first frame
+// lands on nothing; Esc reaches the palette only when its field has the keyboard.
+test("the palette takes the keyboard again once mounted", async () => {
+  const copy = await palette("SHOP-41", false);
+  copy.inner.input.focused = false;
+  await flush();
+  expect(copy.inner.input.focused).toBe(true);
+  copy.inner.input.focused = false;
+  fireTimers();
+  expect(copy.inner.input.focused).toBe(true);
+});
+
+test("opened on Move to, it takes the keyboard; Esc goes back, then closes, writing nothing", async () => {
+  const copy = await palette("SHOP-41", false, {}, { page: "move" });
+  copy.inner.input.focused = false;
+  await flush();
+  fireTimers();
+  expect(copy.inner.input.placeholder).toBe("Search conductors...");
+  expect(copy.inner.input.focused).toBe(true);
+  env.calls.length = 0;
+  key(copy.render(), "escape");
+  expect(copy.inner.input.placeholder).toBe("Search actions and tickets...");
+  expect(closed()).toEqual([]);
+  key(copy.render(), "escape");
+  expect(env.calls.map((c) => c.fn)).toEqual(["closeOverlay"]);
+});
+
+test("after Esc closed the palette, a late refocus does nothing", async () => {
+  const copy = await palette("SHOP-41", false);
+  key(copy.render(), "escape");
+  copy.inner.input.focused = false;
+  await flush();
+  fireTimers();
+  expect(copy.inner.input.focused).toBe(false);
+});
