@@ -79,3 +79,60 @@ test("currentUser is null when the user cannot be read", async () => {
   backend({ jsonapi: { users: [] } });
   expect(await repository.currentUser()).toBeNull();
 });
+
+// HERDRAPP-23: the workspace catalog, read through JSON:API.
+test("listCatalog reads every label and type of the project's workspace, sorted", async () => {
+  const many = Array.from({ length: 60 }, (_, i) => `l${String(i).padStart(2, "0")}`);
+  backend({
+    jsonapi: {
+      catalog: { labels: ["idea", ...many], types: ["chore"] },
+      foreign: { labels: ["elsewhere"], types: ["epic"] },
+    },
+  });
+  const c = await repository.listCatalog("p1");
+  expect(c.labels).toEqual(["Question", "checkout", "idea", ...many].sort());
+  expect(c.types).toEqual(["bug", "chore"]);
+  const urls = fetched()
+    .filter((u) => u.includes("/bb_term/label?"))
+    .map(decodeURIComponent);
+  expect(urls.length).toBe(2);
+  expect(urls[0]).toContain("[condition][path]=workspace_id.id");
+  expect(urls[0]).toContain("[condition][value]=w1");
+});
+
+test("listCatalog maps each term's uuid to its name", async () => {
+  const c = await repository.listCatalog("p1");
+  expect(c.names["label-checkout"]).toBe("checkout");
+  expect(c.names["type-bug"]).toBe("bug");
+});
+
+test("listCatalog fails when the project has no readable workspace", async () => {
+  backend({ jsonapi: { projects: [{ id: "p1", name: "acme-shop", key: "ACMESHOP" }] } });
+  await expect(repository.listCatalog("p1")).rejects.toThrow("workspace");
+});
+
+test("a ticket whose terms the server leaves out of `included` gets their names from the catalog", async () => {
+  backend({ jsonapi: { omit: ["bb_term--label", "bb_term--type"] } });
+  const bare = await repository.listOpen("p1");
+  expect(bare.find((t: any) => t.identifier === "SHOP-41")?.labels).toEqual([]);
+  await ready();
+  await getStore().catalogRead;
+  const row = getStore().byId("SHOP-41");
+  expect(row?.labels).toEqual(["Question", "checkout"]);
+  expect(row?.type).toBe("bug");
+});
+
+test("the panel's ticket gets the names of terms the server leaves out of `included`", async () => {
+  backend({ jsonapi: { omit: ["bb_term--label", "bb_term--type"] } });
+  await ready();
+  await getStore().catalogRead;
+  const detail = await getStore().ticket("SHOP-41");
+  expect(detail.ticket.labels).toEqual(["Question", "checkout"]);
+  expect(detail.ticket.type).toBe("bug");
+});
+
+test("a catalog read tells every copy of the mod, so the menus redraw", async () => {
+  await ready();
+  await getStore().catalogRead;
+  expect(env.shared["bakers.catalog"]).toMatchObject({ project: "p1" });
+});

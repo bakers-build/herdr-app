@@ -188,9 +188,9 @@ test("an active State, Label or Type control names its value and has the accent"
 test("the Label and Type menus list Any, then the values of the open tickets, sorted", async () => {
   const copy = await list({ label: "checkout" });
   const [labels] = opened(find(copy.render(), "filter-label"));
-  expect(labels.props.items.map((i: any) => i.label)).toEqual(["Any", "Question", "checkout"]);
-  expect(labels.props.items[2].current).toBe(true);
-  await actions.perform(labels.props.items[1].action);
+  expect(labels.props.items.map((i: any) => i.label)).toEqual(["Any", "checkout", "Question"]);
+  expect(labels.props.items[1].current).toBe(true);
+  await actions.perform(labels.props.items[2].action);
   expect(env.shared["bakers.filter"]).toEqual({ ...DEFAULT, label: "Question" });
   await actions.perform(labels.props.items[0].action);
   expect(env.shared["bakers.filter"]).toEqual(DEFAULT);
@@ -202,4 +202,43 @@ test("the Label and Type menus list Any, then the values of the open tickets, so
   expect(find(root, "row-SHOP-41")).toBeDefined();
   expect(find(root, "row-SHOP-56")).toBeUndefined();
   expect(findText(root, "Nothing matches these filters.")).toBeUndefined();
+});
+
+// HERDRAPP-23: the menus offer the workspace's labels and types, a reason when they cannot.
+test("the Label and Type menus offer the workspace's catalog, 0 where no open ticket matches", async () => {
+  const copy = await list({}, { catalog: { labels: ["idea"], types: ["chore"] } });
+  const [labels] = opened(find(copy.render(), "filter-label"));
+  expect(labels.props.items.map((i: any) => [i.label, i.hint])).toEqual([
+    ["Any", undefined],
+    ["checkout", "1"],
+    ["idea", "0"],
+    ["Question", "1"],
+  ]);
+  const [types] = opened(find(copy.render(), "filter-type"));
+  expect(types.props.items.map((i: any) => [i.label, i.hint])).toEqual([
+    ["Any", undefined],
+    ["bug", "1"],
+    ["chore", "0"],
+  ]);
+});
+
+test("a menu with no value says why: the catalog could not be read", async () => {
+  const bare = tickets.map((t) => ({ ...t, labels: [] }));
+  const copy = await list({}, { tickets: bare, hide: ["bb_term--label", "bb_term--type"] });
+  const [labels] = opened(find(copy.render(), "filter-label"));
+  expect(labels.props.items.map((i: any) => [i.label, Boolean(i.disabled)])).toEqual([
+    ["Any", false],
+    ["No labels in this workspace", true],
+  ]);
+  reset();
+  resetMod();
+  const failing = await list(
+    {},
+    { tickets: bare, projects: [{ id: "p1", name: "acme-shop", key: "ACMESHOP" }] },
+  );
+  const [failed] = opened(find(failing.render(), "filter-label"));
+  expect(failed.props.items[1]).toEqual({
+    label: "Labels could not be loaded: The project's workspace could not be read.",
+    disabled: true,
+  });
 });

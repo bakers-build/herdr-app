@@ -194,6 +194,7 @@ test("context: the panel's sections", () => {
     type: "bug",
     recipe: "matt",
     labels: ["Question"],
+    labelsLocked: false,
     frozen: { text: "Yes, 35m", form: "unfreeze", label: "Unfreeze..." },
     assignee: "cw",
     reviewers: "-",
