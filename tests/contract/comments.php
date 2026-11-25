@@ -21,9 +21,9 @@ $bundleKey = $etm->getDefinition('bb_comment')->getKey('bundle');
 $ids = [];
 foreach ([3600 => 'Contract plan, older', 0 => 'Contract plan, newer'] as $ago => $body) {
   $values = [
-    'bb_comment_type' => 'plan',
+    'type' => 'plan',
     'body' => ['value' => $body, 'format' => 'plain_text'],
-    'uid' => $user->id(),
+    'author' => $user->id(),
     'created' => time() - $ago,
   ];
   if ($bundleKey) {
@@ -31,7 +31,7 @@ foreach ([3600 => 'Contract plan, older', 0 => 'Contract plan, newer'] as $ago =
   }
   $values['ticket_id'] = $ticket->id();
   $comment = $storage->create($values);
-  foreach (['bb_comment_type', 'body'] as $field) {
+  foreach (['type', 'body', 'author'] as $field) {
     if (!$comment->hasField($field)) {
       throw new \RuntimeException("bb_comment has no field $field; it has: " . implode(',', array_keys($comment->getFields())));
     }
@@ -53,7 +53,7 @@ $storage->resetCache();
 $loaded = $storage->loadMultiple($ids);
 $types = [];
 foreach ($ids as $id) {
-  $types[$id] = $loaded[$id]->get('bb_comment_type')->value ?? NULL;
+  $types[$id] = $loaded[$id]->get('type')->value ?? $loaded[$id]->get('type')->target_id ?? NULL;
 }
 $fields = array_keys(reset($loaded)->getFields());
 $linked = [];
