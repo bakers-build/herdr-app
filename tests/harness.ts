@@ -51,7 +51,7 @@ function el(kind: string, arg?: unknown): any {
 export type Env = {
   calls: Call[];
   tasks: Promise<unknown>[];
-  timers: { ms: number; fn: (cx: any) => void; every: boolean }[];
+  timers: { ms: number; fn: (cx: any) => void; every: boolean; owner: string }[];
   exec: (
     cmd: string,
     args: string[],
@@ -82,8 +82,58 @@ export const env: Env = {} as Env;
 // Set once the mocks below exist and main.js can load; reset() refills the registry from then on.
 let refill: (() => void) | null = null;
 
+// Herdr gives retained text state (InputState.new, TextareaState.new) to the mod copy whose host
+// call is live when it is created, and releases it when that copy closes. `live` is that copy:
+// "test" unless a test runs a call of a named copy with hostCall; nothing is released unless a
+// test retires a copy.
+const DEFAULT_COPY = "test";
+let live = DEFAULT_COPY;
+// Kept beside the states, not on them, so goldens that serialise a state stay as they are.
+const retained = new Map<unknown, { owner: string; released: boolean }>();
+
+/** The copy that owns a text state, or undefined for anything that is not one. */
+export function ownerOf(state: unknown): string | undefined {
+  return retained.get(state)?.owner;
+}
+
+/** The copy whose host call is live now. */
+export function liveCopy(): string {
+  return live;
+}
+
+/** Runs `fn` as a call of `copy`, synchronously: what it creates belongs to `copy`. */
+export function asCopy<T>(copy: string, fn: () => T): T {
+  const prev = live;
+  live = copy;
+  try {
+    return fn();
+  } finally {
+    live = prev;
+  }
+}
+
+/** One host call of `copy`, as Herdr runs a click or key handler: `fn`, then its microtasks drain
+ *  while the call is still live, so continuations that settle in them run as `copy` too. */
+export async function hostCall(copy: string, fn: () => void) {
+  const prev = live;
+  live = copy;
+  try {
+    fn();
+    await new Promise((r) => setTimeout(r, 0));
+  } finally {
+    live = prev;
+  }
+}
+
+/** Models Herdr retiring a closed copy: every text state it owns is released. */
+export function retire(copy: string) {
+  for (const s of retained.values()) if (s.owner === copy) s.released = true;
+}
+
 export function reset() {
   refill?.();
+  live = DEFAULT_COPY;
+  retained.clear();
   Object.assign(env, {
     calls: [],
     tasks: [],
@@ -124,6 +174,8 @@ export class InputStub {
   constructor(options: { value?: string; placeholder?: string } = {}) {
     this.text = options.value ?? "";
     this.placeholder = options.placeholder;
+    // Owned by the copy whose call creates it; released when that copy retires.
+    retained.set(this, { owner: live, released: false });
   }
   value() {
     return this.text;
@@ -154,6 +206,13 @@ export class InputStub {
   }
 }
 
+/** Herdr's message for drawing a state whose copy retired. */
+function rendered(state: unknown) {
+  if (retained.get(state)?.released)
+    throw new Error("this input state has been released and can no longer be rendered");
+  return state;
+}
+
 class ViewBase {}
 
 mock.module("gpui-kit", () => ({
@@ -169,8 +228,8 @@ mock.module("gpui-base", () => ({
   ScrollHandle: { new: () => ({ scroll_to_item() {} }) },
   InputState: { new: (o?: any) => new InputStub(o) },
   TextareaState: { new: (o?: any) => new InputStub(o) },
-  Input: { new: (state: unknown) => el("Input", state) },
-  Textarea: { new: (state: unknown) => el("Textarea", state) },
+  Input: { new: (state: unknown) => el("Input", rendered(state)) },
+  Textarea: { new: (state: unknown) => el("Textarea", rendered(state)) },
   TextView: { markdown: (id: string, text: string) => el("markdown", { id, text }) },
   Checkbox: (props?: unknown) => el("Checkbox", props),
 }));
@@ -247,9 +306,11 @@ export function closingCopy(): () => void {
   };
 }
 
-/** A context stub: spawned tasks are kept so tests can await them with flush(). */
-export function cx(): any {
+/** A context stub of `owner` (the live copy by default): spawned tasks are kept so tests can await
+ *  them with flush(); its timer callbacks run as calls of `owner`, as Herdr runs them. */
+export function cx(owner: string = live): any {
   const c: any = {
+    owner,
     notified: 0,
     stopped: false,
     notify() {
@@ -259,16 +320,16 @@ export function cx(): any {
       c.stopped = true;
     },
     spawn(fn: (cx: any) => Promise<unknown>) {
-      const p = Promise.resolve().then(() => fn(cx()));
+      const p = Promise.resolve().then(() => fn(cx(owner)));
       env.tasks.push(p);
       return p;
     },
     timer: {
       every(ms: number, fn: (cx: any) => void) {
-        env.timers.push({ ms, fn, every: true });
+        env.timers.push({ ms, fn, every: true, owner });
       },
       after(ms: number, fn: (cx: any) => void) {
-        env.timers.push({ ms, fn, every: false });
+        env.timers.push({ ms, fn, every: false, owner });
       },
     },
     focus_handle() {
@@ -287,17 +348,24 @@ export function cx(): any {
   return c;
 }
 
-/** Lets spawned tasks run: a number of macrotask turns (a command loop never settles). */
+/** Lets spawned tasks run: a number of macrotask turns (a command loop never settles). A
+ *  cx.timer.after(0) callback runs in the next turn, as Herdr's executor runs it; longer timers
+ *  wait for fireTimers. */
 export async function flush(turns = 40) {
-  for (let i = 0; i < turns; i++) await new Promise((r) => setTimeout(r, 0));
+  for (let i = 0; i < turns; i++) {
+    await new Promise((r) => setTimeout(r, 0));
+    const due = env.timers.filter((t) => !t.every && t.ms <= 0);
+    if (due.length) env.timers = env.timers.filter((t) => !due.includes(t));
+    for (const t of due) asCopy(t.owner, () => t.fn(cx(t.owner)));
+  }
   env.tasks.length = 0;
 }
 
-/** Runs timers registered with cx.timer.after (and once each `every`). */
+/** Runs timers registered with cx.timer.after (and once each `every`), each as its owner's call. */
 export function fireTimers(ms = Number.POSITIVE_INFINITY) {
   const due = env.timers.filter((t) => t.ms <= ms);
   env.timers = env.timers.filter((t) => t.every || t.ms > ms);
-  for (const t of due) t.fn(cx());
+  for (const t of due) asCopy(t.owner, () => t.fn(cx(t.owner)));
 }
 
 /** Imports a mod file by its path under mods/. */
