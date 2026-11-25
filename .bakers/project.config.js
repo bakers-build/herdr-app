@@ -30,6 +30,9 @@ export default {
       },
     },
   ],
+  // Live checks drive the developer's Herdr: its socket and ~/.config/herdr-app lie outside the
+  // sandbox, so these two commands run unsandboxed. Applies only where the machine runs sandbox mode.
+  permissions: { sandbox: { trusted_commands: ['herdr-app', 'bun run install:herdr'] } },
   // The agent plugins every run gets: the bakers skills and the superpowers recipe.
   marketplaces: [
     { url: 'https://github.com/bakers-build/bakers-build.git', ref: 'next', plugins: ['bakers'] },
