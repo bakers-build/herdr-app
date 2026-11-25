@@ -141,3 +141,80 @@ test("project: an abandoned resolution that fails late does not replace the next
   await flush();
   expect(ctx.projectError().message).toContain("30 s");
 });
+
+test("workspace: the shown workspace is the current project's when nothing is shared", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: two } });
+  await ctx.ensureChoices();
+  expect(ctx.shownWorkspace()).toEqual({ uuid: "w1", name: "acme" });
+  expect(ctx.workspaceChoices().map((w: any) => w.name)).toEqual(["acme", "infra-ws"]);
+});
+
+test("workspace: a shared workspace is shown and narrows the projects", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: two } });
+  env.shared["bakers.workspace"] = "w0";
+  await ctx.ensureChoices();
+  expect(ctx.shownWorkspace().uuid).toBe("w0");
+  expect(ctx.projectsOf(ctx.shownWorkspace()).map((p: any) => p.uuid)).toEqual(["p0"]);
+  expect(ctx.projectsOf(null).length).toBe(2);
+});
+
+test("workspace: an unreadable shared workspace falls back to the current project's", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: two } });
+  env.shared["bakers.workspace"] = "gone";
+  await ctx.ensureChoices();
+  expect(ctx.shownWorkspace().uuid).toBe("w1");
+});
+
+test("workspace: choosing a project shares its workspace", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: two } });
+  await ctx.ensureChoices();
+  ctx.chooseProject({ uuid: "p0", name: "infra" });
+  expect(env.shared["bakers.workspace"]).toBe("w0");
+  expect(env.shared["bakers.project"]).toBe("p0");
+  ctx.chooseProject({ uuid: "p1", name: "acme-shop", workspace: null });
+  expect(env.shared["bakers.workspace"]).toBe("none");
+});
+
+test("workspace: a project unknown to the choices clears the shared workspace", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: two } });
+  await ctx.ensureChoices();
+  env.shared["bakers.workspace"] = "w0";
+  ctx.chooseProject({ uuid: "p7", name: "x" });
+  expect(env.shared["bakers.workspace"]).toBe(null);
+});
+
+test("workspace: projects without a workspace form Other", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: [...two, { id: "p9", name: "loose", workspace: null }] } });
+  await ctx.ensureChoices();
+  const all = ctx.workspaceChoices();
+  const last = all[all.length - 1];
+  expect(last).toEqual({ uuid: "none", name: "Other" });
+  expect(ctx.OTHER).toEqual(last);
+  expect(ctx.projectsOf(last).map((p: any) => p.uuid)).toEqual(["p9"]);
+  env.shared["bakers.project"] = "p9";
+  ctx._resetForTests();
+  await ctx.ensureChoices();
+  expect(ctx.shownWorkspace()).toEqual(last);
+  ctx.chooseWorkspace("w0");
+  expect(env.shared["bakers.workspace"]).toBe("w0");
+});
+
+test("workspace: no choices shows no workspace", () => {
+  expect(ctx.shownWorkspace()).toBe(null);
+});
+
+test("workspace: resolving the shared project keeps a clicked workspace", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: two } });
+  env.shared["bakers.project"] = "p1";
+  env.shared["bakers.workspace"] = "w0";
+  await ctx.ensureChoices();
+  expect(env.shared["bakers.workspace"]).toBe("w0");
+  expect(ctx.shownWorkspace().uuid).toBe("w0");
+});
