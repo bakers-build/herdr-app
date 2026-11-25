@@ -126,7 +126,12 @@ test("Move from the palette shows its form although the palette's load never ans
 });
 
 test("Move from the panel shows its form although a closed copy owns the project resolution", async () => {
-  const dialog = await fromPanel({ form: "move", ticket: "SHOP-41", conductor: "k2", name: "ci-box" });
+  const dialog = await fromPanel({
+    form: "move",
+    ticket: "SHOP-41",
+    conductor: "k2",
+    name: "ci-box",
+  });
   const root = dialog.render();
   expect(dialog.inner.error).toBeNull();
   expect(texts(root)).toContain("Move SHOP-41 to ci-box?");

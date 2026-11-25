@@ -13,7 +13,15 @@ import { windowTask } from "./window.js";
 import { showAgent, syncRun } from "./terminal.js";
 import { openRoute } from "../core/router.js";
 import { classify, labels } from "./commands.js";
-import { cancelForm, freezeForm, moveForm, stateForm, unfreezeForm } from "./form/confirm.js";
+import {
+  cancelForm,
+  freezeForm,
+  moveForm,
+  moveNow,
+  stateForm,
+  stateNow,
+  unfreezeForm,
+} from "./form/confirm.js";
 import { createForm } from "./form/create.js";
 import { sectionForm } from "./form/section.js";
 import closed from "./list/closed.js";
@@ -73,10 +81,10 @@ export function register() {
   define("command", "actions", commands.actions);
   for (const list of [needsMe, open, closed]) define("list", list.id, list);
   define("form", "create", { build: createForm });
-  define("form", "state", { build: stateForm });
+  define("form", "state", { build: stateForm, now: stateNow });
   define("form", "freeze", { build: freezeForm });
   define("form", "unfreeze", { build: unfreezeForm });
-  define("form", "move", { build: moveForm });
+  define("form", "move", { build: moveForm, now: moveNow });
   define("form", "cancel", { build: cancelForm });
   define("form", "section", { build: sectionForm });
   define("action", "ticket.classify", { run: classify });

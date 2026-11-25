@@ -30,6 +30,11 @@ export function openForm(form, p = {}, extra = {}) {
   return openRoute("dialog", { form, ...p }, extra);
 }
 
+/** How long a dialog waits for its form's build. Then a form that registers `now(p)` draws itself
+ *  from what it has; any other shows an error the person can read. */
+export const FORM_TIMEOUT_MS = 3000;
+const LATE = Symbol("late");
+
 export default class Dialog {
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
@@ -45,15 +50,29 @@ export default class Dialog {
     this.pressed = false;
     claimLater(cx, () => this.takeKeyboard());
     cx.spawn(async (cx) => {
+      const p = props();
+      const entry = get("form", p?.form);
       let def;
       try {
-        const build = get("form", props()?.form)?.build;
-        if (!build) throw new Error(`bakers: no form "${props()?.form}"`);
-        def = await build(props());
+        if (!entry?.build) throw new Error(`bakers: no form "${p?.form}"`);
+        // A build can wait on another copy's call that Herdr ended; it never holds the dialog.
+        def = await Promise.race([
+          entry.build(p),
+          new Promise((ok) => cx.timer.after(FORM_TIMEOUT_MS, () => ok(LATE))),
+        ]);
+        if (def === LATE) throw new Error(`no answer within ${FORM_TIMEOUT_MS / 1000} s`);
       } catch (/** @type {any} */ e) {
-        this.error = e?.message ?? String(e);
-        cx.notify();
-        return;
+        try {
+          def = entry?.now?.(p);
+        } catch {
+          def = null;
+        }
+        if (!def) {
+          const reason = e?.message ?? String(e);
+          this.error = entry ? `This dialog could not load: ${reason}. Esc closes it.` : reason;
+          cx.notify();
+          return;
+        }
       }
       // The text states belong to the copy whose call creates them, and die with it. This
       // continuation can still run inside the opener's call (the palette or a menu, which close

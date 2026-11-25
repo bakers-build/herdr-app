@@ -384,6 +384,12 @@ updates.
   follows a project change, and the window task refreshes. The store's single flight is
   keyed by project; a load older than `PROJECT_TIMEOUT_MS` is replaced by a new one, which
   releases its waiters, and a reply for a project that is no longer current is dropped.
+- **Dialogs never wait for a project load:** a dialog is a copy of its own, and a load or
+  project resolution it would share may belong to a copy that is already gone. A form takes
+  what it needs from its props, the store's cache or a read of its one ticket
+  (`ticket/form/confirm.js`). Every build is bounded by `FORM_TIMEOUT_MS`
+  (`ui/form/dialog.js`): then a form that registers `now(p)` draws itself from what it has, and
+  any other shows an error the person can read. Esc closes either.
 - **Who owns retained text state:** an `InputState` or `TextareaState` belongs to the copy
   whose call creates it and is released when that copy closes. A dialog creates its own in a
   timer of its own (`ui/form/dialog.js`), so an opener that closes (the palette, a menu)
