@@ -26,9 +26,9 @@ export function _resetForTests() {
   pending = null;
 }
 
-/** @param {boolean} [fresh] ask the CLI again (after a 401) */
-async function token(fresh = false) {
-  if (session && !fresh) return session;
+/** @param {string} [stale] the token a request was refused with: refresh unless the session already holds a newer one */
+async function token(stale) {
+  if (session && session.token !== stale) return session;
   if (mode === "dropsh") return null;
   if (!pending) pending = askToken().finally(() => (pending = null));
   return pending;
@@ -52,8 +52,10 @@ async function askToken() {
 /** @param {string} path @param {URLSearchParams} params */
 async function get(path, params) {
   const q = params.toString();
+  /** @type {string | undefined} */
+  let staleToken;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const s = await token(attempt > 0);
+    const s = await token(staleToken);
     if (!s) return null;
     let r;
     try {
@@ -65,7 +67,10 @@ async function get(path, params) {
         offline: true,
       });
     }
-    if (r.status === 401 && attempt === 0) continue;
+    if (r.status === 401 && attempt === 0) {
+      staleToken = s.token;
+      continue;
+    }
     if (!r.ok) {
       /** @type {any} */
       let body = null;

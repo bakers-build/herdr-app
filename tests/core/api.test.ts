@@ -334,3 +334,42 @@ test("the fake server keeps listed relationships and supports NOT IN", async () 
   expect(res.data[0].attributes).toEqual({});
   expect(res.data[0].relationships.ticket_id.data.id).toBe("t1");
 });
+
+test("a parallel cold start asks the CLI for one token", async () => {
+  cliWithToken();
+  env.fetch = async () => ({
+    status: 200,
+    ok: true,
+    json: async () => doc([]),
+    text: async () => "",
+  });
+  await Promise.all([api.search("x", "x"), api.search("x", "x"), api.search("x", "x")]);
+  expect(env.calls.filter((c) => c.fn === "exec").length).toBe(1);
+});
+
+test("staggered 401s of one expired token ask for at most one new token", async () => {
+  let n = 0;
+  env.exec = async (_c, argv) =>
+    argv[0] === "auth" && argv[1] === "token"
+      ? { code: 0, stdout: JSON.stringify({ ...TOKEN, token: n++ ? `t${n}` : "old" }), stderr: "" }
+      : { code: 1, stdout: "", stderr: "unexpected" };
+  let delay = 0;
+  env.fetch = async (_u, opts) => {
+    delay += 5;
+    await new Promise((r) => setTimeout(r, delay));
+    const ok = opts.headers.Authorization !== "Bearer old";
+    return {
+      status: ok ? 200 : 401,
+      ok,
+      json: async () => doc({ type: "x", id: "1" }),
+      text: async () => "",
+    };
+  };
+  const rows = await Promise.all([
+    api.read("x", "x", "1"),
+    api.read("x", "x", "1"),
+    api.read("x", "x", "1"),
+  ]);
+  expect(rows.map((r) => r.id)).toEqual(["1", "1", "1"]);
+  expect(env.calls.filter((c) => c.fn === "exec").length).toBeLessThanOrEqual(2);
+});
