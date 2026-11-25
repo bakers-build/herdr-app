@@ -7,7 +7,8 @@
 export const REFOCUS_MS = 600;
 
 /** Calls `take` once, REFOCUS_MS after now; `take` decides whether the claim still applies.
- *  @param {{ timer: { after(ms: number, fn: () => void): unknown } }} cx @param {() => void} take */
-export function claimLater(cx, take) {
-  cx.timer.after(REFOCUS_MS, () => take());
+ *  @param {{ timer: { after(ms: number, fn: () => void, opts?: any): unknown } }} cx
+ *  @param {() => void} take @param {{ owner?: any }} [opts] the timer's owner (TaskOptions) */
+export function claimLater(cx, take, opts) {
+  cx.timer.after(REFOCUS_MS, () => take(), opts);
 }

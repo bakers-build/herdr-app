@@ -90,6 +90,19 @@ const DEFAULT_COPY = "test";
 let live = DEFAULT_COPY;
 // Kept beside the states, not on them, so goldens that serialise a state stay as they are.
 const retained = new Map<unknown, { owner: string; released: boolean }>();
+// Herdr's task rules (gpui-kit TaskOptions.owner): a cx.spawn or cx.timer without `owner` belongs
+// to the view whose call is running when it is made (in init, the view being set up), not to the
+// view that was handed the cx; a retired copy's timers and tasks end with it. `copyOf` maps a
+// mounted view to its copy, so `{ owner: view }` names that copy.
+const copyOf = new WeakMap<object, string>();
+const retired = new Set<string>();
+
+/** The copy that owns a task or timer made now with these options. */
+function taskOwner(opts?: { owner?: object | null }): string {
+  if (opts?.owner === null) return DEFAULT_COPY;
+  if (opts?.owner) return copyOf.get(opts.owner) ?? live;
+  return live;
+}
 
 /** The copy that owns a text state, or undefined for anything that is not one. */
 export function ownerOf(state: unknown): string | undefined {
@@ -125,15 +138,19 @@ export async function hostCall(copy: string, fn: () => void) {
   }
 }
 
-/** Models Herdr retiring a closed copy: every text state it owns is released. */
+/** Models Herdr retiring a closed copy: every text state it owns is released, its pending timers
+ *  are dropped, and its spawned tasks that have not started never run. */
 export function retire(copy: string) {
   for (const s of retained.values()) if (s.owner === copy) s.released = true;
+  retired.add(copy);
+  env.timers = env.timers.filter((t) => t.owner !== copy);
 }
 
 export function reset() {
   refill?.();
   live = DEFAULT_COPY;
   retained.clear();
+  retired.clear();
   Object.assign(env, {
     calls: [],
     tasks: [],
@@ -307,7 +324,9 @@ export function closingCopy(): () => void {
 }
 
 /** A context stub of `owner` (the live copy by default): spawned tasks are kept so tests can await
- *  them with flush(); its timer callbacks run as calls of `owner`, as Herdr runs them. */
+ *  them with flush(). A task or timer belongs to `opts.owner`'s copy, else to the copy whose call
+ *  is live when it is made (Herdr's rule); timer callbacks run as calls of that copy, and nothing
+ *  of a retired copy runs. */
 export function cx(owner: string = live): any {
   const c: any = {
     owner,
@@ -319,17 +338,18 @@ export function cx(owner: string = live): any {
     stop_propagation() {
       c.stopped = true;
     },
-    spawn(fn: (cx: any) => Promise<unknown>) {
-      const p = Promise.resolve().then(() => fn(cx(owner)));
+    spawn(fn: (cx: any) => Promise<unknown>, opts?: { owner?: object | null }) {
+      const o = taskOwner(opts);
+      const p = Promise.resolve().then(() => (retired.has(o) ? undefined : fn(cx(o))));
       env.tasks.push(p);
       return p;
     },
     timer: {
-      every(ms: number, fn: (cx: any) => void) {
-        env.timers.push({ ms, fn, every: true, owner });
+      every(ms: number, fn: (cx: any) => void, opts?: { owner?: object | null }) {
+        env.timers.push({ ms, fn, every: true, owner: taskOwner(opts) });
       },
-      after(ms: number, fn: (cx: any) => void) {
-        env.timers.push({ ms, fn, every: false, owner });
+      after(ms: number, fn: (cx: any) => void, opts?: { owner?: object | null }) {
+        env.timers.push({ ms, fn, every: false, owner: taskOwner(opts) });
       },
     },
     focus_handle() {
@@ -356,16 +376,17 @@ export async function flush(turns = 40) {
     await new Promise((r) => setTimeout(r, 0));
     const due = env.timers.filter((t) => !t.every && t.ms <= 0);
     if (due.length) env.timers = env.timers.filter((t) => !due.includes(t));
-    for (const t of due) asCopy(t.owner, () => t.fn(cx(t.owner)));
+    for (const t of due) if (!retired.has(t.owner)) asCopy(t.owner, () => t.fn(cx(t.owner)));
   }
   env.tasks.length = 0;
 }
 
-/** Runs timers registered with cx.timer.after (and once each `every`), each as its owner's call. */
+/** Runs timers registered with cx.timer.after (and once each `every`), each as its owner's call;
+ *  a retired copy's timers never run. */
 export function fireTimers(ms = Number.POSITIVE_INFINITY) {
   const due = env.timers.filter((t) => t.ms <= ms);
   env.timers = env.timers.filter((t) => t.every || t.ms > ms);
-  for (const t of due) asCopy(t.owner, () => t.fn(cx(t.owner)));
+  for (const t of due) if (!retired.has(t.owner)) asCopy(t.owner, () => t.fn(cx(t.owner)));
 }
 
 /** Imports a mod file by its path under mods/. */
@@ -373,10 +394,12 @@ export async function load(path: string): Promise<any> {
   return (await import(new URL(`../mods/${path}`, import.meta.url).href)).default;
 }
 
-/** Makes a view the way Herdr does: constructor, then init(props, cx). */
+/** Makes a view the way Herdr does: constructor, then init(props, cx), in a call of the live copy,
+ *  which owns the view. */
 export function mount(View: any, props: any = env.props): any {
   env.props = props;
   const view = new View(props);
+  copyOf.set(view, live);
   view.init?.(props, cx());
   return view;
 }

@@ -6,8 +6,11 @@
 // cmd-Enter sends like the primary button, Esc closes and Enter types a newline. Sending
 // follows form/submit (steps, partial failures, conflict).
 // On success: close, a toast with the definition's text, then its after().
-// Retained state (the text inputs) is created in a call of the dialog's own, never in a
-// continuation that the opener's call may run: an opener that closes would take it along.
+// The opener (the cmd-K palette, a menu) closes itself and opens the dialog in one call, and the
+// dialog's build can settle while that call still runs. A task or timer made then without an owner
+// belongs to the running view, the opener, and Herdr ends it with the opener: the form never came.
+// So every task and timer the dialog makes names the dialog's root view as its owner, and retained
+// state (the text inputs) is created in a timer call of the dialog's own.
 import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { closeOverlay, notify, props } from "herdr";
@@ -36,8 +39,12 @@ export const FORM_TIMEOUT_MS = 3000;
 const LATE = Symbol("late");
 
 export default class Dialog {
-  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
-  init(_props, cx) {
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx
+   *  @param {import("gpui-kit").View} [view] this copy's root view, the owner of the dialog's work */
+  init(_props, cx, view) {
+    /** TaskOptions for every task and timer of the dialog. @type {{ owner: any } | undefined} */
+    this.own = view ? { owner: view } : undefined;
+    const own = this.own;
     this.handle = cx.focus_handle();
     this.handle.focus();
     this.def = null;
@@ -48,9 +55,10 @@ export default class Dialog {
     this.closed = false;
     /** True after a press inside: the person placed the keyboard, and the late claim leaves it. */
     this.pressed = false;
-    claimLater(cx, () => this.takeKeyboard());
+    claimLater(cx, () => this.takeKeyboard(), own);
+    // Read now, in the dialog's own call: the body may run in the opener's.
+    const p = props();
     cx.spawn(async (cx) => {
-      const p = props();
       const entry = get("form", p?.form);
       let def;
       try {
@@ -58,7 +66,7 @@ export default class Dialog {
         // A build can wait on another copy's call that Herdr ended; it never holds the dialog.
         def = await Promise.race([
           entry.build(p),
-          new Promise((ok) => cx.timer.after(FORM_TIMEOUT_MS, () => ok(LATE))),
+          new Promise((ok) => cx.timer.after(FORM_TIMEOUT_MS, () => ok(LATE), own)),
         ]);
         if (def === LATE) throw new Error(`no answer within ${FORM_TIMEOUT_MS / 1000} s`);
       } catch (/** @type {any} */ e) {
@@ -77,8 +85,8 @@ export default class Dialog {
       // The text states belong to the copy whose call creates them, and die with it. This
       // continuation can still run inside the opener's call (the palette or a menu, which close
       // themselves), so they are created in a timer call of the dialog's own.
-      cx.timer.after(0, (/** @type {any} */ cx) => this.ready(def, cx));
-    });
+      cx.timer.after(0, (/** @type {any} */ cx) => this.ready(def, cx), own);
+    }, own);
   }
 
   /** Sets the form, its state and its inputs together, in a call the dialog owns.
@@ -133,7 +141,7 @@ export default class Dialog {
         await this.def.after?.(r.results ?? []);
       }
       cx.notify();
-    });
+    }, this.own);
   }
 
   render() {

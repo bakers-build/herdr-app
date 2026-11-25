@@ -394,6 +394,12 @@ updates.
   whose call creates it and is released when that copy closes. A dialog creates its own in a
   timer of its own (`ui/form/dialog.js`), so an opener that closes (the palette, a menu)
   cannot release it.
+- **Who owns tasks and timers:** a `cx.spawn` or `cx.timer` without `owner` belongs to the view
+  whose call is running when it is made (in `init`, the view being set up), not to the view
+  that holds the `cx`, and Herdr ends it with that view. The palette and menus close themselves
+  and open a dialog in one call, and the dialog's build can settle inside it, so every task and
+  timer of a dialog names the dialog's root view (`{ owner }`, which `main.js` hands to the
+  inner view's `init`). The test harness follows both rules (`tests/harness.ts`).
 
 ## Tests
 
