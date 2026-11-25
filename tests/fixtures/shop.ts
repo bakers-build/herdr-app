@@ -128,18 +128,36 @@ export function resources(
     tickets?: any[];
     activity?: any[];
     conductors?: any[];
-    projects?: any[];
+    projects?: any[]; // { id, name, key, workspace?: { id, name } | null }
     users?: any[];
   } = {},
 ): Resource[] {
   const tickets = o.tickets ?? list;
   const out: Resource[] = [];
-  for (const p of o.projects ?? [{ id: "p1", name: "acme-shop", key: "ACMESHOP" }])
+  const projects = o.projects ?? [
+    { id: "p1", name: "acme-shop", key: "ACMESHOP", workspace: { id: "w1", name: "acme" } },
+  ];
+  const workspaces = new Map<string, string>();
+  for (const p of projects) {
+    if (p.workspace) workspaces.set(p.workspace.id, p.workspace.name);
     out.push({
       type: "bb_project--bb_project",
       id: p.id,
       attributes: { name: p.name, key: p.key },
+      relationships: {
+        group_id: { data: p.workspace ? ref("bb_group--bb_group", `g-${p.workspace.id}`) : null },
+      },
     });
+  }
+  for (const [id, name] of workspaces) {
+    out.push({
+      type: "bb_group--bb_group",
+      id: `g-${id}`,
+      attributes: {},
+      relationships: { workspace_id: { data: ref("bb_workspace--bb_workspace", id) } },
+    });
+    out.push({ type: "bb_workspace--bb_workspace", id, attributes: { name } });
+  }
   const terms = new Map<string, Resource>();
   const term = (bundle: string, name: string) => {
     const id = `${bundle}-${name}`;
