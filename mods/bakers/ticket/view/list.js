@@ -88,6 +88,8 @@ export default class TicketList {
   server = { key: null, rows: [], more: false, page: -1 };
   /** @type {any[]} the header.tool views */
   tools = [];
+  /** @type {unknown} the shared project the list last followed */
+  followed = null;
 
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
@@ -125,6 +127,16 @@ export default class TicketList {
       this.key = key;
       this.page = 0;
       cx.notify();
+    }
+    // The picker, another copy, shares the project it switches to: resolve it here once per value.
+    const sharedProject = shared("bakers.project");
+    if (sharedProject && sharedProject !== this.followed) {
+      this.followed = sharedProject;
+      if (sharedProject !== currentProject()?.uuid)
+        cx.spawn(async (cx) => {
+          await ready();
+          cx.notify();
+        });
     }
     // The rows belong to a project: a switch starts over, and nothing loads before there is one.
     const project = currentProject()?.uuid;
