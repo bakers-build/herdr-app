@@ -182,10 +182,15 @@ export function createStore(api, options = {}) {
 let store = null;
 /**
  * The load under way, for one project. A load for another project, or one older than
- * PROJECT_TIMEOUT_MS (a closed copy's that never answers), does not hold up a new one.
- * @type {{ project: string, promise: Promise<void>, started: number } | null}
+ * PROJECT_TIMEOUT_MS (a closed copy's that never answers), does not hold up a new one; the new
+ * one releases whoever still waits for the old.
+ * @type {{ project: string, started: number, promise: Promise<void>, settle: () => void } | null}
  */
 let loading = null;
+
+/** Whether a load of a project under way is recent enough to wait for. @param {string} project */
+const loadingFresh = (project) =>
+  loading?.project === project && Date.now() - loading.started < PROJECT_TIMEOUT_MS;
 
 export function _resetForTests() {
   store = null;
@@ -202,20 +207,33 @@ export function getStore() {
 export async function ready() {
   const p = await ensureProject();
   if (!p) return null;
-  const s = getStore();
-  const running = loading;
-  if (running && running.project === p.uuid && Date.now() - running.started < PROJECT_TIMEOUT_MS)
-    await running.promise;
-  else if (s.project !== p.uuid) {
-    const own = { project: p.uuid, started: Date.now(), promise: s.load(p.uuid) };
-    loading = own;
-    try {
-      await own.promise;
-    } finally {
-      if (loading === own) loading = null;
-    }
-  }
+  if (needsLoad(p.uuid)) await startLoad(p.uuid);
+  else if (loadingFresh(p.uuid)) await loading?.promise;
   return p;
+}
+
+/** Whether the store lacks the project and no recent load of it is under way.
+ *  @param {string} project */
+export function needsLoad(project) {
+  if (loadingFresh(project)) return false;
+  return getStore().project !== project || loading?.project === project;
+}
+
+/** @param {string} project */
+function startLoad(project) {
+  const previous = loading;
+  /** @type {() => void} */
+  let settle = () => {};
+  const promise = new Promise((ok) => (settle = () => ok(undefined)));
+  const own = { project, started: Date.now(), promise, settle };
+  loading = own;
+  previous?.settle();
+  const done = () => {
+    if (loading === own) loading = null;
+    settle();
+  };
+  getStore().load(project).then(done, done);
+  return promise;
 }
 
 /** The failure to show: the project's, else the last refresh's. */

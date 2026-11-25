@@ -21,7 +21,7 @@ import { pager } from "../../ui/components/pager.js";
 import { openForm } from "../../ui/form/dialog.js";
 import { openMenu } from "../../ui/components/menu.js";
 import { failureView } from "../../ui/components/state.js";
-import { getStore, loadError, ready, refresh } from "../store.js";
+import { getStore, loadError, needsLoad, publishNeeds, ready, refresh } from "../store.js";
 import {
   applyFilter,
   choices,
@@ -115,6 +115,15 @@ export default class TicketList {
     cx.timer.every(CHECK_MS, (cx) => this.check(cx));
   }
 
+  /** Loads the current project and shares its needs count. @param {import("gpui-kit").Context} cx */
+  follow(cx) {
+    cx.notify();
+    cx.spawn(async (cx) => {
+      if (await ready()) publishNeeds();
+      cx.notify();
+    });
+  }
+
   /** The list the filter runs, and the same list when it is a server list that needs loading. */
   wanted() {
     const list = listForFilter(currentFilter());
@@ -136,19 +145,16 @@ export default class TicketList {
       this.resolving = resolving;
       cx.notify();
     }
-    // The picker, a popup copy, only chooses the project: load it here, once per value, both
-    // when it shared another uuid and when it changed the project module this copy shares.
+    // The picker, another copy, shares the project it switches to: resolve it here once per value.
     const sharedProject = shared("bakers.project");
-    const behind =
-      sharedProject !== currentProject()?.uuid || getStore().project !== currentProject()?.uuid;
-    if (sharedProject && behind && sharedProject !== this.followed) {
+    if (sharedProject && sharedProject !== this.followed) {
       this.followed = sharedProject;
-      cx.notify();
-      cx.spawn(async (cx) => {
-        await ready();
-        cx.notify();
-      });
+      if (sharedProject !== currentProject()?.uuid) this.follow(cx);
     }
+    // Overlays only choose (their tasks end when they close): this long-lived copy loads the
+    // project's tickets when the store lacks them, also after a load that never answered.
+    const current = currentProject()?.uuid;
+    if (current && needsLoad(current)) this.follow(cx);
     // The rows belong to a project: a switch starts over, and nothing loads before there is one.
     const project = currentProject()?.uuid;
     if (!server || !project) return;
