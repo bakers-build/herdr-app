@@ -7,7 +7,7 @@ import { utf8Bytes } from "../../core/format.js";
 import * as actions from "../commands.js";
 import { readTicket } from "../repository.js";
 import { isClosed, newest, SECTION_LIMITS } from "../rules.js";
-import { getStore, ready, refresh } from "../store.js";
+import { getStore, refresh } from "../store.js";
 
 /** @typedef {"description" | "acceptance" | "summary"} Section */
 
@@ -29,7 +29,6 @@ const capital = (/** @type {string} */ s) => s.charAt(0).toUpperCase() + s.slice
 export async function sectionForm(p) {
   const id = p.ticket;
   const section = p.section;
-  await ready();
   const detail = await getStore().ticket(id);
   const opened = sectionText(detail.ticket, detail.comments, section);
   const limit = SECTION_LIMITS[section];
