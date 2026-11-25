@@ -99,15 +99,162 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     expect(found.map((t: any) => t.identifier).sort()).toEqual([...ids].sort());
   });
 
-  test("ticket search, plan comments, activity and conductors read without error", async () => {
+  test("ticket search, plan comments and conductors read without error", async () => {
     const detail = await tickets.readTicket(TICKET);
     const hits = await tickets.searchTickets(detail.identifier.slice(0, 3), PROJECT);
     expect(Array.isArray(hits)).toBe(true);
-    expect((await tickets.planComments(PROJECT)) instanceof Map).toBe(true);
-    const activity = await tickets.listActivity(TICKET);
-    expect(Array.isArray(activity)).toBe(true);
     const conductors = await tickets.listConductors(PROJECT);
     expect(Array.isArray(conductors)).toBe(true);
+  });
+
+  const byUuid = (a: any, b: any) => String(a.uuid ?? a.id).localeCompare(String(b.uuid ?? b.id));
+
+  test("the sparse list keeps what the list reads, and listRuns equals include=runs", async () => {
+    const list = await tickets.listOpen(PROJECT);
+    expect(list.length).toBeGreaterThan(0);
+    for (const t of list) {
+      expect(typeof t.id).toBe("string");
+      expect(typeof t.identifier).toBe("string");
+      expect(typeof t.title).toBe("string");
+      expect(typeof t.state).toBe("string");
+      expect(t.closed).toBe(false);
+      expect(typeof t.frozen).toBe("boolean");
+      expect("changed" in t && "assignee" in t && "type" in t).toBe(true);
+    }
+    const some = list.slice(0, 25);
+    const runs: Map<string, any[]> = await tickets.listRuns(PROJECT);
+    const full = await api.search("bb_ticket", "bb_ticket", {
+      filter: [["identifier", "IN", some.map((t: any) => t.identifier)]],
+      include: ["runs"],
+      limit: 50,
+    });
+    expect(full).toHaveLength(some.length);
+    let withRuns = 0;
+    for (const t of full) {
+      const expected = (t.runs ?? [])
+        .filter((r: any) => r.state)
+        .map((r: any) => ({
+          uuid: r.id,
+          state: r.state,
+          agent: r.agent ?? r.harness ?? null,
+          started_at: r.started_at ?? null,
+          closed: Boolean(r.closed),
+        }))
+        .sort(byUuid);
+      if (expected.length) withRuns++;
+      expect([...(runs.get(t.id) ?? [])].sort(byUuid)).toEqual(expected);
+    }
+    // The seeded world may hold no runs at all; then only the empty equivalence is proven.
+    process.stdout.write(`contract: ${withRuns} of ${some.length} listed tickets have runs\n`);
+  });
+
+  test("the bb_run search by project, closed and identifier with a fieldset is accepted", async () => {
+    const list = await tickets.listOpen(PROJECT);
+    const ids = list.slice(0, 5).map((t: any) => t.identifier);
+    const rows = await api.search("bb_run", "bb_run", {
+      filter: [
+        ["ticket_id.project_id.id", "=", PROJECT],
+        ["ticket_id.closed", "=", false],
+        ["ticket_id.identifier", "IN", ids],
+      ],
+      fields: {
+        "bb_run--bb_run": ["state", "agent", "harness", "started_at", "closed", "ticket_id"],
+      },
+      limit: 50,
+      all: true,
+    });
+    expect(Array.isArray(rows)).toBe(true);
+    const wanted = new Set(list.slice(0, 5).map((t: any) => t.id));
+    for (const r of rows) expect(wanted.has(r.ticket_id?.id)).toBe(true);
+  });
+
+  test("readTicket reads the comments apart and equal to include=comments", async () => {
+    // The fixture ticket may have few comments: take the project's ticket with the most.
+    const all = await api.search("bb_comment", "bb_comment", {
+      filter: [["ticket_id.project_id.id", "=", PROJECT]],
+      fields: { "bb_comment--bb_comment": ["bb_comment_type", "created", "ticket_id"] },
+      limit: 50,
+      all: true,
+    });
+    const count = new Map<string, number>();
+    for (const c of all)
+      if (c.ticket_id?.id) count.set(c.ticket_id.id, (count.get(c.ticket_id.id) ?? 0) + 1);
+    const best = [...count.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? TICKET;
+    process.stdout.write(`contract: comments read for a ticket with ${count.get(best) ?? 0}\n`);
+
+    const full = await api.read("bb_ticket", "bb_ticket", best, ["comments"]);
+    const part = await tickets.readTicket(full.identifier);
+    const expected = (full.comments ?? []).filter((c: any) => c.created);
+    expect(part.comments.map((c: any) => c.id).sort()).toEqual(
+      expected.map((c: any) => c.id).sort(),
+    );
+    const sorted = part.comments.map((c: any) => String(c.created));
+    expect(sorted).toEqual([...sorted].sort());
+    const raw = new Map<string, any>(expected.map((c: any) => [c.id, c]));
+    const FOLDED = ["plan", "spec", "summary"];
+    for (const c of part.comments) {
+      const r = raw.get(c.id);
+      expect(c.type).toBe(r.bb_comment_type ?? "comment");
+      expect(c.created).toBe(r.created);
+      expect(c.author).toBe(r.author_name ?? "");
+      if (c.loaded) expect(c.body).toBe(r.body ?? "");
+      else {
+        expect(c.body).toBe("");
+        expect(FOLDED).toContain(c.type);
+        expect(await tickets.commentBody(c.id)).toBe(r.body ?? "");
+      }
+    }
+    // Per folded type exactly the newest is loaded, the older ones are not.
+    for (const type of FOLDED) {
+      const ofType = part.comments.filter((c: any) => c.type === type);
+      if (!ofType.length) continue;
+      expect(ofType.filter((c: any) => c.loaded).length).toBe(1);
+      expect(ofType.at(-1).loaded).toBe(true);
+      for (const c of ofType.slice(0, -1)) expect(c.loaded).toBe(false);
+    }
+    for (const c of part.comments.filter((c: any) => !FOLDED.includes(c.type)))
+      expect(c.loaded).toBe(true);
+  });
+
+  test("planComments with its fieldset returns created and the ticket relation", async () => {
+    const plans: Map<string, any[]> = await tickets.planComments(PROJECT);
+    expect(plans instanceof Map).toBe(true);
+    const direct = await api.search("bb_comment", "bb_comment", {
+      filter: [
+        ["bb_comment_type", "=", "plan"],
+        ["ticket_id.project_id.id", "=", PROJECT],
+        ["ticket_id.closed", "=", false],
+      ],
+      limit: 50,
+      all: true,
+    });
+    expect([...plans.values()].flat()).toHaveLength(
+      direct.filter((c: any) => c.ticket_id?.id).length,
+    );
+    for (const [ticket, list] of plans) {
+      expect(ticket).toMatch(/^[0-9a-f-]{36}$/);
+      for (const c of list) {
+        expect(c.type).toBe("plan");
+        expect(typeof c.created).toBe("string");
+      }
+    }
+  });
+
+  test("activity by the ticket's identifier equals the search by its uuid", async () => {
+    const detail = await tickets.readTicket(TICKET);
+    const activity = await tickets.listActivity(detail.identifier);
+    const direct = await api.search("bb_activity", "bb_activity", {
+      filter: [["ticket_id.id", "=", TICKET]],
+      include: ["actor"],
+      sort: "-created",
+      limit: 20,
+    });
+    const key = (a: any) => `${a.created}|${a.kind}`;
+    expect(activity.map(key).sort()).toEqual(direct.map(key).sort());
+    process.stdout.write(`contract: the fixture ticket has ${direct.length} activity rows\n`);
+    for (const a of activity) expect(typeof a.kind).toBe("string");
+    const created = activity.map((a: any) => String(a.created));
+    expect(created).toEqual([...created].sort().reverse());
   });
 
   test("me names the signed-in user, whom currentUser reads", async () => {
