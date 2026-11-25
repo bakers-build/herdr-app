@@ -233,6 +233,20 @@ export function fetched(): string[] {
     .map((c) => decodeURIComponent(String(c.args[0]).replace(/\+/g, " ")));
 }
 
+/**
+ * Models Herdr ending a closed copy's tasks: from the next closeOverlay on, requests never
+ * answer. Call the returned function once the closed copy is gone, so other copies answer again.
+ */
+export function closingCopy(): () => void {
+  const real = env.fetch;
+  const from = env.calls.length;
+  const closed = () => env.calls.slice(from).some((c) => c.fn === "closeOverlay");
+  env.fetch = (url, opts) => (closed() ? new Promise(() => {}) : real(url, opts));
+  return () => {
+    env.fetch = real;
+  };
+}
+
 /** A context stub: spawned tasks are kept so tests can await them with flush(). */
 export function cx(): any {
   const c: any = {

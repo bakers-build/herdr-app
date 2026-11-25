@@ -1,4 +1,5 @@
-// project/view/picker (route project.picker): switch the window's project.
+// project/view/picker (route project.picker): switch the window's project. It only chooses: a
+// popup's tasks end when it closes, so the Tickets list, a long-lived copy, loads the project.
 import { h_flex } from "gpui-base";
 import { perform } from "../../core/actions.js";
 import { PopupList } from "../../ui/components/menu.js";
@@ -27,9 +28,8 @@ export default class ProjectPicker extends PopupList {
     return pickerItems(projectsOf(shownWorkspace()), currentProject()?.uuid ?? null).map((it) => ({
       ...it,
       choose: async (/** @type {any} */ cx) => {
-        this.close();
         await perform(it.action, cx);
-        await perform(["ticket.refresh"], cx);
+        this.close();
       },
     }));
   }
