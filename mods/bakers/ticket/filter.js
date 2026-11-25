@@ -92,6 +92,9 @@ export function counts(records, user, filter = DEFAULT_FILTER, catalog = null) {
   };
 }
 
+/** Orders label and type names without regard to case ("Question" among the lowercase ones). @param {string} a @param {string} b */
+export const byName = (a, b) => a.localeCompare(b, "en", { sensitivity: "base" });
+
 /**
  * The values of the Label and Type menus: the workspace's catalog with those the open records
  * carry, so a value outside the catalog, or every value when the catalog is missing, still shows.
@@ -99,7 +102,7 @@ export function counts(records, user, filter = DEFAULT_FILTER, catalog = null) {
  */
 export function choices(records, catalog = null) {
   const open = records.filter((r) => !r.closed);
-  const sorted = (/** @type {Iterable<string>} */ v) => [...new Set(v)].sort();
+  const sorted = (/** @type {Iterable<string>} */ v) => [...new Set(v)].sort(byName);
   return {
     labels: sorted([...(catalog?.labels ?? []), ...open.flatMap((r) => r.labels ?? [])]),
     types: sorted([...(catalog?.types ?? []), ...open.map((r) => r.type).filter(Boolean)]),

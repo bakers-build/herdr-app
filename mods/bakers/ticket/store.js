@@ -97,6 +97,8 @@ export function createStore(api, options = {}) {
         if (!read.error || !store.catalog || store.catalog.error) store.catalog = read;
         const names = store.catalog?.names;
         store.tickets = store.tickets.map((/** @type {any} */ t) => named(t, names));
+        // a panel read before the catalog arrived holds bare term refs too
+        for (const [k, d] of details) details.set(k, { ...d, ticket: named(d.ticket, names) });
         for (const fn of listeners) fn(store);
         options.onCatalog?.(project);
       });

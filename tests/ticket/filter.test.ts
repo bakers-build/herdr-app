@@ -176,7 +176,7 @@ const catalog = { labels: ["auto", "human-review", "idea"], types: ["bug", "idea
 
 test("choices: the catalog's labels and types with the open tickets' own, sorted once each", () => {
   expect(choices(records, catalog)).toEqual({
-    labels: ["Question", "auto", "human-review", "idea", "ui"],
+    labels: ["auto", "human-review", "idea", "Question", "ui"],
     types: ["bug", "chore", "feature", "idea"],
   });
   expect(choices(records, null)).toEqual(choices(records));
@@ -223,7 +223,7 @@ test("without the signed-in user Mine counts null and does not filter", () => {
 
 test("choices: distinct values, sorted", () => {
   expect(choices(records)).toEqual({
-    labels: ["Question", "auto", "ui"].sort(),
+    labels: ["auto", "Question", "ui"],
     types: ["bug", "chore", "feature"],
   });
 });
@@ -260,4 +260,14 @@ test("Mine matches the assignee by either of the user's names", () => {
     ids(applyFilter(withDisplay, { ...DEFAULT_FILTER, mine: true }, { user: byDisplay })),
   ).toEqual(["SHOP-56", "SHOP-61"]);
   expect(counts(withDisplay, byDisplay).mine).toBe(2);
+});
+
+// Review R4: "Question" sorts among the lowercase labels, not before them.
+test("choices sort without regard to case", () => {
+  expect(
+    choices([], { labels: ["idea", "Question", "auto"], types: ["bug", "Chore"], error: null }),
+  ).toEqual({
+    labels: ["auto", "idea", "Question"],
+    types: ["bug", "Chore"],
+  });
 });

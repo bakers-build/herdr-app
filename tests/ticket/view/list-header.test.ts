@@ -188,9 +188,9 @@ test("an active State, Label or Type control names its value and has the accent"
 test("the Label and Type menus list Any, then the values of the open tickets, sorted", async () => {
   const copy = await list({ label: "checkout" });
   const [labels] = opened(find(copy.render(), "filter-label"));
-  expect(labels.props.items.map((i: any) => i.label)).toEqual(["Any", "Question", "checkout"]);
-  expect(labels.props.items[2].current).toBe(true);
-  await actions.perform(labels.props.items[1].action);
+  expect(labels.props.items.map((i: any) => i.label)).toEqual(["Any", "checkout", "Question"]);
+  expect(labels.props.items[1].current).toBe(true);
+  await actions.perform(labels.props.items[2].action);
   expect(env.shared["bakers.filter"]).toEqual({ ...DEFAULT, label: "Question" });
   await actions.perform(labels.props.items[0].action);
   expect(env.shared["bakers.filter"]).toEqual(DEFAULT);
@@ -210,9 +210,9 @@ test("the Label and Type menus offer the workspace's catalog, 0 where no open ti
   const [labels] = opened(find(copy.render(), "filter-label"));
   expect(labels.props.items.map((i: any) => [i.label, i.hint])).toEqual([
     ["Any", undefined],
-    ["Question", "1"],
     ["checkout", "1"],
     ["idea", "0"],
+    ["Question", "1"],
   ]);
   const [types] = opened(find(copy.render(), "filter-type"));
   expect(types.props.items.map((i: any) => [i.label, i.hint])).toEqual([

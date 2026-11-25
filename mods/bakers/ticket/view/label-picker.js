@@ -5,7 +5,7 @@ import { Input, InputState } from "gpui-base";
 import { props } from "herdr";
 import { perform } from "../../core/actions.js";
 import { PopupList } from "../../ui/components/menu.js";
-import { noValues } from "../filter.js";
+import { byName, noValues } from "../filter.js";
 import { getStore, ready } from "../store.js";
 
 export default class LabelPicker extends PopupList {
@@ -47,21 +47,18 @@ export default class LabelPicker extends PopupList {
     const known = new Set(store.catalog?.labels ?? []);
     for (const tk of store.tickets) for (const l of tk.labels ?? []) known.add(l);
     const offered = [...known].filter((l) => !own.has(l));
-    if (!offered.length)
-      return [
-        {
-          key: "none",
-          label:
-            known.size && store.catalog && !store.catalog.error
-              ? "The ticket has every label"
-              : noValues("label", store.catalog),
-          disabled: true,
-        },
-      ];
+    if (!offered.length) {
+      const catalogOk = Boolean(store.catalog && !store.catalog.error);
+      const why = { key: "why", label: noValues("label", store.catalog), disabled: true };
+      if (!known.size) return [why];
+      // the ticket has every label known; without the catalog, also say why it is missing
+      const every = { key: "none", label: "The ticket has every label", disabled: true };
+      return catalogOk ? [every] : [every, why];
+    }
     const q = this.input.value().trim().toLowerCase();
     return offered
       .filter((l) => !q || l.toLowerCase().includes(q))
-      .sort()
+      .sort(byName)
       .map((l) => ({ key: l, label: l, choose: (/** @type {any} */ cx) => this.add(l, cx) }));
   }
 

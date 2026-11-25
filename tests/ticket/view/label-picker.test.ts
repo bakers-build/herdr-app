@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, resetMod } from "../../fixtures/shop";
+import { activeSpace, backend, list as tickets, resetMod } from "../../fixtures/shop";
 import { cx, env, fetched, find, flush, key, load, mount, reset, tools } from "../../harness";
 
 const writes = () => tools().filter(([t]) => !/_(read|list|search)$/.test(t));
@@ -66,18 +66,11 @@ test("the label picker offers the catalog's labels the ticket lacks, filtered by
   expect(writes()).toEqual([["bakers_ticket_update", { ticket: "SHOP-41", labels_add: ["idea"] }]]);
 });
 
-test("without a catalog the picker says why it offers nothing; a typed name still adds", async () => {
+test("without a catalog a typed name still adds", async () => {
   const copy = await open(
     { view: "ticket.label-picker", ticket: "SHOP-41" },
     { jsonapi: { projects: [{ id: "p1", name: "acme-shop", key: "ACMESHOP" }] } },
   );
-  expect(copy.inner.items()).toEqual([
-    {
-      key: "none",
-      label: "Labels could not be loaded: The project's workspace could not be read.",
-      disabled: true,
-    },
-  ]);
   copy.inner.input.type("idea");
   copy.inner.input.submit();
   await flush();
@@ -104,5 +97,48 @@ test("when the ticket has every label of the workspace the picker says so", asyn
   const copy = await open({ view: "ticket.label-picker", ticket: "SHOP-41" });
   expect(copy.inner.items()).toEqual([
     { key: "none", label: "The ticket has every label", disabled: true },
+  ]);
+});
+
+// Review R3: a failed catalog read does not hide that the ticket already has every loaded label.
+test("without a catalog, a ticket with every loaded label says so, and why the catalog is missing", async () => {
+  const copy = await open(
+    { view: "ticket.label-picker", ticket: "SHOP-41" },
+    { jsonapi: { projects: [{ id: "p1", name: "acme-shop", key: "ACMESHOP" }] } },
+  );
+  // SHOP-41 carries Question and checkout, the only labels on the loaded tickets
+  expect(labelsOf(copy)).toEqual([
+    "The ticket has every label",
+    "Labels could not be loaded: The project's workspace could not be read.",
+  ]);
+});
+
+// Review R4: the labels sort without regard to case, and a long catalog scrolls.
+test("the picker sorts labels without regard to case", async () => {
+  const copy = await open(
+    { view: "ticket.label-picker", ticket: "SHOP-41" },
+    { jsonapi: { catalog: { labels: ["idea", "Zeta", "auto", "Beta"] } } },
+  );
+  expect(labelsOf(copy)).toEqual(["auto", "Beta", "idea", "Zeta"]);
+});
+
+test("the picker's rows scroll inside a bounded height", async () => {
+  const copy = await open(
+    { view: "ticket.label-picker", ticket: "SHOP-41" },
+    { jsonapi: { catalog: { labels: ["auto"] } } },
+  );
+  const rows = find(copy.render(), "rows");
+  expect(rows.calls.max_h).toBeDefined();
+  expect(rows.calls.overflow_y_scrollbar).toBeDefined();
+});
+
+test("without a catalog and with no label on any loaded ticket, the picker shows only why", async () => {
+  const bare = tickets.map((t) => ({ ...t, labels: [] }));
+  const copy = await open(
+    { view: "ticket.label-picker", ticket: "SHOP-41" },
+    { jsonapi: { tickets: bare, projects: [{ id: "p1", name: "acme-shop", key: "ACMESHOP" }] } },
+  );
+  expect(labelsOf(copy)).toEqual([
+    "Labels could not be loaded: The project's workspace could not be read.",
   ]);
 });

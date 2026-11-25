@@ -443,3 +443,29 @@ test("a failed catalog read keeps the project's last good catalog", async () => 
     error: null,
   });
 });
+
+test("a catalog landing after a panel read names the cached detail's terms too", async () => {
+  let release = () => {};
+  const api = fakeApi({
+    listCatalog: async () => {
+      await new Promise<void>((r) => (release = r));
+      return { labels: ["auto"], types: ["bug"], names: { "l-auto": "auto", "t-bug": "bug" } };
+    },
+    readTicket: async () => ({
+      ...rows[1],
+      labels: [],
+      type: null,
+      unnamed: { labels: ["l-auto"], type: "t-bug" },
+      comments: [],
+      runs: [],
+    }),
+  });
+  const store = createStore(api, { now: () => NOW });
+  await store.load("p1");
+  await store.enrich(rows[1].id, true);
+  expect(store.cached(rows[1].id).ticket.labels).toEqual([]);
+  release();
+  await store.catalogRead;
+  expect(store.cached(rows[1].id).ticket.labels).toEqual(["auto"]);
+  expect(store.cached(rows[1].id).ticket.type).toBe("bug");
+});
