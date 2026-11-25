@@ -348,6 +348,7 @@ test("a refresh reads the project's catalog with the tickets and keeps it", asyn
   const store = createStore(api, { now: () => NOW });
   expect(store.catalog).toBeNull();
   await store.load("p1");
+  await store.catalogRead;
   expect(api.calls).toEqual(["list p1", "plans p1", "catalog p1"]);
   expect(store.catalog).toEqual({
     labels: ["auto", "idea"],
@@ -365,6 +366,7 @@ test("a failing catalog read keeps its error and leaves the tickets loading", as
   });
   const store = createStore(api, { now: () => NOW });
   await store.load("p1");
+  await store.catalogRead;
   expect(store.error).toBeNull();
   expect(store.records().length).toBe(6);
   expect(store.catalog.labels).toEqual([]);
@@ -372,22 +374,52 @@ test("a failing catalog read keeps its error and leaves the tickets loading", as
   expect(store.catalog.error.message).toBe("HTTP 403");
 });
 
-test("a project switch forgets the old project's catalog", async () => {
-  let gate: (() => void) | null = null;
+test("a project switch forgets the old project's catalog, and drops it when it lands late", async () => {
+  const gates: Record<string, () => void> = {};
   const api = fakeApi({
     listCatalog: async (p: string) => {
-      if (p === "p2") await new Promise<void>((r) => (gate = r));
+      await new Promise<void>((r) => (gates[p] = r));
       return { labels: [p], types: [] };
     },
   });
   const store = createStore(api, { now: () => NOW });
   await store.load("p1");
-  expect(store.catalog.labels).toEqual(["p1"]);
-  const switching = store.load("p2");
+  const p1 = store.catalogRead;
+  await store.load("p2");
   expect(store.catalog).toBeNull();
-  (gate as unknown as () => void)();
-  await switching;
+  gates.p2();
+  await store.catalogRead;
   expect(store.catalog.labels).toEqual(["p2"]);
+  gates.p1();
+  await p1;
+  expect(store.catalog.labels).toEqual(["p2"]);
+});
+
+test("a slow catalog read holds back neither the tickets nor the listeners", async () => {
+  let release = () => {};
+  const landed: string[] = [];
+  const api = fakeApi({
+    listCatalog: async () => {
+      await new Promise<void>((r) => (release = r));
+      return { labels: ["auto"], types: [], names: { "l-auto": "auto" } };
+    },
+    listOpen: async () => [{ ...rows[1], labels: [], unnamed: { labels: ["l-auto"], type: null } }],
+  });
+  const store = createStore(api, { now: () => NOW, onCatalog: () => landed.push("catalog") });
+  let fired = 0;
+  store.onChange(() => fired++);
+  const loaded = await Promise.race([
+    store.load("p1").then(() => "loaded"),
+    new Promise((r) => setTimeout(() => r("held back"), 50)),
+  ]);
+  expect(loaded).toBe("loaded");
+  expect(fired).toBe(1);
+  expect(store.records()[0].labels).toEqual([]);
+  release();
+  await store.catalogRead;
+  expect(fired).toBe(2);
+  expect(landed).toEqual(["catalog"]);
+  expect(store.records()[0].labels).toEqual(["auto"]);
 });
 
 test("a failed catalog read keeps the project's last good catalog", async () => {
@@ -400,8 +432,10 @@ test("a failed catalog read keeps the project's last good catalog", async () => 
   });
   const store = createStore(api, { now: () => NOW });
   await store.load("p1");
+  await store.catalogRead;
   fail = true;
   await store.refresh();
+  await store.catalogRead;
   expect(store.catalog).toEqual({
     labels: ["auto"],
     types: ["bug"],

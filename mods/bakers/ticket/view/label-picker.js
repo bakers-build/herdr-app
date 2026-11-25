@@ -48,7 +48,16 @@ export default class LabelPicker extends PopupList {
     for (const tk of store.tickets) for (const l of tk.labels ?? []) known.add(l);
     const offered = [...known].filter((l) => !own.has(l));
     if (!offered.length)
-      return [{ key: "none", label: noValues("label", store.catalog), disabled: true }];
+      return [
+        {
+          key: "none",
+          label:
+            known.size && store.catalog && !store.catalog.error
+              ? "The ticket has every label"
+              : noValues("label", store.catalog),
+          disabled: true,
+        },
+      ];
     const q = this.input.value().trim().toLowerCase();
     return offered
       .filter((l) => !q || l.toLowerCase().includes(q))

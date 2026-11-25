@@ -116,7 +116,23 @@ test("a ticket whose terms the server leaves out of `included` gets their names 
   const bare = await repository.listOpen("p1");
   expect(bare.find((t: any) => t.identifier === "SHOP-41")?.labels).toEqual([]);
   await ready();
+  await getStore().catalogRead;
   const row = getStore().byId("SHOP-41");
   expect(row?.labels).toEqual(["Question", "checkout"]);
   expect(row?.type).toBe("bug");
+});
+
+test("the panel's ticket gets the names of terms the server leaves out of `included`", async () => {
+  backend({ jsonapi: { omit: ["bb_term--label", "bb_term--type"] } });
+  await ready();
+  await getStore().catalogRead;
+  const detail = await getStore().ticket("SHOP-41");
+  expect(detail.ticket.labels).toEqual(["Question", "checkout"]);
+  expect(detail.ticket.type).toBe("bug");
+});
+
+test("a catalog read tells every copy of the mod, so the menus redraw", async () => {
+  await ready();
+  await getStore().catalogRead;
+  expect(env.shared["bakers.catalog"]).toMatchObject({ project: "p1" });
 });

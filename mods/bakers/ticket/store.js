@@ -2,8 +2,8 @@
 // mod (created on first use, never at module top level, AGENTS.md). A refresh reads the open
 // tickets with the selected one (also when closed), and the open tickets' plan comments, and
 // derives who needs you from them. Beside them it reads the project's workspace catalog (labels
-// and ticket types) for the menus; a failed catalog read is kept as its error and never fails
-// the tickets.
+// and ticket types) for the menus, in the background: the tickets never wait for it, a failed
+// read is kept as its error, and onCatalog tells when one lands.
 import { setShared } from "herdr";
 import { selectedTicket } from "./tabs.js";
 import { ensureProject, projectError } from "../project/state.js";
@@ -13,7 +13,8 @@ import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
 /**
  * @param {any} api the loaders (listOpen, planComments, readTicket; listCatalog when served)
- * @param {{ now?: () => number, tabs?: () => string[] }} [options] tabs: identifiers read with the open tickets (the selected one)
+ * @param {{ now?: () => number, tabs?: () => string[], onCatalog?: (project: string) => void }} [options]
+ *   tabs: identifiers read with the open tickets (the selected one); onCatalog: a catalog read landed
  */
 export function createStore(api, options = {}) {
   const now = options.now ?? (() => Date.now());
@@ -23,6 +24,8 @@ export function createStore(api, options = {}) {
   const details = new Map();
   /** @type {Map<string, any>} uuid -> derived facts from the list */
   const facts = new Map();
+  /** The newest catalog read; an older one landing later is dropped. */
+  let catalogRead = 0;
   /** @type {Promise<void> | null} the user read under way; at most one at a time */
   let readingUser = null;
   /** Reads the signed-in user while there is none; a read that ends after a project switch is dropped. */
@@ -65,6 +68,8 @@ export function createStore(api, options = {}) {
     user: null,
     /** @type {import("./filter.js").Catalog | null} the workspace's labels and types; null until read */
     catalog: null,
+    /** @type {Promise<void>} the catalog read under way (tests await it) */
+    catalogRead: Promise.resolve(),
 
     /** @param {string} project */
     async load(project) {
@@ -85,7 +90,16 @@ export function createStore(api, options = {}) {
       store.loading = true;
       const project = store.project;
       const reads = Promise.all([api.listOpen(project, tabs()), api.planComments(project)]);
-      const catalog = readCatalog(project);
+      const seq = ++catalogRead;
+      store.catalogRead = readCatalog(project).then((read) => {
+        if (!read || store.project !== project || seq !== catalogRead) return;
+        // A failed read keeps the last good catalog of the project; the error shows only without one.
+        if (!read.error || !store.catalog || store.catalog.error) store.catalog = read;
+        const names = store.catalog?.names;
+        store.tickets = store.tickets.map((/** @type {any} */ t) => named(t, names));
+        for (const fn of listeners) fn(store);
+        options.onCatalog?.(project);
+      });
       try {
         const [list, plans] = await reads;
         facts.clear();
@@ -94,20 +108,13 @@ export function createStore(api, options = {}) {
           const why = deriveWhy(t, comments, t.runs);
           facts.set(t.id, { why, since: since(t, comments, t.runs, why), run: activeRun(t.runs) });
         }
-        store.tickets = list;
+        store.tickets = list.map((/** @type {any} */ t) => named(t, store.catalog?.names));
         store.error = null;
         store.updated = now();
       } catch (e) {
         store.error = e;
       } finally {
         store.loading = false;
-      }
-      const read = await catalog;
-      if (read && store.project === project) {
-        // A failed read keeps the last good catalog of the project; the error shows only without one.
-        if (!read.error || !store.catalog || store.catalog.error) store.catalog = read;
-        const names = store.catalog.names;
-        store.tickets = store.tickets.map((/** @type {any} */ t) => named(t, names));
       }
       for (const fn of listeners) fn(store);
       await readUser();
@@ -204,7 +211,11 @@ export function _resetForTests() {
 
 export function getStore() {
   if (!store)
-    store = createStore(repository, { tabs: () => [selectedTicket() ?? ""].filter(Boolean) });
+    store = createStore(repository, {
+      tabs: () => [selectedTicket() ?? ""].filter(Boolean),
+      // every copy redraws, so the menus and the picker show the catalog once it is there
+      onCatalog: (project) => setShared("bakers.catalog", { project, at: Date.now() }),
+    });
   return store;
 }
 

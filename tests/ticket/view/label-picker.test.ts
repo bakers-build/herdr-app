@@ -99,3 +99,10 @@ test("a label added in the picker re-reads the tickets, so the list and the pane
   // the panel reloads when the shared refresh time changes (ticket/view/context.js check)
   expect(updated()).not.toBe(before);
 });
+
+test("when the ticket has every label of the workspace the picker says so", async () => {
+  const copy = await open({ view: "ticket.label-picker", ticket: "SHOP-41" });
+  expect(copy.inner.items()).toEqual([
+    { key: "none", label: "The ticket has every label", disabled: true },
+  ]);
+});
