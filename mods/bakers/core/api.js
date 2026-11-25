@@ -6,11 +6,11 @@
 import { BakersError, run } from "./cli.js";
 import { normalize } from "./jsonapi.js";
 
-/** @typedef {[string, string, (string | number | boolean | string[])?]} Condition [path, operator, value; IN takes a list] */
+/** @typedef {[string, string, (string | number | boolean | string[])?]} Condition [path, operator, value; IN and NOT IN take a list] */
 
 /** A condition value as Drupal reads it: booleans as 1 or 0. @param {string | number | boolean} v */
 const value = (v) => (typeof v === "boolean" ? (v ? "1" : "0") : String(v));
-/** @typedef {{ filter?: Condition[], include?: string[], sort?: string, limit?: number, offset?: number, all?: boolean }} Query */
+/** @typedef {{ filter?: Condition[], include?: string[], fields?: Record<string, string[]>, sort?: string, limit?: number, offset?: number, all?: boolean }} Query */
 
 /** @type {{ base: string, token: string } | null} */
 let session = null;
@@ -26,9 +26,9 @@ export function _resetForTests() {
   pending = null;
 }
 
-/** @param {boolean} [fresh] ask the CLI again (after a 401) */
-async function token(fresh = false) {
-  if (session && !fresh) return session;
+/** @param {string} [stale] the token a request was refused with: refresh unless the session already holds a newer one */
+async function token(stale) {
+  if (session && session.token !== stale) return session;
   if (mode === "dropsh") return null;
   if (!pending) pending = askToken().finally(() => (pending = null));
   return pending;
@@ -52,8 +52,10 @@ async function askToken() {
 /** @param {string} path @param {URLSearchParams} params */
 async function get(path, params) {
   const q = params.toString();
+  /** @type {string | undefined} */
+  let staleToken;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const s = await token(attempt > 0);
+    const s = await token(staleToken);
     if (!s) return null;
     let r;
     try {
@@ -65,7 +67,10 @@ async function get(path, params) {
         offline: true,
       });
     }
-    if (r.status === 401 && attempt === 0) continue;
+    if (r.status === 401 && attempt === 0) {
+      staleToken = s.token;
+      continue;
+    }
     if (!r.ok) {
       /** @type {any} */
       let body = null;
@@ -93,6 +98,8 @@ function params(q, offset) {
   });
   if (q.sort) p.set("sort", q.sort);
   if (q.include?.length) p.set("include", q.include.join(","));
+  for (const [type, names] of Object.entries(q.fields ?? {}))
+    p.set(`fields[${type}]`, names.join(","));
   if (q.limit != null) {
     p.set("page[limit]", String(q.limit));
     p.set("page[offset]", String(offset));
@@ -100,7 +107,7 @@ function params(q, offset) {
   return p;
 }
 
-/** The same query for `bakers dropsh search`. @param {string} type @param {string} bundle @param {Query} q @param {number} offset */
+/** The same query for `bakers dropsh search`; it has no sparse fieldsets, so `fields` is not sent. @param {string} type @param {string} bundle @param {Query} q @param {number} offset */
 function dropshArgs(type, bundle, q, offset) {
   const a = ["dropsh", "search", type, "--bundle", bundle];
   for (const [path, op, v] of q.filter ?? []) {

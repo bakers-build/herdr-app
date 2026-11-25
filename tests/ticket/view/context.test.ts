@@ -4,6 +4,7 @@ import { activeSpace, backend, list, live, read, resetMod } from "../../fixtures
 import {
   click,
   env,
+  fetched,
   find,
   findText,
   fireTimers,
@@ -363,4 +364,130 @@ test("a click on a link opens it with the system's opener", async () => {
     "open",
     ["https://git.example/acme/shop/merge_requests/91"],
   ]);
+});
+
+/** Holds the answers to reads of one ticket (by UUID) until `release` runs; the rest is served as before. */
+function holdDetail() {
+  const serve = env.fetch;
+  let release = () => {};
+  const gate = new Promise<void>((r) => (release = r));
+  env.fetch = async (url: string, opts?: any) => {
+    if (/\/bb_ticket\/bb_ticket\/[^/?]+(\?|$)/.test(String(url))) await gate;
+    return serve(url, opts);
+  };
+  return () => release();
+}
+
+test("a selected ticket shows its header and title from the list row while the detail loads", async () => {
+  const copy = await panel();
+  const release = holdDetail();
+  env.shared["bakers.selected"] = "SHOP-56";
+  fireTimers();
+  const root = copy.render();
+  expect(texts(find(root, "doc-header")).slice(0, 2)).toEqual(["SHOP-56", "plan"]);
+  expect(find(root, "title")).toBeDefined();
+  expect(texts(root)).not.toContain("Loading SHOP-56...");
+  expect(texts(root)).toContain("Loading...");
+  // Nothing edits or moves a ticket that is not read yet.
+  expect(find(root, "composer")).toBeUndefined();
+  release();
+  await flush();
+  expect(texts(copy.render())).not.toContain("Loading...");
+  expect(find(copy.render(), "composer")).toBeDefined();
+});
+
+test("a ticket read before shows at once and refreshes in the background", async () => {
+  const copy = await panel();
+  env.shared["bakers.selected"] = "SHOP-56";
+  fireTimers();
+  await flush();
+  env.shared["bakers.selected"] = "SHOP-41";
+  fireTimers();
+  await flush();
+  const release = holdDetail();
+  env.shared["bakers.selected"] = "SHOP-56";
+  env.calls.length = 0;
+  fireTimers();
+  const root = copy.render();
+  expect(find(root, "section-description")).toBeDefined();
+  expect(texts(root)).not.toContain("Loading...");
+  await flush(5);
+  expect(fetched().some((u) => /bb_ticket\/bb_ticket\/[^/?]+(\?|$)/.test(u))).toBe(true);
+  release();
+  await flush();
+  expect(find(copy.render(), "section-description")).toBeDefined();
+});
+
+test("the activity is requested by identifier before the detail is answered", async () => {
+  const copy = await panel();
+  const release = holdDetail();
+  env.shared["bakers.selected"] = "SHOP-56";
+  env.calls.length = 0;
+  fireTimers();
+  await flush();
+  expect(fetched().some((u) => u.includes("bb_activity") && u.includes("SHOP-56"))).toBe(true);
+  release();
+  await flush();
+  copy.render();
+});
+
+test("late results of the ticket left are not drawn into the new one", async () => {
+  const copy = await panel();
+  const release = holdDetail();
+  env.shared["bakers.selected"] = "SHOP-56";
+  fireTimers();
+  await flush();
+  env.shared["bakers.selected"] = "SHOP-41";
+  fireTimers();
+  release();
+  await flush();
+  expect(texts(find(copy.render(), "doc-header")).slice(0, 1)).toEqual(["SHOP-41"]);
+});
+
+test("a ticket outside the list opened before shows its cached detail at once", async () => {
+  const copy = await panel();
+  env.shared["bakers.selected"] = "SHOP-49";
+  fireTimers();
+  await flush();
+  expect(texts(find(copy.render(), "doc-header")).slice(0, 1)).toEqual(["SHOP-49"]);
+  env.shared["bakers.selected"] = "SHOP-41";
+  fireTimers();
+  await flush();
+  const release = holdDetail();
+  env.shared["bakers.selected"] = "SHOP-49";
+  fireTimers();
+  const root = copy.render();
+  expect(texts(root)).not.toContain("Loading SHOP-49...");
+  expect(texts(find(root, "doc-header")).slice(0, 1)).toEqual(["SHOP-49"]);
+  expect(find(root, "section-description")).toBeDefined();
+  release();
+  await flush();
+});
+
+// open:<id> (a toast, Go to ticket) on a ticket outside the list that was read before selects it
+// without waiting for the network; the panel then shows the cached detail.
+test("opening a ticket outside the list read before selects it at once", async () => {
+  const { open }: any = await import("../../../mods/bakers/ticket/view/commands.js");
+  const copy = await panel();
+  env.shared["bakers.selected"] = "SHOP-49";
+  fireTimers();
+  await flush();
+  env.shared["bakers.selected"] = "SHOP-41";
+  fireTimers();
+  await flush();
+  // Hold every ticket read, by uuid or by identifier (a search), until released.
+  const serve = env.fetch;
+  let release = () => {};
+  const gate = new Promise<void>((r) => (release = r));
+  env.fetch = async (url: string, opts?: any) => {
+    if (/\/bb_ticket\/bb_ticket(\/|\?|$)/.test(String(url))) await gate;
+    return serve(url, opts);
+  };
+  void open.run("SHOP-49");
+  await flush();
+  expect(env.shared["bakers.selected"]).toBe("SHOP-49");
+  fireTimers();
+  expect(texts(find(copy.render(), "doc-header")).slice(0, 1)).toEqual(["SHOP-49"]);
+  release();
+  await flush();
 });

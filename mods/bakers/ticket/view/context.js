@@ -13,6 +13,7 @@ import { openRoute } from "../../core/router.js";
 import { classify } from "../../core/errors.js";
 import { runReason, runTerminal, showAgent } from "../terminal.js";
 import { selectedTicket } from "../tabs.js";
+import { ready } from "../store.js";
 import { TicketDocument } from "./document.js";
 import { full } from "../presenter/full.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
@@ -73,6 +74,8 @@ export default class Panel {
     this.key = key;
     if (id !== this.id) {
       this.id = id;
+      this.activity = null;
+      this.activityServed = true;
       this.doc = id ? new TicketDocument(id, () => this.load(id)) : null;
     }
     if (!id) {
@@ -80,24 +83,34 @@ export default class Panel {
       return;
     }
     cx.spawn(async (cx) => {
-      await this.load(id);
+      await this.load(id, cx);
       cx.notify();
     });
   }
 
-  /** Loads the document and the activity of the followed ticket. @param {string} id */
-  async load(id) {
+  /** Loads the document and the activity of the followed ticket. @param {string} id @param {import("gpui-kit").Context} [cx] redraws as each part lands */
+  async load(id, cx) {
     const doc = this.doc;
     if (!doc || doc.id !== id) return;
-    await doc.load();
-    if (this.id !== id || !doc.detail) return;
+    // The detail and the activity (by identifier) are read together; each lands on its own.
+    const draw = () => cx?.notify();
+    await Promise.all([doc.load().then(draw), this.loadActivity(id).then(draw)]);
+  }
+
+  /** @param {string} id */
+  async loadActivity(id) {
+    let activity = null;
+    let served = true;
     try {
-      this.activity = await listActivity(doc.detail.ticket.id);
-      this.activityServed = true;
+      await ready();
+      activity = await listActivity(id);
     } catch (e) {
-      this.activity = null;
-      this.activityServed = classify(e)?.kind !== "api";
+      served = classify(e)?.kind !== "api";
     }
+    // Another ticket may be followed by now: its activity is not this one's.
+    if (this.id !== id) return;
+    this.activity = activity;
+    this.activityServed = served;
   }
 
   /** @param {any} vm */
@@ -412,7 +425,7 @@ export default class Panel {
     const doc = this.doc;
     if (!this.id || !doc) return root.child(loading("No ticket selected"));
     const d = doc.detail;
-    if (!d || d.ticket?.identifier !== this.id)
+    if (!d || d.ticket?.identifier !== this.id || (d.partial && doc.failure))
       return root.child(
         doc.failure ? failureView(doc.failure, null) : loading(`Loading ${this.id}...`),
       );
@@ -426,6 +439,25 @@ export default class Panel {
       activityServed: this.activityServed,
     });
     const page = full(d, { terminal, now });
+    // The list's row is all there is yet: header and title only; edits wait for the read.
+    if (d.partial)
+      return root.child(
+        v_flex()
+          .id("panel-scroll")
+          .flex_1()
+          .min_h(0)
+          .overflow_y_scrollbar()
+          .p(12)
+          .child(
+            v_flex()
+              .id("panel-content")
+              .flex_none()
+              .gap(14)
+              .child(doc.header(page))
+              .child(doc.title(page))
+              .child(loading("Loading...")),
+          ),
+      );
     const card = doc.card(page.needs);
     return root
       .child(

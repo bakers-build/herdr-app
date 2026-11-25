@@ -1,14 +1,39 @@
 // ticket/repository: reading tickets and what belongs to them through JSON:API
 // (core/api.js), the only place in the module that reads. Returns model objects.
 import { me, read, search } from "../core/api.js";
-import { nameOf, toDetail, toTicket } from "./model.js";
+import { nameOf, toComment, toDetail, toRun, toTicket } from "./model.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** @type {[string, string]} */
 const TICKET = ["bb_ticket", "bb_ticket"];
-const LIST_INCLUDE = ["runs", "labels", "ticket_type"];
+const LIST_INCLUDE = ["labels", "ticket_type"];
+/** What the list rows and the store read of a ticket, a run and a plan comment. */
+const LIST_FIELDS = {
+  "bb_ticket--bb_ticket": [
+    "identifier",
+    "title",
+    "state",
+    "labels",
+    "frozen",
+    "frozen_at",
+    "closed",
+    "closed_date",
+    "changed",
+    "assignee_name",
+    "ticket_type",
+    "claim_machine",
+    "conductor_id",
+  ],
+};
+const RUN_FIELDS = {
+  "bb_run--bb_run": ["state", "agent", "harness", "started_at", "closed", "ticket_id"],
+};
+const PLAN_FIELDS = { "bb_comment--bb_comment": ["created", "ticket_id"] };
+/** The comments the panel folds: its newest of each is read with its body, older ones when opened. */
+const FOLDED = ["plan", "spec", "summary"];
+const COMMENT = "bb_comment--bb_comment";
+const COMMENT_META = ["bb_comment_type", "author_name", "created"];
 const DETAIL_INCLUDE = [
-  "comments",
   "runs",
   "labels",
   "ticket_type",
@@ -20,7 +45,7 @@ const DETAIL_INCLUDE = [
 ];
 
 /**
- * The open tickets of a project, with runs and labels: the base of the open lists. The
+ * The open tickets of a project, with labels and type (their runs: listRuns): the base of the open lists. The
  * tickets of open tabs come along, closed or not, so their tabs can follow the state.
  * @param {string} project @param {string[]} [tabs] identifiers read besides the open tickets (the selected one)
  */
@@ -30,6 +55,7 @@ export async function listOpen(project, tabs = []) {
     search(...TICKET, {
       filter: [inProject, ["closed", "=", false]],
       include: LIST_INCLUDE,
+      fields: LIST_FIELDS,
       sort: "-changed",
       limit: 50,
       all: true,
@@ -38,12 +64,44 @@ export async function listOpen(project, tabs = []) {
       ? search(...TICKET, {
           filter: [inProject, ["identifier", "IN", tabs]],
           include: LIST_INCLUDE,
+          fields: LIST_FIELDS,
           limit: 50,
         })
       : [],
   ]);
   const seen = new Set(open.map((t) => t.id));
   return [...open, ...tabbed.filter((t) => !seen.has(t.id))].map(toTicket);
+}
+
+/**
+ * The runs of the project's open tickets and of the tickets of open tabs, all of them (the
+ * newest start counts), by ticket uuid. A search of their own: reading them with the tickets
+ * is by far the slowest part of the list.
+ * @param {string} project @param {string[]} [tabs] identifiers, as for listOpen
+ * @returns {Promise<Map<string, any[]>>}
+ */
+export async function listRuns(project, tabs = []) {
+  const inProject = /** @type {[string, string, string]} */ ([
+    "ticket_id.project_id.id",
+    "=",
+    project,
+  ]);
+  const find = (/** @type {import("../core/api.js").Query["filter"]} */ filter) =>
+    search("bb_run", "bb_run", { filter, fields: RUN_FIELDS, sort: "id", limit: 50, all: true });
+  const [open, tabbed] = await Promise.all([
+    find([inProject, ["ticket_id.closed", "=", false]]),
+    tabs.length ? find([inProject, ["ticket_id.identifier", "IN", tabs]]) : [],
+  ]);
+  /** @type {Map<string, any[]>} */
+  const byTicket = new Map();
+  const seen = new Set();
+  for (const r of [...open, ...tabbed]) {
+    const ticket = r.ticket_id?.id;
+    if (!ticket || !r.state || seen.has(r.id)) continue;
+    seen.add(r.id);
+    byTicket.set(ticket, [...(byTicket.get(ticket) ?? []), toRun(r)]);
+  }
+  return byTicket;
 }
 
 /** Which open tickets of the project have a plan comment, and when the newest was written. @param {string} project */
@@ -54,6 +112,8 @@ export async function planComments(project) {
       ["ticket_id.project_id.id", "=", project],
       ["ticket_id.closed", "=", false],
     ],
+    fields: PLAN_FIELDS,
+    sort: "id",
     limit: 50,
     all: true,
   });
@@ -67,28 +127,79 @@ export async function planComments(project) {
 }
 
 /**
- * One ticket with comments, runs, terms, conductor and reviewers.
+ * One ticket with comments, runs, terms, conductor and reviewers. The comments are read apart: the
+ * others in full, the plan, spec and summary comments as metadata, then the body of the newest
+ * of each; an older one has none until commentBody reads it.
  * @param {string} idOrUuid identifier or UUID
  * @param {boolean} [byUuid] it is a UUID (default: it looks like one)
  */
 export async function readTicket(idOrUuid, byUuid = UUID.test(idOrUuid)) {
-  const t = byUuid
-    ? await read(...TICKET, idOrUuid, DETAIL_INCLUDE)
-    : (
-        await search(...TICKET, {
+  const ofTicket = /** @type {[string, string, string]} */ ([
+    byUuid ? "ticket_id.id" : "ticket_id.identifier",
+    "=",
+    idOrUuid,
+  ]);
+  const comments = (
+    /** @type {import("../core/api.js").Condition[]} */ filter,
+    /** @type {string[]} */ fields,
+  ) =>
+    search("bb_comment", "bb_comment", {
+      filter: [ofTicket, ...filter],
+      fields: { [COMMENT]: fields },
+      sort: "id",
+      limit: 50,
+      all: true,
+    });
+  // NOT IN never matches a comment with no type (SQL NULL), so those are read on their own.
+  const [t, others, untyped, folded] = await Promise.all([
+    byUuid
+      ? read(...TICKET, idOrUuid, DETAIL_INCLUDE)
+      : search(...TICKET, {
           filter: [["identifier", "=", idOrUuid]],
           include: DETAIL_INCLUDE,
           limit: 1,
-        })
-      )[0];
+        }).then((rows) => rows[0]),
+    comments([["bb_comment_type", "NOT IN", FOLDED]], [...COMMENT_META, "body"]),
+    comments([["bb_comment_type", "IS NULL"]], [...COMMENT_META, "body"]),
+    comments([["bb_comment_type", "IN", FOLDED]], COMMENT_META),
+  ]);
   if (!t) throw new Error(`Ticket ${idOrUuid} does not exist or is not readable.`);
-  return toDetail(t);
+  const newest = FOLDED.map((type) =>
+    folded
+      .filter((c) => c.created && c.bb_comment_type === type)
+      // Ascending and last, as toDetail and its consumers read "newest": a tie is the later entry.
+      .sort((a, b) => String(a.created).localeCompare(String(b.created)))
+      .at(-1),
+  ).filter((c) => c !== undefined);
+  const bodies = newest.length
+    ? await search("bb_comment", "bb_comment", {
+        filter: [["id", "IN", newest.map((c) => c.id)]],
+        fields: { [COMMENT]: ["body"] },
+        limit: newest.length,
+      })
+    : [];
+  const body = new Map(bodies.map((c) => [c.id, c]));
+  return toDetail({
+    ...t,
+    comments: [...others, ...untyped, ...folded.map((c) => ({ ...c, ...body.get(c.id) }))],
+  });
 }
 
-/** The ticket's activity, newest first. @param {string} ticketUuid */
-export async function listActivity(ticketUuid) {
+/** The body of one comment, read when the panel opens an older plan, spec or summary. @param {string} id */
+export async function commentBody(id) {
+  const [c] = await search("bb_comment", "bb_comment", {
+    filter: [["id", "=", id]],
+    fields: { [COMMENT]: ["body"] },
+    limit: 1,
+  });
+  if (!c) throw new Error("This comment is not readable.");
+  return toComment(c).body;
+}
+
+/** The ticket's activity, newest first. @param {string} identifier */
+export async function listActivity(identifier) {
   const rows = await search("bb_activity", "bb_activity", {
-    filter: [["ticket_id.id", "=", ticketUuid]],
+    filter: [["ticket_id.identifier", "=", identifier]],
     include: ["actor"],
     sort: "-created",
     limit: 20,
@@ -146,7 +257,9 @@ export async function listConductors(project) {
  * @param {import("../core/api.js").Query} query
  */
 export async function query(query) {
-  return (await search(...TICKET, { include: LIST_INCLUDE, ...query })).map(toTicket);
+  return (await search(...TICKET, { include: LIST_INCLUDE, fields: LIST_FIELDS, ...query })).map(
+    toTicket,
+  );
 }
 
 /**

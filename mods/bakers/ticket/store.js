@@ -13,8 +13,21 @@ import * as repository from "./repository.js";
 import { named } from "./model.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
+/** A refresh reads older plans, specs and summaries without their body; one the user opened keeps it. @param {any} fresh @param {any} before */
+function keepBodies(fresh, before) {
+  const read = new Map(
+    (before?.comments ?? [])
+      .filter((/** @type {any} */ c) => c.loaded !== false)
+      .map((/** @type {any} */ c) => [c.id, c]),
+  );
+  for (const c of fresh?.comments ?? []) {
+    const old = read.get(c.id);
+    if (c.loaded === false && old) Object.assign(c, { body: old.body, loaded: true });
+  }
+}
+
 /**
- * @param {any} api the loaders (listOpen, planComments, readTicket; listCatalog when served)
+ * @param {any} api the loaders (listOpen, listRuns, planComments, readTicket; listCatalog when served)
  * @param {{ now?: () => number, tabs?: () => string[], onCatalog?: (project: string) => void }} [options]
  *   tabs: identifiers read with the open tickets (the selected one); onCatalog: a catalog read landed
  */
@@ -96,7 +109,12 @@ export function createStore(api, options = {}) {
       const project = store.project;
       if (!project) return;
       store.loading = true;
-      const reads = Promise.all([api.listOpen(project, tabs()), api.planComments(project)]);
+      const open = tabs();
+      const reads = Promise.all([
+        api.listOpen(project, open),
+        api.listRuns(project, open),
+        api.planComments(project),
+      ]);
       const seq = ++catalogRead;
       store.catalogRead = readCatalog(project).then((read) => {
         if (!read || store.project !== project || seq !== catalogRead) return;
@@ -110,8 +128,10 @@ export function createStore(api, options = {}) {
         options.onCatalog?.(project);
       });
       try {
-        const [list, plans] = await reads;
+        const [tickets, runs, plans] = await reads;
         if (store.project !== project) return;
+        // The runs are read apart: every consumer still sees each ticket's runs on the ticket.
+        const list = tickets.map((/** @type {any} */ t) => ({ ...t, runs: runs.get(t.id) ?? [] }));
         facts.clear();
         for (const t of list) {
           const comments = plans.get(t.id) ?? [];
@@ -134,6 +154,7 @@ export function createStore(api, options = {}) {
     /** Reads one ticket with everything a tab or the panel shows. @param {string} id @param {boolean} [byUuid] */
     async enrich(id, byUuid) {
       const ticket = named(await api.readTicket(id, byUuid), store.catalog?.names);
+      keepBodies(ticket, details.get(ticket?.id ?? id));
       const comments = ticket?.comments ?? [];
       const runs = ticket?.runs ?? [];
       const why = deriveWhy(ticket, comments, runs);
@@ -148,10 +169,33 @@ export function createStore(api, options = {}) {
       return row ? store.enrich(row.uuid, true) : store.enrich(idOrUuid);
     },
 
-    /** @param {string} idOrUuid */
+    /** The last detail read, by uuid or identifier; a ticket outside the list is found too.
+     *  @param {string} idOrUuid */
     cached(idOrUuid) {
       const row = store.byId(idOrUuid);
-      return details.get(row?.uuid ?? idOrUuid) ?? null;
+      const hit = details.get(row?.uuid ?? idOrUuid);
+      if (hit) return hit;
+      for (const d of details.values()) if (d.ticket?.identifier === idOrUuid) return d;
+      return null;
+    },
+
+    /** What the list knows of a ticket, shaped as a detail and marked partial: the panel draws its
+     *  header and title from it until the read lands. Null when the list has no such ticket. @param {string} idOrUuid */
+    partial(idOrUuid) {
+      const t = store.tickets.find(
+        (/** @type {any} */ x) => x.identifier === idOrUuid || x.id === idOrUuid,
+      );
+      if (!t) return null;
+      const f = facts.get(t.id);
+      const why = isClosed(t) ? null : (f?.why ?? null);
+      return {
+        ticket: { ...t },
+        comments: [],
+        runs: t.runs ?? [],
+        why,
+        since: f?.since ?? null,
+        partial: true,
+      };
     },
 
     /** @param {string} idOrUuid */

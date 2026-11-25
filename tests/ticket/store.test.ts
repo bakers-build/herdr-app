@@ -123,7 +123,11 @@ function fakeApi(over: any = {}) {
     calls,
     listOpen: async (p: string, tabs: string[] = []) => {
       calls.push(["list", p, ...tabs].join(" "));
-      return rows.map((r) => ({ ...r, runs: details[r.id]?.runs ?? [] }));
+      return rows.map((r) => ({ ...r, runs: [] }));
+    },
+    listRuns: async (p: string, tabs: string[] = []) => {
+      calls.push(["runs", p, ...tabs].join(" "));
+      return new Map(Object.entries(details).map(([id, d]) => [id, d.runs]));
     },
     planComments: async (p: string) => {
       calls.push(`plans ${p}`);
@@ -199,18 +203,30 @@ test("needs() shares identifiers only, longest waiting first", async () => {
   expect(store.needs()).toEqual({ count: 3, ids: ["SHOP-60", "SHOP-41", "SHOP-56"] });
 });
 
-test("a refresh is one list read and one plan read, no read per ticket", async () => {
+test("a refresh is one list, one runs and one plan read, no read per ticket", async () => {
   const api = fakeApi();
   const store = createStore(api, { now: () => NOW });
   await store.load("p1");
-  expect(api.calls).toEqual(["list p1", "plans p1"]);
+  expect(api.calls).toEqual(["list p1", "runs p1", "plans p1"]);
 });
 
 test("a refresh asks for the open tickets together with the tickets of the open tabs", async () => {
   const api = fakeApi();
   const store = createStore(api, { now: () => NOW, tabs: () => ["SHOP-49", "SHOP-41"] });
   await store.load("p1");
-  expect(api.calls).toEqual(["list p1 SHOP-49 SHOP-41", "plans p1"]);
+  expect(api.calls).toEqual(["list p1 SHOP-49 SHOP-41", "runs p1 SHOP-49 SHOP-41", "plans p1"]);
+});
+
+test("the runs read apart are joined to their tickets: active run, since and why as before", async () => {
+  const store = createStore(fakeApi(), { now: () => NOW });
+  await store.load("p1");
+  expect(store.tickets.find((t: any) => t.id === "u41").runs).toEqual(details.u41.runs);
+  expect(store.tickets.find((t: any) => t.id === "u56").runs).toEqual([]);
+  const r41 = store.byId("SHOP-41");
+  expect(r41.run).toEqual(details.u41.runs[0]);
+  expect(r41.since).toBe(NOW - 35 * 60000);
+  expect(store.byId("SHOP-60").run).toBeNull();
+  expect(store.needs()).toEqual({ count: 3, ids: ["SHOP-60", "SHOP-41", "SHOP-56"] });
 });
 
 test("byId finds by identifier or uuid; onChange fires after refresh", async () => {
@@ -228,7 +244,7 @@ test("a failing refresh keeps the error and the old rows", async () => {
   const api = fakeApi({
     listOpen: async () => {
       if (fail) throw Object.assign(new Error("bakers offline: not found"), { offline: true });
-      return rows.map((r) => ({ ...r, runs: details[r.id]?.runs ?? [] }));
+      return rows.map((r) => ({ ...r, runs: [] }));
     },
   });
   const store = createStore(api, { now: () => NOW });
@@ -337,6 +353,28 @@ test("a user read finishing after a project switch is not kept for the new proje
   expect(store.user).toBeNull();
 });
 
+test("a refresh of the detail keeps a body the user already opened", async () => {
+  const store = createStore(
+    fakeApi({
+      readTicket: async () => ({
+        id: "u41",
+        identifier: "SHOP-41",
+        runs: [],
+        comments: [
+          { id: "p0", type: "plan", created: "2026-01-01T10:00:00Z", body: "", loaded: false },
+        ],
+      }),
+    }),
+    { now: () => NOW },
+  );
+  const first = await store.ticket("u41");
+  first.comments[0].body = "Older plan text";
+  first.comments[0].loaded = true;
+  const again = await store.ticket("u41");
+  expect(again.comments[0]).toMatchObject({ body: "Older plan text", loaded: true });
+  expect(store.cached("u41").comments[0].body).toBe("Older plan text");
+});
+
 // HERDRAPP-28: the project changes while a refresh is in flight.
 test("T3: a refresh answering after a project switch is dropped; the new project's rows stay", async () => {
   const held: (() => void)[] = [];
@@ -395,7 +433,7 @@ test("a refresh reads the project's catalog with the tickets and keeps it", asyn
   expect(store.catalog).toBeNull();
   await store.load("p1");
   await store.catalogRead;
-  expect(api.calls).toEqual(["list p1", "plans p1", "catalog p1"]);
+  expect(api.calls).toEqual(["list p1", "runs p1", "plans p1", "catalog p1"]);
   expect(store.catalog).toEqual({
     labels: ["auto", "idea"],
     types: ["bug"],
@@ -514,4 +552,31 @@ test("a catalog landing after a panel read names the cached detail's terms too",
   await store.catalogRead;
   expect(store.cached(rows[1].id).ticket.labels).toEqual(["auto"]);
   expect(store.cached(rows[1].id).ticket.type).toBe("bug");
+});
+
+// A ticket outside the list (closed, or never listed) opened before shows its detail at once again.
+test("a detail read for a ticket outside the list is cached under its identifier", async () => {
+  const api = fakeApi({
+    readTicket: async (id: string) => {
+      api.calls.push(`read ${id}`);
+      return { id: "u18", identifier: "SHOP-18", title: "Closed one", runs: [], comments: [] };
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  await store.load("p1");
+  expect(store.cached("SHOP-18")).toBeNull();
+  await store.ticket("SHOP-18");
+  expect(store.cached("SHOP-18")?.ticket.title).toBe("Closed one");
+  expect(store.cached("u18")?.ticket.identifier).toBe("SHOP-18");
+});
+
+// With two open runs the list and the panel show the same one, the newest, in any read order.
+test("the active run is the newest open run, whatever order the runs come in", async () => {
+  const { activeRun } = await import("../../mods/bakers/ticket/rules.js");
+  const older = { uuid: "zz", state: "running", started_at: 100, closed: false };
+  const newer = { uuid: "aa", state: "running", started_at: 200, closed: false };
+  const done = { uuid: "mm", state: "done", started_at: 300, closed: true };
+  expect(activeRun([older, newer, done])?.uuid).toBe("aa");
+  expect(activeRun([newer, older, done])?.uuid).toBe("aa");
+  expect(activeRun([done])).toBeNull();
 });

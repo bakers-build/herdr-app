@@ -37,8 +37,14 @@ export function since(ticket, comments, runs, why) {
   return started.length ? Math.max(...started) : null;
 }
 
-/** The run that is going on, if any. @param {any[]} runs */
-export const activeRun = (runs) => (runs ?? []).find((r) => !r.closed) ?? null;
+/** The run that is going on, if any: the newest open one, so every read order agrees. @param {any[]} runs */
+export const activeRun = (runs) =>
+  (runs ?? [])
+    .filter((r) => !r.closed)
+    .reduce(
+      (best, r) => (best && (toMs(r.started_at) ?? 0) <= (toMs(best.started_at) ?? 0) ? best : r),
+      null,
+    );
 
 /** The agent's latest question. @param {any[]} comments */
 export function question(comments) {

@@ -1,7 +1,7 @@
 // ticket/presenter/full: a whole ticket for its tab (R2-3): the header (identifier, state, Frozen,
 // agent line), the title, the Needs-you card, the description and the comments.
 import { age, firstLine, toMs } from "../../core/format.js";
-import { question } from "../rules.js";
+import { activeRun, question } from "../rules.js";
 import { agentLine } from "./field/agent-line.js";
 
 const FOLDED = ["plan", "spec", "summary"];
@@ -10,7 +10,7 @@ const FOLDED = ["plan", "spec", "summary"];
 export function full(detail, o) {
   const tk = detail.ticket;
   const record = {
-    run: detail.runs.find((/** @type {any} */ r) => !r.closed) ?? null,
+    run: activeRun(detail.runs),
     why: detail.why,
     since: detail.since,
     conductor: tk.conductor,
@@ -53,6 +53,7 @@ export function comments(detail, now) {
     body: c.body ?? "",
     firstLine: firstLine(c.body),
     foldable: FOLDED.includes(c.type),
+    loaded: c.loaded !== false,
     marked: asking && c === last,
   }));
 }

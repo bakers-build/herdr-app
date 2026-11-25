@@ -22,8 +22,10 @@ import { inlineForm } from "../../ui/form/inline.js";
 import { FormInputs } from "../../ui/form/inputs.js";
 import { openMenu } from "../../ui/components/menu.js";
 import { pill } from "../../ui/components/pill.js";
+import { failureView } from "../../ui/components/state.js";
 import { statusLine } from "../../ui/components/status-line.js";
 import { heading, mono } from "../../ui/components/text.js";
+import { commentBody } from "../repository.js";
 import { getStore, ready } from "../store.js";
 import { commentForm } from "../form/comment.js";
 import { editForm } from "../form/edit.js";
@@ -60,6 +62,8 @@ export class TicketDocument {
   failure = null;
   /** @type {Set<string>} the expanded entries */
   open = new Set();
+  /** @type {import("../../core/errors.js").Failure | null} why the last body could not be read */
+  bodyFailure = null;
   /** @type {Inline | null} the open edit form */
   editor = null;
   /** @type {Inline} the comment form; init makes it */
@@ -70,6 +74,18 @@ export class TicketDocument {
     this.id = id;
     this.reload = reload ?? (() => this.load());
     this.composer = this.makeComposer("comment");
+    this.seed();
+  }
+
+  /** Starts from what the store has: the ticket read before, else the list's row (partial). */
+  seed() {
+    const store = getStore();
+    this.detail ??= store.cached(this.id) ?? store.partial(this.id);
+  }
+
+  /** The detail is the list's row only: nothing edits or moves the ticket yet. */
+  get partial() {
+    return Boolean(this.detail?.partial);
   }
 
   /** @param {"comment" | "answer"} mode @param {string} [text] */
@@ -82,11 +98,49 @@ export class TicketDocument {
   async load() {
     try {
       await ready();
+      this.seed();
       this.detail = await getStore().ticket(this.id);
       this.failure = null;
     } catch (e) {
       this.failure = classify(e);
     }
+  }
+
+  /**
+   * Opens or folds a comment. The first opening of one read without its body (an older plan, spec
+   * or summary) reads that body, once; if it fails the entry stays unread and folded.
+   * @param {string} key @param {import("gpui-kit").Context} cx
+   */
+  toggle(key, cx) {
+    if (this.open.has(key)) {
+      this.open.delete(key);
+      cx.notify();
+      return;
+    }
+    this.open.add(key);
+    this.bodyFailure = null;
+    const comment = this.detail?.comments?.find((/** @type {any} */ c) => c.id === key);
+    if (comment && comment.loaded === false) {
+      cx.spawn(async (cx) => {
+        try {
+          const body = await commentBody(key);
+          // A refresh may have replaced the detail meanwhile: write to what is current too.
+          const current = [
+            comment,
+            this.detail?.comments?.find((/** @type {any} */ c) => c.id === key),
+            getStore()
+              .cached(this.id)
+              ?.comments?.find((/** @type {any} */ c) => c.id === key),
+          ];
+          for (const c of current) if (c) Object.assign(c, { body, loaded: true });
+        } catch (e) {
+          this.open.delete(key);
+          this.bodyFailure = classify(e);
+        }
+        cx.notify();
+      });
+    }
+    cx.notify();
   }
 
   terminal() {
@@ -103,7 +157,7 @@ export class TicketDocument {
 
   /** The ticket action a single key (G, R) runs, from the one list of actions. @param {string} k */
   keyAction(k) {
-    if (!this.detail) return null;
+    if (!this.detail || this.partial) return null;
     const reason = runReason(this.runInfo(), this.terminal());
     return ticketActions(this.detail, reason).find((a) => a.keys?.toLowerCase() === k) ?? null;
   }
@@ -120,7 +174,7 @@ export class TicketDocument {
   }
 
   edit() {
-    if (this.detail && !this.editor) {
+    if (this.detail && !this.partial && !this.editor) {
       this.editor = new Inline(editForm(this.detail.ticket));
       this.editor.inputs.focus("title");
     }
@@ -129,6 +183,7 @@ export class TicketDocument {
   /** A: answer a question, approve a plan. */
   act() {
     const d = this.detail;
+    if (this.partial) return;
     if (d?.why === "Asked a question") this.answer();
     else if (d?.why === "Plan ready for approval")
       openForm("state", { ticket: this.id, from: d.ticket.state, to: "working" });
@@ -152,6 +207,7 @@ export class TicketDocument {
   /** The panel's keys; true when one acted. @param {any} e @param {any} cx @returns {boolean} */
   onKey(e, cx) {
     const k = e.keystroke;
+    if (this.partial) return false;
     const active = this.editor ?? (this.composer.focused ? this.composer : null);
     if (active) {
       const what = formKey(k, "inline");
@@ -172,6 +228,7 @@ export class TicketDocument {
 
   /** @param {any} vm */
   header(vm) {
+    const wait = this.partial;
     return h_flex()
       .id("doc-header")
       .items_center()
@@ -184,6 +241,7 @@ export class TicketDocument {
           chevron: true,
           size: 11,
           onClick: () =>
+            wait ||
             openMenu(stateItems(vm.id, vm.state), { footer: STATE_MENU_FOOTER, footerApi: true }),
         }),
       )
@@ -197,10 +255,26 @@ export class TicketDocument {
         }),
       )
       .child(div().flex_1())
-      .child(button("edit", "Edit", () => this.edit(), { h: 24, size: 12 }))
-      .child(button("actions", "Actions", () => run("bakers.actions"), { h: 24, size: 12 }))
       .child(
-        button("more", "...", () => openMenu(moreItems(this.detail)), { h: 24, px: 0 })
+        button("edit", "Edit", wait ? null : () => this.edit(), {
+          h: 24,
+          size: 12,
+          disabled: wait,
+        }),
+      )
+      .child(
+        button("actions", "Actions", wait ? null : () => run("bakers.actions"), {
+          h: 24,
+          size: 12,
+          disabled: wait,
+        }),
+      )
+      .child(
+        button("more", "...", wait ? null : () => openMenu(moreItems(this.detail)), {
+          h: 24,
+          px: 0,
+          disabled: wait,
+        })
           .w(24)
           .justify_center(),
       );
@@ -258,13 +332,12 @@ export class TicketDocument {
       .id("comments")
       .gap(10)
       .child(heading(vm.commentsHeading))
+      .when(Boolean(this.bodyFailure), (el) =>
+        el.child(failureView(/** @type {any} */ (this.bodyFailure), null)),
+      )
       .children(
         vm.comments.map((/** @type {any} */ c) =>
-          entry(c, this.open.has(c.key), (cx) => {
-            if (this.open.has(c.key)) this.open.delete(c.key);
-            else this.open.add(c.key);
-            cx.notify();
-          }),
+          entry(c, this.open.has(c.key), (cx) => this.toggle(c.key, cx)),
         ),
       );
   }

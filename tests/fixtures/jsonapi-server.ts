@@ -1,7 +1,7 @@
 // A small JSON:API server for the tests: answers the mod's fetch with documents shaped like
 // Drupal's JSON:API (the real bb_ticket read in jsonapi/bb_ticket-read.json). It understands
-// condition filters (=, <>, CONTAINS, STARTS_WITH, IN, IS NULL, IS NOT NULL) on attributes
-// and on relationship paths (ticket_id.project_id.id), sort, include (also dotted) and paging.
+// condition filters (=, <>, CONTAINS, STARTS_WITH, IN, NOT IN, IS NULL, IS NOT NULL) on attributes
+// and on relationship paths (ticket_id.project_id.id), sort, include (also dotted), sparse fieldsets (fields[type]=a,b) and paging.
 // Strict like Drupal: a boolean matches only 1 or 0, and IN takes a list (value[]=a&value[]=b).
 
 export type Resource = {
@@ -51,6 +51,9 @@ export function jsonapiServer(
         return has.some((v) => String(v).toLowerCase().startsWith(String(value).toLowerCase()));
       case "IN":
         return has.some((v) => list.includes(String(v)));
+      case "NOT IN":
+        // as in SQL: a NULL value matches neither IN nor NOT IN
+        return has.length > 0 && !has.some((v) => list.includes(String(v)));
       case "IS NULL":
         return has.length === 0;
       case "IS NOT NULL":
@@ -78,6 +81,21 @@ export function jsonapiServer(
         level = next;
       }
     }
+  };
+
+  /** A resource with only the attributes and relationships its type's `fields` lists. */
+  const sparse = (r: Resource, p: URLSearchParams): Resource => {
+    const listed = p.get(`fields[${r.type}]`);
+    if (listed === null) return r;
+    const keep = new Set(listed.split(",").filter(Boolean));
+    const pick = <T>(o: Record<string, T> | undefined) =>
+      Object.fromEntries(Object.entries(o ?? {}).filter(([k]) => keep.has(k)));
+    const out: Resource = { type: r.type, id: r.id, attributes: pick(r.attributes) };
+    if (r.relationships) {
+      const rel = pick(r.relationships);
+      if (Object.keys(rel).length) out.relationships = rel;
+    }
+    return out;
   };
 
   const ok = (body: any) => ({
@@ -120,7 +138,11 @@ export function jsonapiServer(
           text: async () => "",
         };
       collectIncludes(r, include, included);
-      return ok({ jsonapi: { version: "1.1" }, data: r, included: [...included.values()] });
+      return ok({
+        jsonapi: { version: "1.1" },
+        data: sparse(r, p),
+        included: [...included.values()].map((x) => sparse(x, p)),
+      });
     }
     let rows = resources.filter((r) => r.type === type);
     for (let i = 0; p.has(`filter[f${i}][condition][path]`); i++)
@@ -149,8 +171,8 @@ export function jsonapiServer(
     for (const r of page) collectIncludes(r, include, included);
     return ok({
       jsonapi: { version: "1.1" },
-      data: page,
-      included: [...included.values()],
+      data: page.map((r) => sparse(r, p)),
+      included: [...included.values()].map((x) => sparse(x, p)),
       links: offset + limit < rows.length ? { next: { href: "next" } } : {},
     });
   };
