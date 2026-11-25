@@ -7,7 +7,7 @@ ticket's state next to the agent terminals, so a developer does not switch to th
 
 The layout with the Tickets list (frame R2-4) and the right panel as the selected ticket's work
 area are built as one mod, `bakers`. The panel shows the whole ticket (header, state,
-description, comments, the composer, agent, properties, activity) and, below it, the live run of
+description, comments, agent, properties, activity) and, below it, the live run of
 that ticket with its terminal, 50/50 and resizable. A ticket never opens as a tab. Herdr places
 the mod in several blocks, tabs and overlays; each copy gets a route (`ticket.list`,
 `ticket.context`, `ticket.run`, `ticket.actions`,
@@ -73,7 +73,7 @@ socket, it stops before writing anything.
 | cmd-shift-N | New ticket |
 | cmd-K | Actions of the selected ticket (on the Tickets tab or while the panel shows it) and the bakers commands |
 | Tickets tab | Up/Down select (the panel follows), Enter, cmd-Enter or a double click show the ticket in the panel, `/` filter, N new ticket, R refresh; the filter bar narrows the list: Needs me, Mine, State, Label, Type, Clear |
-| Ticket panel (once clicked into) | A acts on the Needs-you card, E edits, G shows the agent and focuses its run, R moves the run; cmd-Enter sends or saves, Esc cancels |
+| Ticket panel (once clicked into) | A acts on the Needs-you card, E edits, G shows the agent and focuses its run, R moves the run; in the edit form cmd-Enter saves, Esc cancels |
 
 The panel takes half the work area beside the list, also while a run shows; a dragged width
 stays. Hide in the run's header leaves the run alone and gives the ticket the full
@@ -94,7 +94,7 @@ Every change of state, freeze, move or cancel asks first; Esc writes nothing.
 Reads go to the bakers JSON:API with your own sign-in: the mod asks `bakers auth token` (CLI
 0.10.1-next.11 or later) for a short-lived token, keeps it in memory only and asks again
 after a 401. With an older CLI it reads through `bakers dropsh` instead. Writes (comment,
-answer, edit, state, freeze, move, cancel, classify, labels) go through `bakers tools`.
+edit, state, freeze, move, cancel, classify, labels) go through `bakers tools`.
 The mod puts no ticket content into Herdr's shared state.
 
 Mine is the tickets assigned to you: the mod reads the signed-in user from the API. Only when

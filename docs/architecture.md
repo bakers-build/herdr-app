@@ -266,7 +266,8 @@ The panel goes the same way:
 - It maps the ticket with the view modes `presenter/full.js` (the document) and
   `presenter/context.js` (agent, properties, the sections Description, Acceptance and Summary,
   activity, runs) and draws them. Each section's Edit... opens `form/section.js` in a popup.
-- The document holds two inline forms, `form/comment.js` (the composer) and `form/edit.js`.
+- The document holds one inline form, `form/edit.js`. Comments are not written from the panel;
+  a question is answered in the run ("Answer in the run", A).
 - Its menus and its keys G and R come from `operations/`.
 
 ## A list definition

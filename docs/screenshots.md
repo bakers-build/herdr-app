@@ -34,7 +34,7 @@ Take each shot with `herdr-app shot r2-4.png` and `herdr-app shot r2-3.png`.
 - Sidebar open (cmd-B).
 - Select a ticket that asked a question (frozen, label Question) and press Enter, so the panel
   shows it.
-- Press A, so the composer is in answer mode, and type an answer without sending it.
+- The Needs-you card shows the question with one button, "Answer in the run".
 
 ## What to compare
 
@@ -49,7 +49,6 @@ Take each shot with `herdr-app shot r2-4.png` and `herdr-app shot r2-3.png`.
 | Go to ticket | 480 px wide, 120 px from the top, 10 px padding, field 32 px with a 2 px accent border |
 | Document | at most 760 px; padding 20/24 px; 16 px between blocks; title 22 px semibold |
 | Needs-you card | 1 px accent border, 8 px corners, 12/14 px padding |
-| Composer | 2 px accent top border in answer mode; buttons 26 px |
 | Panel | half the work area beside the list (min 280 px); header 40 px; body 12 px padding, 14 px between sections; small buttons 24 px, 11 px |
 
 The annotations in the frames (region numbers, "sidebar hidden", "italic = preview tab ...",
