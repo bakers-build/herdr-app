@@ -6,6 +6,8 @@
 // cmd-Enter sends like the primary button, Esc closes and Enter types a newline. Sending
 // follows form/submit (steps, partial failures, conflict).
 // On success: close, a toast with the definition's text, then its after().
+// Retained state (the text inputs) is created in a call of the dialog's own, never in a
+// continuation that the opener's call may run: an opener that closes would take it along.
 import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { closeOverlay, notify, props } from "herdr";
@@ -43,18 +45,38 @@ export default class Dialog {
     this.pressed = false;
     claimLater(cx, () => this.takeKeyboard());
     cx.spawn(async (cx) => {
+      let def;
       try {
         const build = get("form", props()?.form)?.build;
         if (!build) throw new Error(`bakers: no form "${props()?.form}"`);
-        this.def = await build(props());
-        this.state = new FormState(this.def);
-        this.inputs = new FormInputs(this.def, this.state);
-        this.inputs.focus();
+        def = await build(props());
       } catch (/** @type {any} */ e) {
         this.error = e?.message ?? String(e);
+        cx.notify();
+        return;
       }
-      cx.notify();
+      // The text states belong to the copy whose call creates them, and die with it. This
+      // continuation can still run inside the opener's call (the palette or a menu, which close
+      // themselves), so they are created in a timer call of the dialog's own.
+      cx.timer.after(0, (/** @type {any} */ cx) => this.ready(def, cx));
     });
+  }
+
+  /** Sets the form, its state and its inputs together, in a call the dialog owns.
+   *  @param {any} def @param {any} cx */
+  ready(def, cx) {
+    if (this.closed) return;
+    try {
+      const state = new FormState(def);
+      const inputs = new FormInputs(def, state);
+      this.def = def;
+      this.state = state;
+      this.inputs = inputs;
+      inputs.focus();
+    } catch (/** @type {any} */ e) {
+      this.error = e?.message ?? String(e);
+    }
+    cx.notify();
   }
 
   close() {
@@ -108,7 +130,7 @@ export default class Dialog {
       .on_mouse_down("left", () => {
         this.pressed = true;
       });
-    // init sets the handle; def, state and inputs are set together, without an await between.
+    // init sets the handle; ready sets def, state and inputs together.
     const handle = this.handle;
     if (!this.def || !this.state || !this.inputs || !handle)
       // Loading or failed: Esc still closes, so a failed form never traps the user.

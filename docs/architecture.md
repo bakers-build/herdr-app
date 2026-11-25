@@ -384,6 +384,10 @@ updates.
   follows a project change, and the window task refreshes. The store's single flight is
   keyed by project; a load older than `PROJECT_TIMEOUT_MS` is replaced by a new one, which
   releases its waiters, and a reply for a project that is no longer current is dropped.
+- **Who owns retained text state:** an `InputState` or `TextareaState` belongs to the copy
+  whose call creates it and is released when that copy closes. A dialog creates its own in a
+  timer of its own (`ui/form/dialog.js`), so an opener that closes (the palette, a menu)
+  cannot release it.
 
 ## Tests
 
