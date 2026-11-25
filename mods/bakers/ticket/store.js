@@ -1,10 +1,11 @@
 // ticket/store: the tickets of the window's project, in memory, shared by every copy of the
 // mod (created on first use, never at module top level, AGENTS.md). A refresh reads the open
 // tickets with the selected one (also when closed), and the open tickets' plan comments, and
-// derives who needs you from them.
+// derives who needs you from them. Loads run in the long-lived copies (the list, the window
+// task): Herdr ends a closed overlay's tasks, so a load started there may never answer.
 import { setShared } from "herdr";
 import { selectedTicket } from "./tabs.js";
-import { ensureProject, projectError } from "../project/state.js";
+import { ensureProject, PROJECT_TIMEOUT_MS, projectError } from "../project/state.js";
 import * as repository from "./repository.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
@@ -51,10 +52,14 @@ export function createStore(api, options = {}) {
     /** @type {{ uuid: string, name: string, names: string[] } | null} the signed-in user */
     user: null,
 
-    /** @param {string} project */
+    /** A switch from another project forgets its rows, time, failure and selection.
+     *  @param {string} project */
     async load(project) {
       if (project !== store.project) {
+        if (store.project) setShared("bakers.selected", null);
         store.tickets = [];
+        store.updated = null;
+        store.error = null;
         details.clear();
         facts.clear();
         store.user = null;
@@ -63,15 +68,18 @@ export function createStore(api, options = {}) {
       await store.refresh();
     },
 
-    /** Reads the open tickets, then the signed-in user while it is unknown (a failed read is retried). */
+    /** Reads the open tickets, then the signed-in user while it is unknown (a failed read is
+     *  retried). A read that answers after a project switch is dropped. */
     async refresh() {
-      if (!store.project) return;
+      const project = store.project;
+      if (!project) return;
       store.loading = true;
       try {
         const [list, plans] = await Promise.all([
-          api.listOpen(store.project, tabs()),
-          api.planComments(store.project),
+          api.listOpen(project, tabs()),
+          api.planComments(project),
         ]);
+        if (store.project !== project) return;
         facts.clear();
         for (const t of list) {
           const comments = plans.get(t.id) ?? [];
@@ -82,9 +90,10 @@ export function createStore(api, options = {}) {
         store.error = null;
         store.updated = now();
       } catch (e) {
+        if (store.project !== project) return;
         store.error = e;
       } finally {
-        store.loading = false;
+        if (store.project === project) store.loading = false;
       }
       for (const fn of listeners) fn(store);
       await readUser();
@@ -171,7 +180,11 @@ export function createStore(api, options = {}) {
 
 /** @type {any} */
 let store = null;
-/** @type {Promise<any> | null} */
+/**
+ * The load under way, for one project. A load for another project, or one older than
+ * PROJECT_TIMEOUT_MS (a closed copy's that never answers), does not hold up a new one.
+ * @type {{ project: string, promise: Promise<void>, started: number } | null}
+ */
 let loading = null;
 
 export function _resetForTests() {
@@ -190,9 +203,17 @@ export async function ready() {
   const p = await ensureProject();
   if (!p) return null;
   const s = getStore();
-  if (s.project !== p.uuid || loading) {
-    if (!loading) loading = s.load(p.uuid).finally(() => (loading = null));
-    await loading;
+  const running = loading;
+  if (running && running.project === p.uuid && Date.now() - running.started < PROJECT_TIMEOUT_MS)
+    await running.promise;
+  else if (s.project !== p.uuid) {
+    const own = { project: p.uuid, started: Date.now(), promise: s.load(p.uuid) };
+    loading = own;
+    try {
+      await own.promise;
+    } finally {
+      if (loading === own) loading = null;
+    }
   }
   return p;
 }
@@ -200,10 +221,14 @@ export async function ready() {
 /** The failure to show: the project's, else the last refresh's. */
 export const loadError = () => projectError() ?? getStore().error;
 
-/** Refreshes and shares the needs-you count with every copy (rail, tab bar, status). */
+/** Reads the project's tickets again and shares the needs-you count with every copy (rail, tab
+ *  bar, status). It reads anew rather than wait for a load under way, which may never answer. */
 export async function refresh() {
-  if (!(await ready())) return;
-  await getStore().refresh();
+  const p = await ensureProject();
+  if (!p) return;
+  const s = getStore();
+  if (s.project === p.uuid) await s.refresh();
+  else await ready();
   publishNeeds();
 }
 

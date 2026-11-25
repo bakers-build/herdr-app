@@ -136,15 +136,18 @@ export default class TicketList {
       this.resolving = resolving;
       cx.notify();
     }
-    // The picker, another copy, shares the project it switches to: resolve it here once per value.
+    // The picker, a popup copy, only chooses the project: load it here, once per value, both
+    // when it shared another uuid and when it changed the project module this copy shares.
     const sharedProject = shared("bakers.project");
-    if (sharedProject && sharedProject !== this.followed) {
+    const behind =
+      sharedProject !== currentProject()?.uuid || getStore().project !== currentProject()?.uuid;
+    if (sharedProject && behind && sharedProject !== this.followed) {
       this.followed = sharedProject;
-      if (sharedProject !== currentProject()?.uuid)
-        cx.spawn(async (cx) => {
-          await ready();
-          cx.notify();
-        });
+      cx.notify();
+      cx.spawn(async (cx) => {
+        await ready();
+        cx.notify();
+      });
     }
     // The rows belong to a project: a switch starts over, and nothing loads before there is one.
     const project = currentProject()?.uuid;
@@ -177,7 +180,10 @@ export default class TicketList {
     const { list, server } = this.wanted();
     const isServer = list === server;
     const filter = currentFilter();
-    const base = applyFilter(isServer ? this.server.rows : getStore().records(), filter, {
+    // The store's rows belong to its project: none while it has not loaded the current one.
+    const store = getStore();
+    const own = store.project === currentProject()?.uuid ? store.records() : [];
+    const base = applyFilter(isServer ? this.server.rows : own, filter, {
       user: getStore().user,
     });
     return {
@@ -408,14 +414,22 @@ export default class TicketList {
     this.syncSelection(records);
     const now = Date.now();
     // Without a project nothing loads: say that it is resolving, or why it failed, never "empty".
-    const loadingProject = !currentProject() && projectResolving();
-    const failure = loadingProject
-      ? null
-      : list.def.load
-        ? (this.server.failure ?? (currentProject() ? null : classify(projectError())))
-        : getStore().tickets.length
-          ? null
-          : classify(loadError());
+    const project = currentProject();
+    const loadingProject = !project && projectResolving();
+    // A project whose tickets have not loaded yet, after a switch or at the start.
+    const store = getStore();
+    const loadingTickets =
+      !list.def.load &&
+      project !== null &&
+      (store.project !== project.uuid || (store.loading && !store.tickets.length));
+    const failure =
+      loadingProject || loadingTickets
+        ? null
+        : list.def.load
+          ? (this.server.failure ?? (project ? null : classify(projectError())))
+          : store.tickets.length
+            ? null
+            : classify(loadError());
     return v_flex()
       .id("tickets")
       .size_full()
@@ -468,11 +482,13 @@ export default class TicketList {
                   div().child(
                     loadingProject
                       ? "Loading the project…"
-                      : emptyText(
-                          list,
-                          this.filter.value(),
-                          !records.length && isActive(currentFilter(), getStore().user),
-                        ),
+                      : loadingTickets
+                        ? `Loading ${project?.name}…`
+                        : emptyText(
+                            list,
+                            this.filter.value(),
+                            !records.length && isActive(currentFilter(), getStore().user),
+                          ),
                   ),
                 ),
               )
