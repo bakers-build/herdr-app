@@ -142,6 +142,16 @@ test("Move to... then a conductor renders the move dialog and its field", async 
     expect(find(root, `field-${name}`)).toBeDefined();
 });
 
+test("Freeze... on a ticket that is not frozen renders its dialog", async () => {
+  const { order, error, root, dialog } = await fromPalette((p) => click(row(p, "action-freeze")), {
+    ticket: "SHOP-56",
+  });
+  expect(order).toEqual(["close overlay-9", "open"]);
+  expect(error).toBeNull();
+  expect(dialog.inner.error).toBeNull();
+  expect(texts(root)).toContain("Freeze SHOP-56?");
+});
+
 test("Unfreeze... renders its dialog", async () => {
   const { order, error, root, dialog } = await fromPalette((p) => click(row(p, "action-freeze")));
   expect(order).toEqual(["close overlay-9", "open"]);
