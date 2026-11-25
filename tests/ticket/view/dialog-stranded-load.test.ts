@@ -156,3 +156,10 @@ test("Freeze, Unfreeze and Cancel run from the panel show their forms with no pr
     expect(texts(dialog.render())).toContain(title);
   }
 });
+
+test("Edit section from the panel shows its text although a closed copy owns the project resolution", async () => {
+  const dialog = await fromPanel({ form: "section", ticket: "SHOP-41", section: "description" });
+  expect(dialog.inner.error).toBeNull();
+  expect(texts(dialog.render())).toContain("Edit description of SHOP-41");
+  expect(find(dialog.render(), "field-body")).toBeDefined();
+});
