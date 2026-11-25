@@ -50,7 +50,7 @@ Take each shot with `herdr-app shot r2-4.png` and `herdr-app shot r2-3.png`.
 | Document | at most 760 px; padding 20/24 px; 16 px between blocks; title 22 px semibold |
 | Needs-you card | 1 px accent border, 8 px corners, 12/14 px padding |
 | Composer | 2 px accent top border in answer mode; buttons 26 px |
-| Panel | 368 px; header 40 px; body 12 px padding, 14 px between sections; small buttons 24 px, 11 px |
+| Panel | half the work area beside the list (min 280 px); header 40 px; body 12 px padding, 14 px between sections; small buttons 24 px, 11 px |
 
 The annotations in the frames (region numbers, "sidebar hidden", "italic = preview tab ...",
 "popup, drawn open", "toast, Herdr", "follows the focused tab" and the like) are notes for

@@ -3,7 +3,7 @@
 // blocks and adds, as drawn in R2-4 and R2-3: a 56 px rail, the sidebar at 220 px hidden
 // (cmd-B; Herdr's own Spaces and Agents, with no bakers box: one an older layout carries is
 // removed), the bakers tab bar (view "tabs") at 40 px, the ticket child of the right panel
-// (368 px, hidden; cmd-shift-T), the hidden run column below the panel's stack (1:1, its header
+// (half of work-body beside main, min 280 px, hidden; cmd-shift-T), the hidden run column below the panel's stack (1:1, its header
 // only; the mod adds the run's terminal), the bakers status item beside Herdr's status, and 8 px
 // pane corners. A run column an older version put into work-body moves into the panel.
 // Applying it twice changes nothing.
@@ -79,8 +79,12 @@ export function bakersLayout(main) {
     });
   const panel = find(l, "panel");
   if (panel) {
-    panel.size = { px: 368 };
+    panel.size = { weight: 1 };
+    panel.min = 280;
+    delete panel.max;
     panel.hidden = true;
+    const work = find(l, "main");
+    if (work) work.size = { weight: 1 };
   }
   if (panel && body) {
     const old = parentOf(l, "run");
