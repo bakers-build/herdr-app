@@ -82,13 +82,24 @@ test("the tab bar is the bakers view tabs at 40 px", () => {
   expect(tabs.content).toEqual({ mod: "bakers", props: { view: "shell.tabs" } });
 });
 
-test("the panel stack gains the ticket child; the panel stays 368 px and hidden", () => {
+test("the panel stack gains the ticket child; the panel and main split work-body 1:1, the panel hidden", () => {
   const l = bakersLayout(main);
   const body = find(l, "panel-body");
   expect(body.children.map((c: any) => c.id)).toEqual(["files", "changes", "ticket"]);
   expect(find(l, "ticket").content).toEqual({ mod: "bakers", props: { view: "ticket.context" } });
-  expect(find(l, "panel").size).toEqual({ px: 368 });
-  expect(find(l, "panel").hidden).toBe(true);
+  const panel = find(l, "panel");
+  expect(panel.size).toEqual({ weight: 1 });
+  expect(panel.min).toBe(280);
+  expect("max" in panel).toBe(false);
+  expect(panel.hidden).toBe(true);
+  expect(find(l, "main").size).toEqual({ weight: 1 });
+  expect(bakersLayout(l)).toEqual(l);
+});
+
+test("a main with its own px size still gets weight 1", () => {
+  const clone = structuredClone(main);
+  find(clone, "main").size = { px: 700 };
+  expect(find(bakersLayout(clone), "main").size).toEqual({ weight: 1 });
 });
 
 const RUN_HEADER = {

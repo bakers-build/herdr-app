@@ -133,12 +133,11 @@ test("a live run of the selected ticket shows below the panel body, 1:1, focus u
       children: [{ id: "run-terminal", type: "block", content: { terminal: "t7" } }],
     },
   ]);
-  // the rest of the tree is as read, the panel widened from the installed width
+  // the rest of the tree is as read, the panel's size included
   const rest = structuredClone(tree);
   findNode(rest, "panel").children = findNode(before, "panel").children;
-  findNode(rest, "panel").size = findNode(before, "panel").size;
   expect(rest).toEqual(before);
-  expect(p.size).toEqual({ px: 480 });
+  expect(p.size).toEqual({ weight: 1 });
 });
 
 test("a remote run shows by its address", () => {
@@ -228,32 +227,53 @@ test("Hide keeps the run hidden across selections and new runs", () => {
   expect(runs()).toEqual([]);
 });
 
-test("the panel is 480 px while a run shows and 368 px again without; a user's width stays", () => {
-  expect(panel().size).toEqual({ px: terminal.PANEL_PX });
+test("a shown or hidden run never changes the panel's size; a dragged width stays", () => {
+  expect(panel().size).toEqual({ weight: 1 });
   shown();
-  expect(panel().size).toEqual({ px: 480 });
+  expect(panel().size).toEqual({ weight: 1 });
   select("SHOP-56");
   terminal.syncRun();
-  expect(runs().map(([c]) => c)).toEqual(["layout.set"]);
+  expect(runs()).toEqual([["layout.hide", { id: "run" }]]);
   applies();
-  expect(panel().size).toEqual({ px: 368 });
+  expect(panel().size).toEqual({ weight: 1 });
   expect(col().hidden).toBe(true);
-  panel().size = { px: 600 };
+  panel().size = { px: 462 };
   select("SHOP-41");
   terminal.syncRun();
+  expect(runs()).toEqual([["layout.show", { id: "run" }]]);
   applies();
-  expect(panel().size).toEqual({ px: 600 });
+  expect(panel().size).toEqual({ px: 462 });
   expect(col().hidden).toBe(false);
   select("SHOP-56");
   terminal.syncRun();
   expect(runs()).toEqual([["layout.hide", { id: "run" }]]);
+  applies();
+  expect(panel().size).toEqual({ px: 462 });
 });
 
-test("PANEL_PX is the width the installer gives the panel", () => {
-  expect(findNode(bakersLayout(structuredClone(main)), "panel").size).toEqual({
-    px: terminal.PANEL_PX,
-  });
-  expect(terminal.RUN_PX).toBe(480);
+test("a panel dragged to 368 px stays 368 px while a run shows and goes", () => {
+  panel().size = { px: 368 };
+  shown();
+  expect(panel().size).toEqual({ px: 368 });
+  panel().size = { px: 480 };
+  select("SHOP-56");
+  terminal.syncRun();
+  expect(runs()).toEqual([["layout.hide", { id: "run" }]]);
+  applies();
+  expect(panel().size).toEqual({ px: 480 });
+});
+
+test("a layout.set for a new run copies the panel's weight unchanged", () => {
+  shown();
+  env.terminals = [live("t9")];
+  terminal.syncRun();
+  expect(sets().length).toBe(1);
+  expect(findNode(sets()[0][1].layout, "panel").size).toEqual({ weight: 1 });
+});
+
+test("the module no longer exports a panel width", () => {
+  expect("PANEL_PX" in terminal).toBe(false);
+  expect("RUN_PX" in terminal).toBe(false);
 });
 
 test("a run column an older version put into work-body moves into the panel in one write", () => {
@@ -414,7 +434,7 @@ test("another ticket's shells never show; its selection stays in bakers.runTab",
 test("a run column without run-stack is rebuilt once", () => {
   // the shape HERDRAPP-13 stored: the run terminal directly in the shown column
   select("SHOP-41");
-  panel().size = { px: 480 };
+  panel().size = { px: 462 };
   col().hidden = false;
   col().children = [HEADER, { id: "run-terminal", type: "block", content: { terminal: "t7" } }];
   env.terminals = [live("t7")];
@@ -423,6 +443,7 @@ test("a run column without run-stack is rebuilt once", () => {
   applies();
   expect(col().children.map((c: any) => c.id)).toEqual(["run-header", "run-stack"]);
   expect(kids(stack())).toEqual([["run-terminal", "t7"]]);
+  expect(panel().size).toEqual({ px: 462 });
   terminal.syncRun(Date.now() + 5000);
   expect(runs()).toEqual([]);
 });
@@ -528,7 +549,7 @@ test("Show agent with the panel hidden: the same tick's layout.set never hides i
   terminal.hideRun();
   applies();
   terminal.syncRun();
-  applies(); // the width goes back to 368 through layout.set
+  applies(); // the run column hides through layout.hide
   findNode(env.layout, "panel").hidden = true; // cmd-shift-T
   env.shared["bakers.runHidden"] = true;
   terminal.showAgent("SHOP-41");

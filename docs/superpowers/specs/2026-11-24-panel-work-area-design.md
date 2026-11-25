@@ -20,12 +20,14 @@ One place per ticket: the right panel (`panel`) shows the selected ticket's full
 - Tree: `panel` (column) = [`panel-body` (stack, weight 1), `run` (column, weight 1, hidden)], `run` = [`run-header` 32 px, `run-terminal`]. Herdr's divider between them is the drag handle (AC4); 1:1 weights give 50/50.
 - `scripts/layout.js` adds `run` (hidden, header only) after `panel-body` and removes a `run` found in `work-body` (AC4).
 - `syncRun()` (1 s task): needs `panel` and `panel-body`, else nothing. `want` = live run of `bakers.selected` unless `bakers.runHidden` or `panel-body.active !== "ticket"` (AC6; Herdr's files/changes children get no run below them). A `run` whose parent is not `panel` is moved there in the same write (migration). Writes:
-  - `layout.set` only when the run's terminal address changes, the column is missing or misplaced, or the width rule below changes `panel.size` (AC10);
+  - `layout.set` only when the run's terminal address changes, the column is missing or misplaced (AC10);
   - else `layout.show/hide {id: run}` when its visibility differs (AC5).
   It never shows or hides `panel` itself and never focuses, except for a focus request (below).
 - New `core/herdr.js` helper `withoutNode(root, id)`; `withNode` gets the panel as parent and `panel-body` as `after`.
 
 ### Width (AC8)
+Superseded by HERDRAPP-22: the panel is 50/50 with `main` and a run no longer resizes it. The rule below is history.
+
 Constants in `ticket/terminal.js`: `PANEL_PX = 368` (installed), `RUN_PX = 480`; a test pins `PANEL_PX` to `scripts/layout.js`. With a run shown and `panel.size.px === PANEL_PX`, the write sets 480; when the run goes and `panel.size.px === RUN_PX`, it sets 368. Any other width is the user's and is never touched.
 
 ### Show agent and Hide (AC7)
@@ -41,9 +43,9 @@ README and `docs/architecture.md` describe the panel as the ticket work area, wi
 ### Decisions (run's calls, auto)
 - Arrows move the run and the width with the selection, row by row: AC2, AC6 and AC8 ask for exactly that.
 - The run shows only while the panel is on its `ticket` child.
-- Section order and the composer at the bottom: chosen for a 368–480 px column; shown at acceptance.
+- Section order and the composer at the bottom: chosen for a 368–480 px column; shown at acceptance. (Superseded by HERDRAPP-22: the panel is now half the work area.)
 - Leftover ticket tabs are closed rather than kept as dead views.
-- Width ownership by comparing with 368/480, no stored state: a drag to exactly 368 counts as default.
+- Width ownership by comparing with 368/480, no stored state: a drag to exactly 368 counts as default. (Superseded by HERDRAPP-22: a run no longer resizes the panel.)
 - The sync never unhides a hidden panel; only Enter, goto, create, toast and Show agent do.
 
 ### Risks / check live

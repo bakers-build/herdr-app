@@ -19,9 +19,6 @@ export const RUN = "run";
 const HEADER = "run-header";
 export const TERMINAL = "run-terminal";
 export const STACK = "run-stack";
-/** The panel's installed width (scripts/layout.js) and its width while a run shows. */
-export const PANEL_PX = 368;
-export const RUN_PX = 480;
 
 /** @param {string} id identifier @param {string} [uuid] */
 export function runTerminal(id, uuid) {
@@ -134,24 +131,13 @@ function column(col, stack) {
 }
 
 /**
- * The panel's size for a shown or gone run: the installed width widens while a run shows and
- * comes back without one; any other width is the user's. Null when it stays.
- * @param {any} panel @param {boolean} showing
- */
-function panelSize(panel, showing) {
-  const px = panel.size?.px;
-  if (showing && px === PANEL_PX) return { ...panel.size, px: RUN_PX };
-  if (!showing && px === RUN_PX) return { ...panel.size, px: PANEL_PX };
-  return null;
-}
-
-/**
  * The window task's tick: the run area below the panel body shows the selected ticket's live
  * run and its shells, or hides. Synchronous, and it writes the layout only on a real change
- * (layout.set rewrites the layout file): other stack children, a missing stack, a misplaced
- * column or a width; else layout.show or layout.hide, or (the column shown) layout.select for
- * another shown tab.
- * It never shows or hides the panel, never ends a terminal and never focuses, but for Show agent.
+ * (layout.set rewrites the layout file): other stack children, a missing stack or a misplaced
+ * column; else layout.show or layout.hide, or (the column shown) layout.select for another
+ * shown tab.
+ * It never resizes the panel (a layout.set copies its size as read), never shows or hides it,
+ * never ends a terminal and never focuses, but for Show agent.
  * @param {number} [now]
  */
 export function syncRun(now = Date.now()) {
@@ -168,15 +154,13 @@ export function syncRun(now = Date.now()) {
   const col = findNode(root, RUN);
   if (!col && !want) return settleFocus(want, now);
   const placed = (panel.children ?? []).some((/** @type {any} */ c) => c.id === RUN);
-  const size = panelSize(panel, Boolean(want));
   const inStack = findNode(col, STACK);
   const moved = stack && !holds(inStack, stack.kids);
-  if (!placed || moved || size) {
+  if (!placed || moved) {
     const base = placed ? root : withoutNode(root, RUN);
     const next = withNode(base, column(placed ? col : null, stack), PANEL, PANEL_BODY);
     if (next) {
       const p = findNode(next, PANEL);
-      if (size) p.size = size;
       const b = findNode(p, PANEL_BODY);
       if (!b.size) b.size = { weight: 1 };
       if (fresh) {
