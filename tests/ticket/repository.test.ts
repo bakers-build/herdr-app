@@ -202,8 +202,12 @@ test("the detail does not include its comments and reads them with sparse fields
   const detail = urls.find((u) => u.includes("/bb_ticket/bb_ticket?")) ?? "";
   expect(detail).not.toMatch(/include=[^&]*comments/);
   const comments = urls.filter((u) => u.includes("/bb_comment/bb_comment?"));
-  expect(comments.length).toBe(3);
+  expect(comments.length).toBe(4);
   for (const u of comments) expect(u).toContain("fields[bb_comment--bb_comment]=");
+  const untyped = comments.find((u) => u.includes("operator]=IS NULL")) ?? "";
+  expect(untyped).toContain(
+    "fields[bb_comment--bb_comment]=bb_comment_type,author_name,created,body",
+  );
   const others = comments.find((u) => u.includes("operator]=NOT IN")) ?? "";
   expect(others).toContain(
     "fields[bb_comment--bb_comment]=bb_comment_type,author_name,created,body",
@@ -278,7 +282,7 @@ test("when summaries tie on created, the one the panel reads as newest is the on
 test("a ticket without plan, spec or summary needs no request for newest bodies", async () => {
   await repository.readTicket("SHOP-41");
   const comments = fetched().filter((u) => u.includes("/bb_comment/bb_comment?"));
-  expect(comments.length).toBe(2);
+  expect(comments.length).toBe(3);
 });
 
 test("commentBody reads one comment's body and nothing else", async () => {
@@ -304,8 +308,8 @@ test("the searches that page through everything sort by a unique key", async () 
     .filter(
       (u) => /\/bb_(run|comment)\/bb_(run|comment)\?/.test(u) && u.includes("page[limit]=50"),
     );
-  // two run searches, the plan comments, the two comment searches of the detail
-  expect(paged.length).toBe(5);
+  // two run searches, the plan comments, the three comment searches of the detail
+  expect(paged.length).toBe(6);
   for (const u of paged) expect(u).toMatch(/[?&]sort=id(&|$)/);
 });
 
@@ -364,4 +368,23 @@ test("a catalog read tells every copy of the mod, so the menus redraw", async ()
   await ready();
   await getStore().catalogRead;
   expect(env.shared["bakers.catalog"]).toMatchObject({ project: "p1" });
+});
+
+// SQL's NOT IN never matches NULL: a comment with no type is read on its own and shows as "comment".
+test("the detail keeps a comment with no type", async () => {
+  const before = read.u56.comments;
+  read.u56.comments = [
+    { id: "n0", type: null, author: "You", created: "2026-01-03T08:00:00Z", body: "Untyped" },
+    ...before,
+  ];
+  try {
+    const d = await repository.readTicket("SHOP-56");
+    expect(d.comments.find((c: any) => c.id === "n0")).toMatchObject({
+      type: "comment",
+      body: "Untyped",
+      loaded: true,
+    });
+  } finally {
+    read.u56.comments = before;
+  }
 });

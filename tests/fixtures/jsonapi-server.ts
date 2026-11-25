@@ -52,7 +52,8 @@ export function jsonapiServer(
       case "IN":
         return has.some((v) => list.includes(String(v)));
       case "NOT IN":
-        return !has.some((v) => list.includes(String(v)));
+        // as in SQL: a NULL value matches neither IN nor NOT IN
+        return has.length > 0 && !has.some((v) => list.includes(String(v)));
       case "IS NULL":
         return has.length === 0;
       case "IS NOT NULL":

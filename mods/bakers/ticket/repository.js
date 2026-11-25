@@ -150,7 +150,8 @@ export async function readTicket(idOrUuid, byUuid = UUID.test(idOrUuid)) {
       limit: 50,
       all: true,
     });
-  const [t, others, folded] = await Promise.all([
+  // NOT IN never matches a comment with no type (SQL NULL), so those are read on their own.
+  const [t, others, untyped, folded] = await Promise.all([
     byUuid
       ? read(...TICKET, idOrUuid, DETAIL_INCLUDE)
       : search(...TICKET, {
@@ -159,6 +160,7 @@ export async function readTicket(idOrUuid, byUuid = UUID.test(idOrUuid)) {
           limit: 1,
         }).then((rows) => rows[0]),
     comments([["bb_comment_type", "NOT IN", FOLDED]], [...COMMENT_META, "body"]),
+    comments([["bb_comment_type", "IS NULL"]], [...COMMENT_META, "body"]),
     comments([["bb_comment_type", "IN", FOLDED]], COMMENT_META),
   ]);
   if (!t) throw new Error(`Ticket ${idOrUuid} does not exist or is not readable.`);
@@ -179,7 +181,7 @@ export async function readTicket(idOrUuid, byUuid = UUID.test(idOrUuid)) {
   const body = new Map(bodies.map((c) => [c.id, c]));
   return toDetail({
     ...t,
-    comments: [...others, ...folded.map((c) => ({ ...c, ...body.get(c.id) }))],
+    comments: [...others, ...untyped, ...folded.map((c) => ({ ...c, ...body.get(c.id) }))],
   });
 }
 
