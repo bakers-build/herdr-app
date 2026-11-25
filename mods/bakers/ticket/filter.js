@@ -92,8 +92,16 @@ export function counts(records, user, filter = DEFAULT_FILTER, catalog = null) {
   };
 }
 
-/** Orders label and type names without regard to case ("Question" among the lowercase ones). @param {string} a @param {string} b */
-export const byName = (a, b) => a.localeCompare(b, "en", { sensitivity: "base" });
+/**
+ * Orders label and type names without regard to case ("Question" among the lowercase ones).
+ * Compares lowercased names itself: Herdr's QuickJS ignores localeCompare's locale and options.
+ * @param {string} a @param {string} b
+ */
+export const byName = (a, b) => {
+  const x = a.toLowerCase();
+  const y = b.toLowerCase();
+  return x < y ? -1 : x > y ? 1 : a < b ? -1 : a > b ? 1 : 0;
+};
 
 /**
  * The values of the Label and Type menus: the workspace's catalog with those the open records

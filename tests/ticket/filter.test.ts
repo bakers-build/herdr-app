@@ -271,3 +271,19 @@ test("choices sort without regard to case", () => {
     types: ["bug", "Chore"],
   });
 });
+
+// Developer live check: Herdr runs the mod in QuickJS, whose localeCompare ignores the locale and
+// its options and compares code points, so "Question" still came first there.
+test("choices sort without regard to case also where localeCompare ignores its options", () => {
+  const original = String.prototype.localeCompare;
+  String.prototype.localeCompare = function (this: string, other: string) {
+    return this < other ? -1 : this > other ? 1 : 0;
+  };
+  try {
+    expect(
+      choices([], { labels: ["idea", "Question", "auto"], types: ["bug", "Chore"], error: null }),
+    ).toEqual({ labels: ["auto", "idea", "Question"], types: ["bug", "Chore"] });
+  } finally {
+    String.prototype.localeCompare = original;
+  }
+});

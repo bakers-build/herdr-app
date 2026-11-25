@@ -122,6 +122,23 @@ test("the picker sorts labels without regard to case", async () => {
   expect(labelsOf(copy)).toEqual(["auto", "Beta", "idea", "Zeta"]);
 });
 
+// Developer live check: in Herdr's QuickJS, localeCompare ignores its options (code-point order).
+test("the picker sorts without regard to case also where localeCompare ignores its options", async () => {
+  const copy = await open(
+    { view: "ticket.label-picker", ticket: "SHOP-41" },
+    { jsonapi: { catalog: { labels: ["idea", "Zeta", "auto", "Beta"] } } },
+  );
+  const original = String.prototype.localeCompare;
+  String.prototype.localeCompare = function (this: string, other: string) {
+    return this < other ? -1 : this > other ? 1 : 0;
+  };
+  try {
+    expect(labelsOf(copy)).toEqual(["auto", "Beta", "idea", "Zeta"]);
+  } finally {
+    String.prototype.localeCompare = original;
+  }
+});
+
 test("the picker's rows scroll inside a bounded height", async () => {
   const copy = await open(
     { view: "ticket.label-picker", ticket: "SHOP-41" },
