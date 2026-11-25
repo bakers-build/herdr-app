@@ -266,8 +266,7 @@ export class TicketDocument {
   /** The title, or the edit form in its place while editing. @param {any} vm */
   title(vm) {
     const editor = this.editor;
-    if (editor)
-      return inlineForm("editor", editor.def, editor.inputs, (v, cx) => this.send(editor, v, cx));
+    if (editor) return inlineForm("editor", editor.def, editor.inputs);
     return div()
       .id("title")
       .text_size(18)
