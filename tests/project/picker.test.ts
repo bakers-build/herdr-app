@@ -16,6 +16,8 @@ import {
   texts,
 } from "../harness";
 
+const actions: any = await import("../../mods/bakers/core/actions.js");
+
 beforeEach(() => {
   reset();
   resetMod();
@@ -119,12 +121,37 @@ test("clicking a workspace shows its projects and keeps the project", async () =
   expect(env.calls.some((c) => c.fn === "closeOverlay")).toBe(false);
 });
 
+/** Two projects in the shown workspace w1, so the selection can move down. */
+const THREE = [...TWO, { id: "p2", name: "acme-docs", key: "ACMEDOCS", workspace: W1 }];
+const picked = () => copyOf("project.picker", { projects: THREE, tickets: BOTH });
+
 test("Right and Left switch the workspace", async () => {
-  const copy = await copyOf("project.picker");
+  const copy = await picked();
   key(copy.render(), "right");
   expect(env.shared["bakers.workspace"]).toBe("w0");
   key(copy.render(), "left");
   expect(env.shared["bakers.workspace"]).toBe("w1");
+});
+
+test("Right and Left reset the row selection", async () => {
+  const copy = await picked();
+  key(copy.render(), "down");
+  expect(copy.inner.at).toBe(1);
+  key(copy.render(), "right"); // w1 -> w0
+  expect(copy.inner.at).toBe(0);
+  key(copy.render(), "left"); // w0 -> w1, which has two rows
+  key(copy.render(), "down");
+  expect(copy.inner.at).toBe(1);
+  key(copy.render(), "left"); // w1 -> w0
+  expect(copy.inner.at).toBe(0);
+});
+
+test("clicking a workspace segment resets the row selection", async () => {
+  const copy = await picked();
+  key(copy.render(), "down");
+  expect(copy.inner.at).toBe(1);
+  click(find(copy.render(), "ws-w0"));
+  expect(copy.inner.at).toBe(0);
 });
 
 test("a fresh picker copy shows the shared workspace", async () => {
@@ -141,26 +168,25 @@ test("a fresh picker copy shows the shared workspace", async () => {
 });
 
 test("choosing a project of another workspace shares that workspace", async () => {
-  activeSpace();
-  backend({ jsonapi: { projects: TWO, tickets: BOTH } });
-  env.shared["bakers.project"] = "p1";
-  env.shared["bakers.workspace"] = "w0";
-  const Bakers = await load("bakers/main.js");
-  const copy = mount(Bakers, { view: "project.picker" });
-  await flush();
-  click(find(copy.render(), "pick-p0"));
-  await flush();
+  const copy = await copyOf("project.picker");
+  expect(env.shared["bakers.workspace"]).toBeUndefined();
+  await actions.perform(["project.choose", "p0", "infra"]);
   expect(env.shared["bakers.project"]).toBe("p0");
   expect(env.shared["bakers.workspace"]).toBe("w0");
+  expect(copy.inner).toBeDefined();
 });
 
 test("with one workspace there is no switch and the button shows the project alone", async () => {
   const picker = await copyOf("project.picker", { projects: ONE, tickets: BOTH });
   const root = picker.render();
   expect(find(root, "workspace-switch")).toBeUndefined();
+  const shared = env.shared["bakers.workspace"];
+  const at = picker.inner.at;
   key(root, "right");
-  expect(env.shared["bakers.workspace"]).not.toBe("w0");
+  expect(env.shared["bakers.workspace"]).toEqual(shared);
+  expect(picker.inner.at).toBe(at);
   expect(find(picker.render(), "pick-p0")).toBeDefined();
+  expect(find(picker.render(), "pick-p1")).toBeDefined();
   const button = find(
     (await copyOf("ticket.list", { projects: ONE, tickets: BOTH })).render(),
     "project-button",

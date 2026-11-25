@@ -54,7 +54,7 @@ export default class ProjectPicker extends PopupList {
             .py(4)
             .rounded(4)
             .cursor_pointer()
-            .hover((el) => el.bg(t.hover))
+            .hover((el) => (s.current ? el : el.bg(t.hover)))
             .when(s.current, (el) => el.bg(t.selected).font_semibold())
             .child(s.label)
             .on_click((_e, cx) => {

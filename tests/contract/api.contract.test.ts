@@ -145,6 +145,7 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     const list = (await projects.listProjects()).map(asProject);
     expect(list.length).toBeGreaterThan(0);
     for (const p of list) {
+      expect(p.workspace).not.toBeNull();
       expect(p.workspace.uuid).toBeString();
       expect(p.workspace.uuid).not.toBe("");
       expect(p.workspace.name).toBeString();
