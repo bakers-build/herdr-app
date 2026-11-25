@@ -23,7 +23,7 @@ import {
   unfreezeForm,
 } from "./form/confirm.js";
 import { createForm } from "./form/create.js";
-import { sectionForm } from "./form/section.js";
+import { sectionForm, sectionNow } from "./form/section.js";
 import closed from "./list/closed.js";
 import needsMe from "./list/needs-me.js";
 import open from "./list/open.js";
@@ -86,7 +86,7 @@ export function register() {
   define("form", "unfreeze", { build: unfreezeForm });
   define("form", "move", { build: moveForm, now: moveNow });
   define("form", "cancel", { build: cancelForm });
-  define("form", "section", { build: sectionForm });
+  define("form", "section", { build: sectionForm, now: sectionNow });
   define("action", "ticket.classify", { run: classify });
   define("action", "ticket.labels", { run: labels });
   define("action", "ticket.refresh", { run: () => refresh() });

@@ -6,11 +6,13 @@
 // cmd-Enter sends like the primary button, Esc closes and Enter types a newline. Sending
 // follows form/submit (steps, partial failures, conflict).
 // On success: close, a toast with the definition's text, then its after().
-// The opener (the cmd-K palette, a menu) closes itself and opens the dialog in one call, and the
-// dialog's build can settle while that call still runs. A task or timer made then without an owner
-// belongs to the running view, the opener, and Herdr ends it with the opener: the form never came.
-// So every task and timer the dialog makes names the dialog's root view as its owner, and retained
-// state (the text inputs) is created in a timer call of the dialog's own.
+// The opener (the cmd-K palette, a menu) closes itself and opens the dialog in one call. Live, the
+// one frame Herdr surely draws for such a dialog is its first, after init; a redraw asked for later
+// from a task or timer did not reach it, so a form that came that way stayed on "..." (HERDRAPP-32).
+// So init draws the form: a synchronous build at once, an asynchronous one from what is known
+// (the definition's `now(p)`), refined by the build's answer. Only a build with nothing to draw
+// from waits, at most FORM_TIMEOUT_MS. The text inputs are made in init, the dialog's own call, or
+// in a timer call of its own, never in a continuation the opener's call may run.
 import { div, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { closeOverlay, notify, props } from "herdr";
@@ -37,17 +39,17 @@ export function openForm(form, p = {}, extra = {}) {
  *  from what it has; any other shows an error the person can read. */
 export const FORM_TIMEOUT_MS = 3000;
 const LATE = Symbol("late");
+/** What a build's late answer may change in a form already drawn: its texts, never its fields. */
+const SHOWN = ["title", "pills", "text", "hint", "keep", "submit"];
 
 export default class Dialog {
-  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx
-   *  @param {import("gpui-kit").View} [view] this copy's root view, the owner of the dialog's work */
-  init(_props, cx, view) {
-    /** TaskOptions for every task and timer of the dialog. @type {{ owner: any } | undefined} */
-    this.own = view ? { owner: view } : undefined;
-    const own = this.own;
+  /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
+  init(_props, cx) {
     this.handle = cx.focus_handle();
     this.handle.focus();
+    /** The form drawn, null while loading. @type {any} */
     this.def = null;
+    /** @type {string | null} */
     this.error = null;
     /** @type {"loading" | "ready" | null} the frame whose first layout took the keyboard */
     this.frame = null;
@@ -55,18 +57,59 @@ export default class Dialog {
     this.closed = false;
     /** True after a press inside: the person placed the keyboard, and the late claim leaves it. */
     this.pressed = false;
-    claimLater(cx, () => this.takeKeyboard(), own);
-    // Read now, in the dialog's own call: the body may run in the opener's.
+    claimLater(cx, () => this.takeKeyboard());
     const p = props();
+    const entry = get("form", p?.form);
+    if (!entry?.build) {
+      this.error = `bakers: no form "${p?.form}"`;
+      return;
+    }
+    /** @type {any} */
+    let built;
+    try {
+      built = entry.build(p);
+    } catch (/** @type {any} */ e) {
+      this.error = `This dialog could not load: ${e?.message ?? String(e)}. Esc closes it.`;
+      return;
+    }
+    // The first frame is the one Herdr surely draws: the form goes into it, made here in init.
+    if (typeof built?.then !== "function") {
+      this.ready(built);
+      return;
+    }
+    let now = null;
+    try {
+      now = entry.now?.(p) ?? null;
+    } catch {
+      now = null;
+    }
+    if (now) {
+      this.ready(now);
+      // The build's answer only refines the texts of the form already drawn.
+      cx.spawn(async (cx) => {
+        try {
+          this.refine(await built);
+          cx.notify();
+        } catch {
+          // The known form stays.
+        }
+      });
+      return;
+    }
+    this.wait(p, entry, built, cx);
+  }
+
+  /** A build that has nothing to draw from yet: its form, else after FORM_TIMEOUT_MS the `now(p)`
+   *  form or an error the person can read. @param {any} p @param {any} entry
+   *  @param {Promise<any>} built @param {import("gpui-kit").AsyncContext} cx */
+  wait(p, entry, built, cx) {
     cx.spawn(async (cx) => {
-      const entry = get("form", p?.form);
       let def;
       try {
-        if (!entry?.build) throw new Error(`bakers: no form "${p?.form}"`);
         // A build can wait on another copy's call that Herdr ended; it never holds the dialog.
         def = await Promise.race([
-          entry.build(p),
-          new Promise((ok) => cx.timer.after(FORM_TIMEOUT_MS, () => ok(LATE), own)),
+          built,
+          new Promise((ok) => cx.timer.after(FORM_TIMEOUT_MS, () => ok(LATE))),
         ]);
         if (def === LATE) throw new Error(`no answer within ${FORM_TIMEOUT_MS / 1000} s`);
       } catch (/** @type {any} */ e) {
@@ -76,8 +119,7 @@ export default class Dialog {
           def = null;
         }
         if (!def) {
-          const reason = e?.message ?? String(e);
-          this.error = entry ? `This dialog could not load: ${reason}. Esc closes it.` : reason;
+          this.error = `This dialog could not load: ${e?.message ?? String(e)}. Esc closes it.`;
           cx.notify();
           return;
         }
@@ -85,12 +127,22 @@ export default class Dialog {
       // The text states belong to the copy whose call creates them, and die with it. This
       // continuation can still run inside the opener's call (the palette or a menu, which close
       // themselves), so they are created in a timer call of the dialog's own.
-      cx.timer.after(0, (/** @type {any} */ cx) => this.ready(def, cx), own);
-    }, own);
+      cx.timer.after(0, (/** @type {any} */ cx) => this.ready(def, cx));
+    });
   }
 
-  /** Sets the form, its state and its inputs together, in a call the dialog owns.
-   *  @param {any} def @param {any} cx */
+  /** Takes the build's answer for the texts of the form already drawn. Its fields, state and
+   *  inputs stay, and with them what the person typed. @param {any} def */
+  refine(def) {
+    if (this.closed || !this.def || !def) return;
+    /** @type {Record<string, any>} */
+    const d = { ...this.def };
+    for (const k of SHOWN) if (k in def) d[k] = def[k];
+    this.def = d;
+  }
+
+  /** Sets the form, its state and its inputs together, in a call the dialog owns: its init, or a
+   *  timer call of its own. @param {any} def @param {any} [cx] */
   ready(def, cx) {
     if (this.closed) return;
     try {
@@ -103,7 +155,7 @@ export default class Dialog {
     } catch (/** @type {any} */ e) {
       this.error = e?.message ?? String(e);
     }
-    cx.notify();
+    cx?.notify();
   }
 
   close() {
@@ -141,7 +193,7 @@ export default class Dialog {
         await this.def.after?.(r.results ?? []);
       }
       cx.notify();
-    }, this.own);
+    });
   }
 
   render() {

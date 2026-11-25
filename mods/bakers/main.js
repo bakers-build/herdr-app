@@ -29,13 +29,11 @@ export function registerAll() {
 registerAll();
 
 export default class Bakers extends View {
-  /** The inner view gets this copy's root view too: work that must outlive the call it starts in
-   *  names it as its owner (gpui-kit TaskOptions.owner).
-   *  @param {import("gpui-shell").Props | undefined} p @param {import("gpui-kit").AsyncContext} cx */
+  /** @param {import("gpui-shell").Props | undefined} p @param {import("gpui-kit").AsyncContext} cx */
   init(p, cx) {
     const C = viewOf(props()?.view);
     this.inner = C ? new C(p) : null;
-    this.inner?.init?.(p, cx, this);
+    this.inner?.init?.(p, cx);
   }
 
   /** @param {import("gpui-kit").Context} cx */

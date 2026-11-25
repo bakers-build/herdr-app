@@ -390,16 +390,20 @@ updates.
   (`ticket/form/confirm.js`). Every build is bounded by `FORM_TIMEOUT_MS`
   (`ui/form/dialog.js`): then a form that registers `now(p)` draws itself from what it has, and
   any other shows an error the person can read. Esc closes either.
+- **A dialog draws its form in its first frame:** the palette and menus close themselves and
+  open a dialog in one call. Live, the one frame Herdr surely draws for such a dialog is the
+  first, after `init`; a redraw asked for later from a task or timer (`cx.notify`) did not reach
+  it, and the dialog stayed on "..." (HERDRAPP-32). So `init` sets the form: a synchronous build
+  at once, an asynchronous one from its `now(p)`, which the build's answer then only refines
+  (texts, never fields or inputs). Only a build with no `now(p)` result waits, bounded as above.
 - **Who owns retained text state:** an `InputState` or `TextareaState` belongs to the copy
-  whose call creates it and is released when that copy closes. A dialog creates its own in a
-  timer of its own (`ui/form/dialog.js`), so an opener that closes (the palette, a menu)
-  cannot release it.
+  whose call creates it and is released when that copy closes. A dialog creates its own in its
+  `init` (Herdr runs it as the view being set up) or in a timer of its own
+  (`ui/form/dialog.js`), never in a continuation that the opener's call may run, so an opener
+  that closes (the palette, a menu) cannot release it.
 - **Who owns tasks and timers:** a `cx.spawn` or `cx.timer` without `owner` belongs to the view
-  whose call is running when it is made (in `init`, the view being set up), not to the view
-  that holds the `cx`, and Herdr ends it with that view. The palette and menus close themselves
-  and open a dialog in one call, and the dialog's build can settle inside it, so every task and
-  timer of a dialog names the dialog's root view (`{ owner }`, which `main.js` hands to the
-  inner view's `init`). The test harness follows both rules (`tests/harness.ts`).
+  whose call is running when it is made (in `init`, the view being set up), and Herdr ends it
+  with that view. The test harness follows that rule (`tests/harness.ts`).
 
 ## Tests
 

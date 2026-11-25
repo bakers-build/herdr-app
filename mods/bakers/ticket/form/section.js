@@ -26,10 +26,19 @@ export function sectionText(ticket, comments, section) {
 const capital = (/** @type {string} */ s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** @param {{ ticket: string, section: Section }} p */
-export async function sectionForm(p) {
+export const sectionForm = async (p) => sectionDef(p, await getStore().ticket(p.ticket));
+
+/** The section form from the detail this copy already read (the panel's), for a dialog that draws
+ *  its form in its first frame; null when the ticket was never read. @param {{ ticket: string, section: Section }} p */
+export function sectionNow(p) {
+  const detail = getStore().cached(p.ticket);
+  return detail ? sectionDef(p, detail) : null;
+}
+
+/** @param {{ ticket: string, section: Section }} p @param {any} detail */
+function sectionDef(p, detail) {
   const id = p.ticket;
   const section = p.section;
-  const detail = await getStore().ticket(id);
   const opened = sectionText(detail.ticket, detail.comments, section);
   const limit = SECTION_LIMITS[section];
   let closedMeanwhile = false;
