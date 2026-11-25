@@ -443,3 +443,23 @@ test("late results of the ticket left are not drawn into the new one", async () 
   await flush();
   expect(texts(find(copy.render(), "doc-header")).slice(0, 1)).toEqual(["SHOP-41"]);
 });
+
+test("a ticket outside the list opened before shows its cached detail at once", async () => {
+  const copy = await panel();
+  env.shared["bakers.selected"] = "SHOP-49";
+  fireTimers();
+  await flush();
+  expect(texts(find(copy.render(), "doc-header")).slice(0, 1)).toEqual(["SHOP-49"]);
+  env.shared["bakers.selected"] = "SHOP-41";
+  fireTimers();
+  await flush();
+  const release = holdDetail();
+  env.shared["bakers.selected"] = "SHOP-49";
+  fireTimers();
+  const root = copy.render();
+  expect(texts(root)).not.toContain("Loading SHOP-49...");
+  expect(texts(find(root, "doc-header")).slice(0, 1)).toEqual(["SHOP-49"]);
+  expect(find(root, "section-description")).toBeDefined();
+  release();
+  await flush();
+});

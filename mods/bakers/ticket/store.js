@@ -169,10 +169,14 @@ export function createStore(api, options = {}) {
       return row ? store.enrich(row.uuid, true) : store.enrich(idOrUuid);
     },
 
-    /** @param {string} idOrUuid */
+    /** The last detail read, by uuid or identifier; a ticket outside the list is found too.
+     *  @param {string} idOrUuid */
     cached(idOrUuid) {
       const row = store.byId(idOrUuid);
-      return details.get(row?.uuid ?? idOrUuid) ?? null;
+      const hit = details.get(row?.uuid ?? idOrUuid);
+      if (hit) return hit;
+      for (const d of details.values()) if (d.ticket?.identifier === idOrUuid) return d;
+      return null;
     },
 
     /** What the list knows of a ticket, shaped as a detail and marked partial: the panel draws its

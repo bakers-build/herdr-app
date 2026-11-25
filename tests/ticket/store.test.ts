@@ -553,3 +553,19 @@ test("a catalog landing after a panel read names the cached detail's terms too",
   expect(store.cached(rows[1].id).ticket.labels).toEqual(["auto"]);
   expect(store.cached(rows[1].id).ticket.type).toBe("bug");
 });
+
+// A ticket outside the list (closed, or never listed) opened before shows its detail at once again.
+test("a detail read for a ticket outside the list is cached under its identifier", async () => {
+  const api = fakeApi({
+    readTicket: async (id: string) => {
+      api.calls.push(`read ${id}`);
+      return { id: "u18", identifier: "SHOP-18", title: "Closed one", runs: [], comments: [] };
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  await store.load("p1");
+  expect(store.cached("SHOP-18")).toBeNull();
+  await store.ticket("SHOP-18");
+  expect(store.cached("SHOP-18")?.ticket.title).toBe("Closed one");
+  expect(store.cached("u18")?.ticket.identifier).toBe("SHOP-18");
+});
