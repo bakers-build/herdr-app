@@ -393,6 +393,8 @@ The tests mirror the structure:
 
 ## Outside the mod
 
-`scripts/install.ts` copies the mod into the Herdr home, writes `layouts/bakers.json` with
+`scripts/install.ts` syncs the mod into the Herdr home (it removes files the repo dropped and keeps
+Herdr's generated `gpui-kit.d.ts` and `jsconfig.json`), writes `layouts/bakers.json` with
 the pure transform `scripts/layout.js` (the blocks carry the shell routes), and merges the
-keys.
+keys. If `herdr-app status` answers, it quits Herdr first and starts it again last: a running
+window saves its in-memory layout over the file, and every copied file would hot-reload the mod.
