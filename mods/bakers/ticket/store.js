@@ -8,6 +8,19 @@ import { ensureProject, projectError } from "../project/state.js";
 import * as repository from "./repository.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
+/** A refresh reads older plans, specs and summaries without their body; one the user opened keeps it. @param {any} fresh @param {any} before */
+function keepBodies(fresh, before) {
+  const read = new Map(
+    (before?.comments ?? [])
+      .filter((/** @type {any} */ c) => c.loaded !== false)
+      .map((/** @type {any} */ c) => [c.id, c]),
+  );
+  for (const c of fresh?.comments ?? []) {
+    const old = read.get(c.id);
+    if (c.loaded === false && old) Object.assign(c, { body: old.body, loaded: true });
+  }
+}
+
 /**
  * @param {any} api the loaders (listOpen, listRuns, planComments, readTicket)
  * @param {{ now?: () => number, tabs?: () => string[] }} [options] tabs: identifiers read with the open tickets (the selected one)
@@ -97,6 +110,7 @@ export function createStore(api, options = {}) {
     /** Reads one ticket with everything a tab or the panel shows. @param {string} id @param {boolean} [byUuid] */
     async enrich(id, byUuid) {
       const ticket = await api.readTicket(id, byUuid);
+      keepBodies(ticket, details.get(ticket?.id ?? id));
       const comments = ticket?.comments ?? [];
       const runs = ticket?.runs ?? [];
       const why = deriveWhy(ticket, comments, runs);

@@ -1,7 +1,7 @@
 // ticket/repository: reading tickets and what belongs to them through JSON:API
 // (core/api.js), the only place in the module that reads. Returns model objects.
 import { me, read, search } from "../core/api.js";
-import { nameOf, toDetail, toRun, toTicket } from "./model.js";
+import { nameOf, toComment, toDetail, toRun, toTicket } from "./model.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** @type {[string, string]} */
@@ -29,8 +29,11 @@ const RUN_FIELDS = {
   "bb_run--bb_run": ["state", "agent", "harness", "started_at", "closed", "ticket_id"],
 };
 const PLAN_FIELDS = { "bb_comment--bb_comment": ["created", "ticket_id"] };
+/** The comments the panel folds: its newest of each is read with its body, older ones when opened. */
+const FOLDED = ["plan", "spec", "summary"];
+const COMMENT = "bb_comment--bb_comment";
+const COMMENT_META = ["bb_comment_type", "author_name", "created"];
 const DETAIL_INCLUDE = [
-  "comments",
   "runs",
   "labels",
   "ticket_type",
@@ -123,22 +126,69 @@ export async function planComments(project) {
 }
 
 /**
- * One ticket with comments, runs, terms, conductor and reviewers.
+ * One ticket with comments, runs, terms, conductor and reviewers. The comments are read apart: the
+ * others in full, the plan, spec and summary comments as metadata, then the body of the newest
+ * of each; an older one has none until commentBody reads it.
  * @param {string} idOrUuid identifier or UUID
  * @param {boolean} [byUuid] it is a UUID (default: it looks like one)
  */
 export async function readTicket(idOrUuid, byUuid = UUID.test(idOrUuid)) {
-  const t = byUuid
-    ? await read(...TICKET, idOrUuid, DETAIL_INCLUDE)
-    : (
-        await search(...TICKET, {
+  const ofTicket = /** @type {[string, string, string]} */ ([
+    byUuid ? "ticket_id.id" : "ticket_id.identifier",
+    "=",
+    idOrUuid,
+  ]);
+  const comments = (
+    /** @type {import("../core/api.js").Condition[]} */ filter,
+    /** @type {string[]} */ fields,
+  ) =>
+    search("bb_comment", "bb_comment", {
+      filter: [ofTicket, ...filter],
+      fields: { [COMMENT]: fields },
+      limit: 50,
+      all: true,
+    });
+  const [t, others, folded] = await Promise.all([
+    byUuid
+      ? read(...TICKET, idOrUuid, DETAIL_INCLUDE)
+      : search(...TICKET, {
           filter: [["identifier", "=", idOrUuid]],
           include: DETAIL_INCLUDE,
           limit: 1,
-        })
-      )[0];
+        }).then((rows) => rows[0]),
+    comments([["bb_comment_type", "NOT IN", FOLDED]], [...COMMENT_META, "body"]),
+    comments([["bb_comment_type", "IN", FOLDED]], COMMENT_META),
+  ]);
   if (!t) throw new Error(`Ticket ${idOrUuid} does not exist or is not readable.`);
-  return toDetail(t);
+  const newest = FOLDED.map((type) =>
+    folded
+      .filter((c) => c.created && c.bb_comment_type === type)
+      .sort((a, b) => String(b.created).localeCompare(String(a.created)))
+      .at(0),
+  ).filter((c) => c !== undefined);
+  const bodies = newest.length
+    ? await search("bb_comment", "bb_comment", {
+        filter: [["id", "IN", newest.map((c) => c.id)]],
+        fields: { [COMMENT]: ["body"] },
+        limit: newest.length,
+      })
+    : [];
+  const body = new Map(bodies.map((c) => [c.id, c]));
+  return toDetail({
+    ...t,
+    comments: [...others, ...folded.map((c) => ({ ...c, ...body.get(c.id) }))],
+  });
+}
+
+/** The body of one comment, read when the panel opens an older plan, spec or summary. @param {string} id */
+export async function commentBody(id) {
+  const [c] = await search("bb_comment", "bb_comment", {
+    filter: [["id", "=", id]],
+    fields: { [COMMENT]: ["body"] },
+    limit: 1,
+  });
+  if (!c) throw new Error("This comment is not readable.");
+  return toComment(c).body;
 }
 
 /** The ticket's activity, newest first. @param {string} ticketUuid */

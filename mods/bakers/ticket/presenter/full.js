@@ -53,6 +53,7 @@ export function comments(detail, now) {
     body: c.body ?? "",
     firstLine: firstLine(c.body),
     foldable: FOLDED.includes(c.type),
+    loaded: c.loaded !== false,
     marked: asking && c === last,
   }));
 }

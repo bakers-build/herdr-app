@@ -22,8 +22,10 @@ import { inlineForm } from "../../ui/form/inline.js";
 import { FormInputs } from "../../ui/form/inputs.js";
 import { openMenu } from "../../ui/components/menu.js";
 import { pill } from "../../ui/components/pill.js";
+import { failureView } from "../../ui/components/state.js";
 import { statusLine } from "../../ui/components/status-line.js";
 import { heading, mono } from "../../ui/components/text.js";
+import { commentBody } from "../repository.js";
 import { getStore, ready } from "../store.js";
 import { commentForm } from "../form/comment.js";
 import { editForm } from "../form/edit.js";
@@ -60,6 +62,8 @@ export class TicketDocument {
   failure = null;
   /** @type {Set<string>} the expanded entries */
   open = new Set();
+  /** @type {import("../../core/errors.js").Failure | null} why the last body could not be read */
+  bodyFailure = null;
   /** @type {Inline | null} the open edit form */
   editor = null;
   /** @type {Inline} the comment form; init makes it */
@@ -87,6 +91,35 @@ export class TicketDocument {
     } catch (e) {
       this.failure = classify(e);
     }
+  }
+
+  /**
+   * Opens or folds a comment. The first opening of one read without its body (an older plan, spec
+   * or summary) reads that body, once; if it fails the entry stays unread and folded.
+   * @param {string} key @param {import("gpui-kit").Context} cx
+   */
+  toggle(key, cx) {
+    if (this.open.has(key)) {
+      this.open.delete(key);
+      cx.notify();
+      return;
+    }
+    this.open.add(key);
+    this.bodyFailure = null;
+    const comment = this.detail?.comments?.find((/** @type {any} */ c) => c.id === key);
+    if (comment && comment.loaded === false) {
+      cx.spawn(async (cx) => {
+        try {
+          comment.body = await commentBody(key);
+          comment.loaded = true;
+        } catch (e) {
+          this.open.delete(key);
+          this.bodyFailure = classify(e);
+        }
+        cx.notify();
+      });
+    }
+    cx.notify();
   }
 
   terminal() {
@@ -258,13 +291,12 @@ export class TicketDocument {
       .id("comments")
       .gap(10)
       .child(heading(vm.commentsHeading))
+      .when(Boolean(this.bodyFailure), (el) =>
+        el.child(failureView(/** @type {any} */ (this.bodyFailure), null)),
+      )
       .children(
         vm.comments.map((/** @type {any} */ c) =>
-          entry(c, this.open.has(c.key), (cx) => {
-            if (this.open.has(c.key)) this.open.delete(c.key);
-            else this.open.add(c.key);
-            cx.notify();
-          }),
+          entry(c, this.open.has(c.key), (cx) => this.toggle(c.key, cx)),
         ),
       );
   }

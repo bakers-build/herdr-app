@@ -1,10 +1,11 @@
-import { beforeEach, expect, test } from "bun:test";
-import { list, live, ticketPanel, resetMod } from "../../fixtures/shop";
+import { afterEach, beforeEach, expect, test } from "bun:test";
+import { list, live, read, ticketPanel, resetMod } from "../../fixtures/shop";
 import { bakersLayout } from "../../../scripts/layout.js";
 import {
   click,
   closest,
   env,
+  fetched,
   find,
   findText,
   fireTimers,
@@ -129,6 +130,74 @@ test("a plan comment shows only its first line until clicked", async () => {
     if (n.kind === "markdown") md = n;
   });
   expect(md.arg.text).toContain("Show the date.");
+});
+
+/** SHOP-56 with an older plan before its newest one; the older one is not loaded with the ticket. */
+const plans = read.u56.comments;
+afterEach(() => {
+  read.u56.comments = plans;
+});
+async function olderPlanPanel() {
+  read.u56.comments = [
+    {
+      id: "p0",
+      type: "plan",
+      author: "Claude Code",
+      created: "2026-01-01T10:00:00Z",
+      body: "Older plan text",
+    },
+    ...plans,
+  ];
+  return ticketPanel("SHOP-56");
+}
+
+const markdownText = (root: any) => {
+  let md: any;
+  walk(find(root, "comments"), (n) => {
+    if (n.kind === "markdown") md = n;
+  });
+  return md?.arg.text;
+};
+
+test("an older plan says Click to read; opening it fetches only its body and shows it", async () => {
+  const copy = await olderPlanPanel();
+  let root = copy.render();
+  expect(texts(find(root, "comment-p0"))).toContain("Click to read");
+  expect(texts(find(root, "comments"))).not.toContain("Older plan text");
+  const before = fetched().length;
+  click(find(root, "comment-p0"));
+  await flush();
+  const requests = fetched()
+    .slice(before)
+    .map((u) => decodeURIComponent(u));
+  expect(requests.length).toBe(1);
+  expect(requests[0]).toContain("/bb_comment/bb_comment?");
+  expect(requests[0]).toContain("fields[bb_comment--bb_comment]=body");
+  root = copy.render();
+  expect(markdownText(root)).toContain("Older plan text");
+  expect(texts(find(root, "comment-p0"))).not.toContain("Click to read");
+  // Folding and opening again reads nothing more.
+  click(find(root, "comment-p0"));
+  click(find(copy.render(), "comment-p0"));
+  await flush();
+  expect(fetched().length).toBe(before + 1);
+  expect(markdownText(copy.render())).toContain("Older plan text");
+});
+
+test("a failed body read leaves the comment unread and says why", async () => {
+  const copy = await olderPlanPanel();
+  const root = copy.render();
+  const fetch = env.fetch;
+  env.fetch = async (url: string, opts?: any) =>
+    decodeURIComponent(url).includes("fields[bb_comment--bb_comment]=body")
+      ? { status: 500, ok: false, json: async () => ({}), text: async () => "boom" }
+      : fetch(url, opts);
+  click(find(root, "comment-p0"));
+  await flush();
+  const after = copy.render();
+  expect(find(after, "failure")).toBeDefined();
+  expect(texts(find(after, "comment-p0"))).toContain("Click to read");
+  expect(markdownText(after)).toBeUndefined();
 });
 
 test("the document fills the panel, scrolling with 12 px padding", async () => {

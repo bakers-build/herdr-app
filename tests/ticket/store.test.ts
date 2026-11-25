@@ -352,3 +352,25 @@ test("a user read finishing after a project switch is not kept for the new proje
   expect(store.project).toBe("p2");
   expect(store.user).toBeNull();
 });
+
+test("a refresh of the detail keeps a body the user already opened", async () => {
+  const store = createStore(
+    fakeApi({
+      readTicket: async () => ({
+        id: "u41",
+        identifier: "SHOP-41",
+        runs: [],
+        comments: [
+          { id: "p0", type: "plan", created: "2026-01-01T10:00:00Z", body: "", loaded: false },
+        ],
+      }),
+    }),
+    { now: () => NOW },
+  );
+  const first = await store.ticket("u41");
+  first.comments[0].body = "Older plan text";
+  first.comments[0].loaded = true;
+  const again = await store.ticket("u41");
+  expect(again.comments[0]).toMatchObject({ body: "Older plan text", loaded: true });
+  expect(store.cached("u41").comments[0].body).toBe("Older plan text");
+});

@@ -1,5 +1,6 @@
 // ui/components/entry: one entry of a feed: a muted meta line (first part strong), then the
-// body; foldable entries show their first line until opened; marked ones carry an accent
+// body; foldable entries show their first line until opened ("Click to read" while their body
+// is not loaded); marked ones carry an accent
 // bar (the comments of an item).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
@@ -8,7 +9,7 @@ import { markdown } from "./markdown.js";
 import { tokens } from "../theme.js";
 
 /**
- * @param {{ key: string, meta: string[], body: string, firstLine: string, foldable: boolean, marked: boolean }} vm
+ * @param {{ key: string, meta: string[], body: string, firstLine: string, foldable: boolean, loaded: boolean, marked: boolean }} vm
  * @param {boolean} open
  * @param {(cx: any) => void} onToggle
  */
@@ -35,9 +36,13 @@ export function entry(vm, open, onToggle) {
     )
     .child(
       vm.foldable && !open
-        ? div().truncate().child(vm.firstLine)
+        ? div()
+            .truncate()
+            .child(vm.loaded ? vm.firstLine : "Click to read")
         : vm.foldable
-          ? markdown(`c-${vm.key}`, vm.body)
+          ? vm.loaded
+            ? markdown(`c-${vm.key}`, vm.body)
+            : div().text_color(t.muted).child("Loading...")
           : div().child(vm.body ?? ""),
     );
 }

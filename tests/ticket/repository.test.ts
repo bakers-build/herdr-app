@@ -1,7 +1,7 @@
 // ticket/repository over the fake JSON:API server: a refresh reads what the open lists need,
 // not the project's history.
 import { beforeEach, expect, test } from "bun:test";
-import { activeSpace, backend, resetMod } from "../fixtures/shop";
+import { activeSpace, backend, read, resetMod } from "../fixtures/shop";
 import { env, fetched, reset } from "../harness";
 
 const repository: any = await import("../../mods/bakers/ticket/repository.js");
@@ -152,4 +152,116 @@ test("currentUser keeps the display name for showing and both names for matching
 test("currentUser is null when the user cannot be read", async () => {
   backend({ jsonapi: { users: [] } });
   expect(await repository.currentUser()).toBeNull();
+});
+
+/** SHOP-56 with an older plan, a spec and an older summary besides its plan, restored afterwards. */
+async function withFoldedComments(fn: () => Promise<any>) {
+  const before = read.u56.comments;
+  read.u56.comments = [
+    {
+      id: "p0",
+      type: "plan",
+      author: "Claude Code",
+      created: "2026-01-01T10:00:00Z",
+      body: "Old plan",
+    },
+    {
+      id: "s0",
+      type: "summary",
+      author: "Claude Code",
+      created: "2026-01-01T11:00:00Z",
+      body: "Old summary",
+    },
+    {
+      id: "s1",
+      type: "summary",
+      author: "Claude Code",
+      created: "2026-01-02T11:00:00Z",
+      body: "New summary",
+    },
+    {
+      id: "sp",
+      type: "spec",
+      author: "Claude Code",
+      created: "2026-01-02T12:00:00Z",
+      body: "The spec",
+    },
+    { id: "k1", type: "comment", author: "You", created: "2026-01-03T09:00:00Z", body: "Go ahead" },
+    ...before,
+  ];
+  try {
+    return await fn();
+  } finally {
+    read.u56.comments = before;
+  }
+}
+
+test("the detail does not include its comments and reads them with sparse fields", async () => {
+  await withFoldedComments(() => repository.readTicket("SHOP-56"));
+  const urls = fetched().map((u) => decodeURIComponent(u));
+  const detail = urls.find((u) => u.includes("/bb_ticket/bb_ticket?")) ?? "";
+  expect(detail).not.toMatch(/include=[^&]*comments/);
+  const comments = urls.filter((u) => u.includes("/bb_comment/bb_comment?"));
+  expect(comments.length).toBe(3);
+  for (const u of comments) expect(u).toContain("fields[bb_comment--bb_comment]=");
+  const others = comments.find((u) => u.includes("operator]=NOT IN")) ?? "";
+  expect(others).toContain(
+    "fields[bb_comment--bb_comment]=bb_comment_type,author_name,created,body",
+  );
+  const meta =
+    comments.find((u) => u.includes("operator]=IN&") && u.includes("bb_comment_type")) ?? "";
+  expect(meta).toContain("fields[bb_comment--bb_comment]=bb_comment_type,author_name,created");
+  expect(meta).not.toContain("created,body");
+  const bodies = comments.find((u) => u.includes("path]=id")) ?? "";
+  expect(bodies).toContain("fields[bb_comment--bb_comment]=body");
+  expect(bodies).toContain("operator]=IN");
+});
+
+test("the detail's comments: others with body, the newest plan, spec and summary with body, older ones without", async () => {
+  const d = await withFoldedComments(() => repository.readTicket("SHOP-56"));
+  const by = (id: string) => d.comments.find((c: any) => c.id === id);
+  expect(d.comments.map((c: any) => c.id)).toEqual(["p0", "s0", "s1", "sp", "k1", "p1"]);
+  expect(by("k1")).toMatchObject({
+    type: "comment",
+    author: "You",
+    body: "Go ahead",
+    loaded: true,
+  });
+  expect(by("p1")).toMatchObject({
+    type: "plan",
+    author: "Claude Code",
+    body: "## Plan\n\nShow the date.",
+    loaded: true,
+  });
+  expect(by("s1")).toMatchObject({ body: "New summary", loaded: true });
+  expect(by("sp")).toMatchObject({ body: "The spec", loaded: true });
+  expect(by("p0")).toMatchObject({ type: "plan", author: "Claude Code", body: "", loaded: false });
+  expect(by("s0")).toMatchObject({ type: "summary", body: "", loaded: false });
+  // The newest bodies come in one request, by id.
+  const urls = fetched().map((u) => decodeURIComponent(u));
+  const bodies = urls.find((u) => u.includes("fields[bb_comment--bb_comment]=body")) ?? "";
+  expect(bodies).toMatch(/\]\[\]=p1/);
+  expect(bodies).toMatch(/\]\[\]=s1/);
+  expect(bodies).toMatch(/\]\[\]=sp/);
+  expect(bodies).not.toMatch(/\]\[\]=(p0|s0)/);
+});
+
+test("a ticket without plan, spec or summary needs no request for newest bodies", async () => {
+  await repository.readTicket("SHOP-41");
+  const comments = fetched().filter((u) => u.includes("/bb_comment/bb_comment?"));
+  expect(comments.length).toBe(2);
+});
+
+test("commentBody reads one comment's body and nothing else", async () => {
+  let before = 0;
+  await withFoldedComments(async () => {
+    await repository.commentBody("p0"); // the first read also asks for a token
+    before = fetched().length;
+    expect(await repository.commentBody("p0")).toBe("Old plan");
+  });
+  const urls = fetched()
+    .slice(before)
+    .map((u) => decodeURIComponent(u));
+  expect(urls.length).toBe(1);
+  expect(urls[0]).toContain("fields[bb_comment--bb_comment]=body");
 });

@@ -3,7 +3,8 @@
 
 /**
  * @typedef {{ uuid: string, state: string, agent: string | null, started_at: string | null, closed: boolean }} Run
- * @typedef {{ id: string, type: string, author: string, created: string, body: string }} Comment
+ * @typedef {{ id: string, type: string, author: string, created: string, body: string,
+ *   loaded: boolean }} Comment
  * @typedef {{ id: string, identifier: string, title: string, state: string, labels: string[],
  *   frozen: boolean, frozen_at: string | null, closed: boolean, closed_date: string | null,
  *   changed: string | null, assignee: string | null, claim_machine: string | null,
@@ -32,6 +33,8 @@ export const toComment = (c) => ({
   author: c.author_name ?? "",
   created: c.created,
   body: c.body ?? "",
+  // A comment read without its body (an older plan, spec or summary) waits for commentBody.
+  loaded: "body" in c,
 });
 
 /** A bb_ticket as the list needs it. @param {any} t */
