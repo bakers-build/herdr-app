@@ -12,18 +12,22 @@ beforeEach(() => {
 afterEach(() => setSystemTime());
 
 const two = [
-  { id: "p0", name: "infra", key: "INFRA" },
-  { id: "p1", name: "acme-shop", key: "ACMESHOP" },
+  { id: "p0", name: "infra", key: "INFRA", workspace: { id: "w0", name: "infra-ws" } },
+  { id: "p1", name: "acme-shop", key: "ACMESHOP", workspace: { id: "w1", name: "acme" } },
 ];
 
 test("project: matches project.config.js of the active space and shares the uuid", async () => {
   activeSpace();
   backend({ jsonapi: { projects: two } });
-  expect(await ctx.ensureProject()).toEqual({ uuid: "p1", name: "acme-shop" });
+  expect(await ctx.ensureProject()).toEqual({
+    uuid: "p1",
+    name: "acme-shop",
+    workspace: { uuid: "w1", name: "acme" },
+  });
   expect(env.shared["bakers.project"]).toBe("p1");
   expect(ctx.projectChoices().map((p: any) => p.name)).toEqual(["acme-shop", "infra"]);
   expect(fetched()).toEqual([
-    "https://bakers.test/jsonapi/bb_project/bb_project?sort=name&page[limit]=50&page[offset]=0",
+    "https://bakers.test/jsonapi/bb_project/bb_project?sort=name&include=group_id,group_id.workspace_id&page[limit]=50&page[offset]=0",
   ]);
 });
 
@@ -32,7 +36,11 @@ test("project: no match takes the first project by name and opens the picker", a
   env.files["/work/other/.bakers/project.config.js"] =
     "export default { project: { name: 'nothing-like-it' } };";
   backend({ jsonapi: { projects: two } });
-  expect(await ctx.ensureProject()).toEqual({ uuid: "p1", name: "acme-shop" });
+  expect(await ctx.ensureProject()).toEqual({
+    uuid: "p1",
+    name: "acme-shop",
+    workspace: { uuid: "w1", name: "acme" },
+  });
   expect(env.calls.find((c) => c.fn === "openOverlay")?.args[0]).toMatchObject({
     props: { view: "project.picker" },
   });
@@ -48,8 +56,21 @@ test("project: an already shared project is read by its uuid", async () => {
   activeSpace();
   backend();
   env.shared["bakers.project"] = "p1";
-  expect(await ctx.ensureProject()).toEqual({ uuid: "p1", name: "acme-shop" });
-  expect(fetched()).toEqual(["https://bakers.test/jsonapi/bb_project/bb_project/p1"]);
+  expect(await ctx.ensureProject()).toEqual({
+    uuid: "p1",
+    name: "acme-shop",
+    workspace: { uuid: "w1", name: "acme" },
+  });
+  expect(fetched()).toEqual([
+    "https://bakers.test/jsonapi/bb_project/bb_project/p1?include=group_id,group_id.workspace_id",
+  ]);
+});
+
+test("project: a project without a workspace has workspace null", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: [{ id: "p9", name: "loose", key: "L", workspace: null }] } });
+  env.shared["bakers.project"] = "p9";
+  expect(await ctx.ensureProject()).toEqual({ uuid: "p9", name: "loose", workspace: null });
 });
 
 test("project: the CLI missing is offline, nothing chosen", async () => {
@@ -98,7 +119,11 @@ test("project: a resolution within the deadline is kept", async () => {
   backend({ jsonapi: { projects: two } });
   const first = ctx.ensureProject();
   setSystemTime(new Date(Date.now() + 29_000));
-  expect(await first).toEqual({ uuid: "p1", name: "acme-shop" });
+  expect(await first).toEqual({
+    uuid: "p1",
+    name: "acme-shop",
+    workspace: { uuid: "w1", name: "acme" },
+  });
   expect(ctx.projectError()).toBe(null);
   expect(fetched()).toHaveLength(1);
 });

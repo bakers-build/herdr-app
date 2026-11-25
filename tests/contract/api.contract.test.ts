@@ -14,6 +14,7 @@ const { env } = await import("../harness");
 const api: any = await import("../../mods/bakers/core/api.js");
 const tickets: any = await import("../../mods/bakers/ticket/repository.js");
 const projects: any = await import("../../mods/bakers/project/repository.js");
+const { asProject }: any = await import("../../mods/bakers/project/model.js");
 
 /** What `bakers auth token` does: the key's client credentials for an access token. */
 async function token() {
@@ -138,5 +139,16 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     const list = await projects.listProjects();
     expect(list.map((p: any) => p.id)).toContain(PROJECT);
     expect((await projects.readProject(PROJECT)).id).toBe(PROJECT);
+  });
+
+  test("listProjects: each project carries its workspace uuid and name", async () => {
+    const list = (await projects.listProjects()).map(asProject);
+    expect(list.length).toBeGreaterThan(0);
+    for (const p of list) {
+      expect(p.workspace.uuid).toBeString();
+      expect(p.workspace.uuid).not.toBe("");
+      expect(p.workspace.name).toBeString();
+      expect(p.workspace.name).not.toBe("");
+    }
   });
 });
