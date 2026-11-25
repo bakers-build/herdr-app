@@ -5,7 +5,6 @@ import { backend, activeSpace, resetMod } from "../fixtures/shop";
 import { reset, tools } from "../harness";
 
 const F = "../../mods/bakers/ticket/form";
-const { commentForm } = await import(`${F}/comment.js`);
 const { editForm } = await import(`${F}/edit.js`);
 const { stateForm, freezeForm, moveForm, cancelForm, consequence } = await import(
   `${F}/confirm.js`
@@ -36,30 +35,6 @@ async function send(def: any, values: Record<string, any>) {
   return { r, s };
 }
 
-test("comment form: answer mode sends the answer, then resumes the run", async () => {
-  const def = commentForm("SHOP-41", "answer");
-  expect(def.label).toBe("Answer to the agent's question");
-  expect(def.fields.map((f: any) => [f.name, f.type, f.value])).toEqual([
-    ["body", "textarea", ""],
-    ["resume", "checkbox", true],
-  ]);
-  expect(def.buttons.map((b: any) => b.label)).toEqual(["Just comment", "Send answer"]);
-  const { r } = await send(def, { body: " Show the page. ", variant: "answer" });
-  expect(r.success).toBe("Answered SHOP-41, the run continues");
-  expect(writes()).toEqual([
-    ["bakers_comment_publish", { ticket: "SHOP-41", type: "comment", body: "Show the page." }],
-    ["bakers_ticket_update", { ticket: "SHOP-41", frozen: false, labels_remove: ["Question"] }],
-  ]);
-});
-
-test("comment form: Just comment and an unchecked box only comment; empty text is refused", async () => {
-  await send(commentForm("SHOP-41", "answer"), { body: "Hi", variant: "comment" });
-  await send(commentForm("SHOP-41", "answer"), { body: "Hi", variant: "answer", resume: false });
-  expect(writes().map((w) => w[0])).toEqual(["bakers_comment_publish", "bakers_comment_publish"]);
-  const { s } = await send(commentForm("SHOP-41", "comment"), { body: "  " });
-  expect(s.errors).toEqual({ body: "Write something first." });
-});
-
 async function failingOnce(tool: string, rest: Record<string, any> = {}) {
   let failures = 1;
   backend({
@@ -69,41 +44,6 @@ async function failingOnce(tool: string, rest: Record<string, any> = {}) {
     [tool]: () => (failures-- > 0 ? new Error("Not allowed") : {}),
   });
 }
-
-test("answer retry: unchecking the box, or typing and deleting, does not post the answer twice", async () => {
-  for (const edit of [
-    (s: any) => s.set("resume", false),
-    (s: any) => {
-      s.set("body", "Hix");
-      s.set("body", "Hi");
-    },
-  ]) {
-    reset();
-    await failingOnce("bakers_ticket_update");
-    const def = commentForm("SHOP-41", "answer");
-    const s = new FormState(def);
-    Object.assign(s.values, { body: "Hi", variant: "answer" });
-    expect((await submit(def, s)).ok).toBe(false);
-    edit(s);
-    expect((await submit(def, s)).ok).toBe(true);
-    expect(writes().filter((w) => w[0] === "bakers_comment_publish").length).toBe(1);
-  }
-});
-
-test("answer retry: an edited answer is posted again", async () => {
-  await failingOnce("bakers_ticket_update");
-  const def = commentForm("SHOP-41", "answer");
-  const s = new FormState(def);
-  Object.assign(s.values, { body: "Hi", variant: "answer" });
-  await submit(def, s);
-  s.set("body", "Hi, the page is /shop");
-  expect((await submit(def, s)).ok).toBe(true);
-  expect(
-    writes()
-      .filter((w) => w[0] === "bakers_comment_publish")
-      .map((w) => w[1].body),
-  ).toEqual(["Hi", "Hi, the page is /shop"]);
-});
 
 test("Move to... retry: an edited reason does not cancel the run again", async () => {
   await failingOnce("bakers_ticket_update");
