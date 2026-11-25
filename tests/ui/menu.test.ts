@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, resetMod } from "../fixtures/shop";
-import { click, cx, env, find, flush, key, load, mount, reset } from "../harness";
+import { click, cx, env, find, fireTimers, flush, key, load, mount, reset } from "../harness";
 
 const writeTools = {
   bakers_comment_publish: { id: "c9" },
@@ -117,4 +117,57 @@ test("a menu takes the keyboard on its first layout; a resize leaves it; Esc clo
   expect(copy.inner.handle.focused).toBe(false);
   key(copy.render(), "escape");
   expect(closed()).toBe(true);
+});
+
+// HERDRAPP-29: after a Herdr start or after R, init's and the first layout's claims both come before
+// the popup holds the keyboard, and Esc went to the Tickets list. A late claim takes it, as the
+// palette's does.
+function missEarlyClaims(copy: any) {
+  copy.inner.handle.focused = false;
+  find(copy.render(), "picker").calls.on_size_change[0]({ width: 220, height: 40 }, cx());
+  copy.inner.handle.focused = false;
+}
+
+test("a menu takes the keyboard at its late claim when the early ones missed; Esc closes", async () => {
+  const copy = await open({
+    view: "menu",
+    items: [{ label: "Refresh", action: ["ticket.refresh"] }],
+  });
+  missEarlyClaims(copy);
+  fireTimers();
+  expect(copy.inner.handle.focused).toBe(true);
+  key(copy.render(), "escape");
+  expect(closed()).toBe(true);
+});
+
+test("the project picker takes the keyboard at its late claim when the early ones missed", async () => {
+  const copy = await open({ view: "project.picker" });
+  missEarlyClaims(copy);
+  fireTimers();
+  expect(copy.inner.handle.focused).toBe(true);
+});
+
+test("a closed menu's late claim takes nothing", async () => {
+  const copy = await open({
+    view: "menu",
+    items: [{ label: "Refresh", action: ["ticket.refresh"] }],
+  });
+  missEarlyClaims(copy);
+  key(copy.render(), "escape");
+  fireTimers();
+  expect(copy.inner.handle.focused).toBe(false);
+});
+
+test("after a press inside the menu, its late claim leaves the keyboard where the press put it", async () => {
+  const copy = await open({
+    view: "menu",
+    items: [{ label: "Refresh", action: ["ticket.refresh"] }],
+  });
+  missEarlyClaims(copy);
+  const c = cx();
+  find(copy.render(), "picker").calls["on_mouse_down:left"][1]({}, c);
+  // The press goes on to the row under it, so a row's click still chooses.
+  expect(c.stopped).toBeFalsy();
+  fireTimers();
+  expect(copy.inner.handle.focused).toBe(false);
 });

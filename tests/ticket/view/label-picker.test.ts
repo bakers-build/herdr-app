@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, resetMod } from "../../fixtures/shop";
-import { cx, env, find, flush, key, load, mount, reset, tools } from "../../harness";
+import { cx, env, find, fireTimers, flush, key, load, mount, reset, tools } from "../../harness";
 
 const writes = () => tools().filter(([t]) => !/_(read|list|search)$/.test(t));
 const writeTools = {
@@ -43,6 +43,21 @@ test("the label picker focuses its filter on its first layout; Esc closes and ad
   expect(copy.inner.input.focused).toBe(true);
   expect(copy.inner.typing).toBe(true);
   copy.inner.input.type("ui");
+  key(copy.render(), "escape");
+  await flush();
+  expect(env.calls.some((c) => c.fn === "closeOverlay")).toBe(true);
+  expect(writes()).toEqual([]);
+});
+
+// HERDRAPP-29: the first popup after a start or after R: init's and the first layout's claims both
+// miss; the late claim gives the filter the keyboard.
+test("the label picker's late claim gives the filter the keyboard; Esc closes and adds nothing", async () => {
+  const copy = await open({ view: "ticket.label-picker", ticket: "SHOP-41" });
+  copy.inner.input.focused = false;
+  find(copy.render(), "picker").calls.on_size_change[0]({ width: 220, height: 80 }, cx());
+  copy.inner.input.focused = false;
+  fireTimers();
+  expect(copy.inner.input.focused).toBe(true);
   key(copy.render(), "escape");
   await flush();
   expect(env.calls.some((c) => c.fn === "closeOverlay")).toBe(true);
