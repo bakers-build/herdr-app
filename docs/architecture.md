@@ -60,7 +60,7 @@ mods/bakers/
     rules.js                      what a ticket means: who needs you, since when, closed
     repository.js                 reads (JSON:API): open tickets, plans, one ticket, activity,
                                   search, conductors, a list's server query
-    commands.js                   writes (bakers tools): comment, resume, edit, transition,
+    commands.js                   writes (bakers tools): comment, edit, transition,
                                   freeze, cancel run, conductor, create, classify, labels
     store.js                      the window's open tickets in memory, refresh, derived facts
     filter.js                     the Tickets tab's filter (Needs me, Mine, State, Label,
