@@ -1,14 +1,21 @@
 // project/state: the window's project, shared by every copy of the mod: the shared
 // uuid, else the project named in .bakers/project.config.js of the active space, read
-// through JSON:API (bb_project). Shared state carries only the project uuid.
+// through JSON:API (bb_project). Shared state carries identifiers only: the project uuid
+// and the shown workspace's uuid (`none` for projects without a workspace).
 import { readTextFile, setShared, shared, spaces } from "herdr";
 import { openRoute } from "../core/router.js";
 import { listProjects, readProject } from "./repository.js";
 import { asProject } from "./model.js";
 
-/** @type {{ uuid: string, name: string } | null} */
+/** @typedef {import("./model.js").Project} Project */
+/** @typedef {import("./model.js").Workspace} Workspace */
+
+/** The workspace of projects whose workspace is unknown. */
+export const OTHER = { uuid: "none", name: "Other" };
+
+/** @type {Project | null} */
 let project = null;
-/** @type {{ uuid: string, name: string }[]} */
+/** @type {Project[]} */
 let choices = [];
 let pickerServed = true;
 /** @type {any} */
@@ -18,7 +25,7 @@ let lastError = null;
  * @type {{ promise: Promise<any>, started: number, settle: (p: any) => void } | null}
  */
 let pending = null;
-/** @type {Promise<{ uuid: string, name: string }[]> | null} */
+/** @type {Promise<Project[]> | null} */
 let listing = null;
 let listingStarted = 0;
 
@@ -68,11 +75,56 @@ async function configuredName() {
   return m ? m[1] : null;
 }
 
-/** @param {{ uuid: string, name: string }} p */
-export function chooseProject(p) {
+/** The distinct workspaces of the choices by name, Other last when a project has none. */
+export function workspaceChoices() {
+  /** @type {Map<string, Workspace>} */
+  const seen = new Map();
+  for (const p of choices) if (p.workspace) seen.set(p.workspace.uuid, p.workspace);
+  const all = [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+  if (choices.some((p) => !p.workspace)) all.push(OTHER);
+  return all;
+}
+
+/** The workspace the picker shows: the shared one if offered, else the current project's. */
+export function shownWorkspace() {
+  const all = workspaceChoices();
+  const uuid = shared("bakers.workspace");
+  const picked = all.find((w) => w.uuid === uuid);
+  if (picked) return picked;
+  if (project) {
+    const own = project.workspace ?? (all.includes(OTHER) ? OTHER : null);
+    if (own) return own;
+  }
+  return all[0] ?? null;
+}
+
+/** @param {string} uuid a workspace uuid, or "none" for Other */
+export function chooseWorkspace(uuid) {
+  setShared("bakers.workspace", uuid);
+}
+
+/** @param {Workspace | null} ws @returns {Project[]} the choices of ws, all when null */
+export function projectsOf(ws) {
+  if (!ws) return choices;
+  return choices.filter((p) => (p.workspace?.uuid ?? OTHER.uuid) === ws.uuid);
+}
+
+/** Sets the window's project and shares its uuid; the shown workspace is left alone.
+ *  @param {Project} p */
+export function adoptProject(p) {
   project = p;
   setShared("bakers.project", p.uuid);
   return p;
+}
+
+/** A person choosing a project: adopts it and shows its workspace, if known, else clears the
+ *  shared workspace so the current project's is shown.
+ *  @param {{ uuid: string, name: string, workspace?: Workspace | null }} p */
+export function chooseProject(p) {
+  const known = "workspace" in p ? p : choices.find((c) => c.uuid === p.uuid);
+  const adopted = adoptProject(/** @type {Project} */ (known ?? p));
+  setShared("bakers.workspace", known ? (known.workspace?.uuid ?? OTHER.uuid) : null);
+  return adopted;
 }
 
 /**
@@ -97,7 +149,7 @@ async function resolve() {
   if (shared_) {
     if (project?.uuid === shared_) return project;
     try {
-      return chooseProject(asProject(await readProject(shared_)));
+      return adoptProject(asProject(await readProject(shared_)));
     } catch (/** @type {any} */ e) {
       if (e?.offline) throw e;
     }
@@ -105,9 +157,9 @@ async function resolve() {
   const name = await configuredName();
   await loadChoices();
   const match = choices.find((p) => p.name === name);
-  if (match) return chooseProject(match);
+  if (match) return adoptProject(match);
   if (choices.length) {
-    chooseProject(choices[0]);
+    adoptProject(choices[0]);
     openRoute("project.picker");
     return project;
   }

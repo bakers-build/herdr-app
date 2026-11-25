@@ -1,11 +1,17 @@
 // project/view/button: the project button in the Tickets list header (header.tool
 // "project.picker"); it opens the project picker when there is more than one project.
-import { svg } from "gpui-kit";
+import { div, svg } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { openRoute } from "../../core/router.js";
 import { chip } from "../../ui/components/chip.js";
 import { icons, tokens } from "../../ui/theme.js";
-import { currentProject, ensureChoices, pickerAvailable, projectChoices } from "../state.js";
+import {
+  currentProject,
+  ensureChoices,
+  pickerAvailable,
+  projectChoices,
+  workspaceChoices,
+} from "../state.js";
 
 export default class ProjectButton {
   /** The list header awaits it, then draws again. */
@@ -15,6 +21,7 @@ export default class ProjectButton {
 
   render() {
     const t = tokens();
+    const ws = workspaceChoices().length > 1 ? currentProject()?.workspace : null;
     const canPick = pickerAvailable() && projectChoices().length > 1;
     return h_flex()
       .id("project-button")
@@ -28,6 +35,7 @@ export default class ProjectButton {
       .border_color(t.border)
       .bg(t.surface)
       .font_semibold()
+      .when(Boolean(ws), (el) => el.child(div().text_color(t.muted).child(`${ws?.name} / `)))
       .child(currentProject()?.name ?? "No project")
       .when(canPick, (el) =>
         el

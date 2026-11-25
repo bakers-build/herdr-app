@@ -100,6 +100,12 @@ export class PopupList {
     return [];
   }
 
+  /** A picker's own keys, tried before the list's; true when it took the key.
+   *  @param {any} _e @returns {boolean} */
+  onKey(_e) {
+    return false;
+  }
+
   /** @param {any} _t @returns {any} drawn above the rows */
   top(_t) {
     return null;
@@ -128,6 +134,11 @@ export class PopupList {
       .on_size_change(() => this.laidOut())
       .on_key_down((e, cx) => {
         const n = choosable.length;
+        if (this.onKey(e)) {
+          cx.stop_propagation();
+          cx.notify();
+          return;
+        }
         if (e.key === "escape") this.close();
         else if (e.key === "down" && n) this.at = (this.at + 1) % n;
         else if (e.key === "up" && n) this.at = (this.at + n - 1) % n;
