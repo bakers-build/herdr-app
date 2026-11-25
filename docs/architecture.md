@@ -46,6 +46,7 @@ mods/bakers/
                                   callout, entry, markdown, menu, state
     form/                         drawing forms: inputs, the inline form, the dialog frame
     register.js                   the routes menu and dialog, the action form.open
+    keyboard.js                   the late keyboard claim of popups, dialogs and the palette
     theme.js                      the wireframe's grays mapped onto Herdr's theme tokens, fonts
     icons/                        the mod's SVGs
 
@@ -183,13 +184,13 @@ such as `at`, and wins over `open`. Herdr's own `menu` mod (the tab context menu
 | `ticket.list` | `ticket/view/list.js` | the tab "Tickets" |
 | `ticket.context` | `ticket/view/context.js` | the right panel's child `ticket`: the selected ticket, whole |
 | `ticket.run` | `ticket/view/run.js` | the header block `run-header` of the run area `run` in the panel, below `panel-body` (installed hidden; `ticket/terminal.js` adds the terminal) |
-| `ticket.actions` | `ticket/view/actions.js` | a window Herdr centres (Esc reaches the mod): takes the keyboard on its first layout and on a press inside; a press outside closes it. cmd-K, cmd-shift-O (`page: "tickets"`), Move to (`page: "move"`) |
+| `ticket.actions` | `ticket/view/actions.js` | a window Herdr centres (Esc reaches the mod): takes the keyboard on its first layout, after 600 ms (`ui/keyboard.js`) and on a press inside; a press outside closes it. cmd-K, cmd-shift-O (`page: "tickets"`), Move to (`page: "move"`) |
 | `ticket.rail`, `ticket.status` | `ticket/view/…` | what the ticket module contributes to the shell's rail and status |
 | `ticket.label-picker` | `ticket/view/label-picker.js` | a popup |
 | `project.picker` | `project/view/picker.js` | a popup from the project button |
 | `project.button` | `project/view/button.js` | the project button in the Tickets list header (kind `header.tool`) |
 | `shell.rail`, `shell.tabs`, `shell.status` | `shell/view/…` | layout blocks (`scripts/layout.js`) |
-| `menu`, `dialog` | `ui/components/menu.js`, `ui/form/dialog.js` | popup menus, form dialogs; each popup and dialog takes the keyboard again on its first layout, so Herdr's and the mod's Esc reach it |
+| `menu`, `dialog` | `ui/components/menu.js`, `ui/form/dialog.js` | popup menus, form dialogs; each popup and dialog takes the keyboard again on its first layout and once more after 600 ms (`ui/keyboard.js`, unless it closed or was pressed), so Herdr's and the mod's Esc reach it also as the first one after a start or after R |
 
 Herdr stores route names in its open tabs and layouts, so a route is never renamed. A route
 that goes (the old detail tab's) is removed, never reused: the window task closes the tabs left

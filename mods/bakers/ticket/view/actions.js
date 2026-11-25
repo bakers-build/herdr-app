@@ -20,13 +20,12 @@ import { getStore, ready } from "../store.js";
 import { selectTicket } from "../tabs.js";
 import { runReason, runTerminal } from "../terminal.js";
 import { openForm } from "../../ui/form/dialog.js";
+import { claimLater } from "../../ui/keyboard.js";
 import { pill } from "../../ui/components/pill.js";
 import { mono } from "../../ui/components/text.js";
 import { tokens, UI_FONT } from "../../ui/theme.js";
 
 const DEBOUNCE_MS = 200;
-/** When the palette focuses its field again after opening, as Herdr's picker does. */
-const REFOCUS_MS = 600;
 const MAX_TICKETS = 8;
 const MAX_PAGE_TICKETS = 50;
 const TITLES = { state: "Change state", move: "Move to", tickets: "Go to ticket" };
@@ -120,12 +119,12 @@ export default class Actions {
       this.takeKeyboard();
       cx.notify();
     });
-    cx.timer.after(REFOCUS_MS, () => this.takeKeyboard());
+    claimLater(cx, () => this.takeKeyboard());
   }
 
   /** Focuses the front page's field. A window does not take the keyboard when it opens, and a
    *  focus before its first frame lands on nothing, so the first layout calls this again, as do
-   *  ready() and a timer, as Herdr's picker does; Esc reaches the palette only through its
+   *  ready() and the late claim (ui/keyboard.js), as Herdr's picker does; Esc reaches the palette only through its
    *  focused field. A press inside takes the keyboard back; a press outside closes the palette. */
   takeKeyboard() {
     if (!this.closed) this.input.focus();

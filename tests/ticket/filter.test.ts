@@ -171,6 +171,25 @@ test("with Needs me and Mine on, every count is what its choice shows", () => {
   for (const [count, patch] of pairs) expect([patch, count]).toEqual([patch, shown(patch)]);
 });
 
+// HERDRAPP-23: the menus offer the workspace's catalog, also values no open ticket carries.
+const catalog = { labels: ["auto", "human-review", "idea"], types: ["bug", "idea"], error: null };
+
+test("choices: the catalog's labels and types with the open tickets' own, sorted once each", () => {
+  expect(choices(records, catalog)).toEqual({
+    labels: ["auto", "human-review", "idea", "Question", "ui"],
+    types: ["bug", "chore", "feature", "idea"],
+  });
+  expect(choices(records, null)).toEqual(choices(records));
+});
+
+test("counts: a catalog value no open ticket carries counts 0, under the same rule", () => {
+  const n = counts(records, user, DEFAULT_FILTER, catalog);
+  expect(n.labels).toEqual({ Question: 1, auto: 2, "human-review": 0, idea: 0, ui: 1 });
+  expect(n.types).toEqual({ bug: 2, chore: 1, feature: 2, idea: 0 });
+  const byType = counts(records, user, { ...DEFAULT_FILTER, type: "feature" }, catalog);
+  expect(byType.labels).toEqual({ Question: 0, auto: 1, "human-review": 0, idea: 0, ui: 0 });
+});
+
 test("Recently closed keeps today's counts", () => {
   expect(counts(records, user, { ...DEFAULT_FILTER, state: "closed", needsMe: true })).toEqual(
     counts(records, user),
@@ -204,7 +223,7 @@ test("without the signed-in user Mine counts null and does not filter", () => {
 
 test("choices: distinct values, sorted", () => {
   expect(choices(records)).toEqual({
-    labels: ["Question", "auto", "ui"].sort(),
+    labels: ["auto", "Question", "ui"],
     types: ["bug", "chore", "feature"],
   });
 });
@@ -241,4 +260,30 @@ test("Mine matches the assignee by either of the user's names", () => {
     ids(applyFilter(withDisplay, { ...DEFAULT_FILTER, mine: true }, { user: byDisplay })),
   ).toEqual(["SHOP-56", "SHOP-61"]);
   expect(counts(withDisplay, byDisplay).mine).toBe(2);
+});
+
+// Review R4: "Question" sorts among the lowercase labels, not before them.
+test("choices sort without regard to case", () => {
+  expect(
+    choices([], { labels: ["idea", "Question", "auto"], types: ["bug", "Chore"], error: null }),
+  ).toEqual({
+    labels: ["auto", "idea", "Question"],
+    types: ["bug", "Chore"],
+  });
+});
+
+// Developer live check: Herdr runs the mod in QuickJS, whose localeCompare ignores the locale and
+// its options and compares code points, so "Question" still came first there.
+test("choices sort without regard to case also where localeCompare ignores its options", () => {
+  const original = String.prototype.localeCompare;
+  String.prototype.localeCompare = function (this: string, other: string) {
+    return this < other ? -1 : this > other ? 1 : 0;
+  };
+  try {
+    expect(
+      choices([], { labels: ["idea", "Question", "auto"], types: ["bug", "Chore"], error: null }),
+    ).toEqual({ labels: ["auto", "idea", "Question"], types: ["bug", "Chore"] });
+  } finally {
+    String.prototype.localeCompare = original;
+  }
 });

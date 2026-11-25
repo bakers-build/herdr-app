@@ -6,6 +6,7 @@ import {
   env,
   find,
   findText,
+  fireTimers,
   flush,
   key,
   load,
@@ -81,4 +82,39 @@ test("a dialog without fields takes the keyboard on its first layout, and a resi
   key(copy.render(), "escape");
   expect(writes()).toEqual([]);
   expect(env.calls.some((c) => c.fn === "closeOverlay")).toBe(true);
+});
+
+// HERDRAPP-29: the first dialog after a start or after R: init's and the first layout's claims both
+// miss; a late claim takes the keyboard. It gives way once the dialog closed or after a press inside.
+async function freezeMissed() {
+  const copy = await open({ view: "dialog", form: "freeze", ticket: "SHOP-41" });
+  copy.inner.handle.focused = false;
+  find(copy.render(), "confirm").calls.on_size_change[0]({ width: 460, height: 200 }, cx());
+  copy.inner.handle.focused = false;
+  return copy;
+}
+
+test("a dialog without fields takes the keyboard at its late claim; Esc closes and writes nothing", async () => {
+  const copy = await freezeMissed();
+  fireTimers();
+  expect(copy.inner.handle.focused).toBe(true);
+  key(copy.render(), "escape");
+  expect(writes()).toEqual([]);
+  expect(env.calls.some((c) => c.fn === "closeOverlay")).toBe(true);
+});
+
+test("a closed dialog's late claim takes nothing", async () => {
+  const copy = await freezeMissed();
+  key(copy.render(), "escape");
+  fireTimers();
+  expect(copy.inner.handle.focused).toBe(false);
+});
+
+test("after a press inside the dialog, its late claim leaves the keyboard where the press put it", async () => {
+  const copy = await freezeMissed();
+  const c = cx();
+  find(copy.render(), "confirm").calls["on_mouse_down:left"][1]({}, c);
+  expect(c.stopped).toBeFalsy();
+  fireTimers();
+  expect(copy.inner.handle.focused).toBe(false);
 });

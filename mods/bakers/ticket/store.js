@@ -1,17 +1,22 @@
 // ticket/store: the tickets of the window's project, in memory, shared by every copy of the
 // mod (created on first use, never at module top level, AGENTS.md). A refresh reads the open
 // tickets with the selected one (also when closed), and the open tickets' plan comments, and
-// derives who needs you from them. Loads run in the long-lived copies (the list, the window
-// task): Herdr ends a closed overlay's tasks, so a load started there may never answer.
+// derives who needs you from them. Beside them it reads the project's workspace catalog (labels
+// and ticket types) for the menus, in the background: the tickets never wait for it, a failed
+// read is kept as its error, and onCatalog tells when one lands. Loads run in the long-lived
+// copies (the list, the window task): Herdr ends a closed overlay's tasks, so a load started
+// there may never answer.
 import { setShared } from "herdr";
 import { selectedTicket } from "./tabs.js";
 import { ensureProject, PROJECT_TIMEOUT_MS, projectError } from "../project/state.js";
 import * as repository from "./repository.js";
+import { named } from "./model.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
 /**
- * @param {any} api the loaders (listOpen, planComments, readTicket)
- * @param {{ now?: () => number, tabs?: () => string[] }} [options] tabs: identifiers read with the open tickets (the selected one)
+ * @param {any} api the loaders (listOpen, planComments, readTicket; listCatalog when served)
+ * @param {{ now?: () => number, tabs?: () => string[], onCatalog?: (project: string) => void }} [options]
+ *   tabs: identifiers read with the open tickets (the selected one); onCatalog: a catalog read landed
  */
 export function createStore(api, options = {}) {
   const now = options.now ?? (() => Date.now());
@@ -21,6 +26,8 @@ export function createStore(api, options = {}) {
   const details = new Map();
   /** @type {Map<string, any>} uuid -> derived facts from the list */
   const facts = new Map();
+  /** The newest catalog read; an older one landing later is dropped. */
+  let catalogRead = 0;
   /** @type {Promise<void> | null} the user read under way; at most one at a time */
   let readingUser = null;
   /** Reads the signed-in user while there is none; a read that ends after a project switch is dropped. */
@@ -42,6 +49,16 @@ export function createStore(api, options = {}) {
     })();
     return readingUser;
   };
+  /** The project's catalog, or its error with no values; null when the api serves none. @param {string} project */
+  const readCatalog = async (project) => {
+    if (!api.listCatalog) return null;
+    try {
+      const c = await api.listCatalog(project);
+      return { labels: c?.labels ?? [], types: c?.types ?? [], names: c?.names ?? {}, error: null };
+    } catch (error) {
+      return { labels: [], types: [], names: {}, error };
+    }
+  };
   /** @type {any} */
   const store = {
     project: null,
@@ -51,6 +68,10 @@ export function createStore(api, options = {}) {
     updated: null,
     /** @type {{ uuid: string, name: string, names: string[] } | null} the signed-in user */
     user: null,
+    /** @type {import("./filter.js").Catalog | null} the workspace's labels and types; null until read */
+    catalog: null,
+    /** @type {Promise<void>} the catalog read under way (tests await it) */
+    catalogRead: Promise.resolve(),
 
     /** A switch from another project forgets its rows, time, failure and selection.
      *  @param {string} project */
@@ -63,6 +84,7 @@ export function createStore(api, options = {}) {
         details.clear();
         facts.clear();
         store.user = null;
+        store.catalog = null;
       }
       store.project = project;
       await store.refresh();
@@ -74,11 +96,21 @@ export function createStore(api, options = {}) {
       const project = store.project;
       if (!project) return;
       store.loading = true;
+      const reads = Promise.all([api.listOpen(project, tabs()), api.planComments(project)]);
+      const seq = ++catalogRead;
+      store.catalogRead = readCatalog(project).then((read) => {
+        if (!read || store.project !== project || seq !== catalogRead) return;
+        // A failed read keeps the last good catalog of the project; the error shows only without one.
+        if (!read.error || !store.catalog || store.catalog.error) store.catalog = read;
+        const names = store.catalog?.names;
+        store.tickets = store.tickets.map((/** @type {any} */ t) => named(t, names));
+        // a panel read before the catalog arrived holds bare term refs too
+        for (const [k, d] of details) details.set(k, { ...d, ticket: named(d.ticket, names) });
+        for (const fn of listeners) fn(store);
+        options.onCatalog?.(project);
+      });
       try {
-        const [list, plans] = await Promise.all([
-          api.listOpen(project, tabs()),
-          api.planComments(project),
-        ]);
+        const [list, plans] = await reads;
         if (store.project !== project) return;
         facts.clear();
         for (const t of list) {
@@ -86,7 +118,7 @@ export function createStore(api, options = {}) {
           const why = deriveWhy(t, comments, t.runs);
           facts.set(t.id, { why, since: since(t, comments, t.runs, why), run: activeRun(t.runs) });
         }
-        store.tickets = list;
+        store.tickets = list.map((/** @type {any} */ t) => named(t, store.catalog?.names));
         store.error = null;
         store.updated = now();
       } catch (e) {
@@ -101,7 +133,7 @@ export function createStore(api, options = {}) {
 
     /** Reads one ticket with everything a tab or the panel shows. @param {string} id @param {boolean} [byUuid] */
     async enrich(id, byUuid) {
-      const ticket = await api.readTicket(id, byUuid);
+      const ticket = named(await api.readTicket(id, byUuid), store.catalog?.names);
       const comments = ticket?.comments ?? [];
       const runs = ticket?.runs ?? [];
       const why = deriveWhy(ticket, comments, runs);
@@ -199,7 +231,11 @@ export function _resetForTests() {
 
 export function getStore() {
   if (!store)
-    store = createStore(repository, { tabs: () => [selectedTicket() ?? ""].filter(Boolean) });
+    store = createStore(repository, {
+      tabs: () => [selectedTicket() ?? ""].filter(Boolean),
+      // every copy redraws, so the menus and the picker show the catalog once it is there
+      onCatalog: (project) => setShared("bakers.catalog", { project, at: Date.now() }),
+    });
   return store;
 }
 

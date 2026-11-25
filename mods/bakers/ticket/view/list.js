@@ -27,6 +27,7 @@ import {
   choices,
   clearFilter,
   counts,
+  noValues,
   currentFilter,
   isActive,
   listForFilter,
@@ -309,8 +310,8 @@ export default class TicketList {
     const f = currentFilter();
     const store = getStore();
     const records = store.records();
-    const n = counts(records, store.user, f);
-    const values = choices(records);
+    const n = counts(records, store.user, f, store.catalog);
+    const values = choices(records, store.catalog);
     /** @param {string} id @param {boolean} on */
     const control = (id, on) =>
       h_flex()
@@ -346,6 +347,7 @@ export default class TicketList {
     /** @param {"label" | "type"} field @param {string[]} options */
     const anyOf = (field, options) => [
       { label: "Any", action: filterBy({ [field]: null }), current: f[field] === null },
+      ...(options.length ? [] : [{ label: noValues(field, store.catalog), disabled: true }]),
       ...options.map((v) => ({
         label: v,
         hint: String(n[field === "label" ? "labels" : "types"][v]),

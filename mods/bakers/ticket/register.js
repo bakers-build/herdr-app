@@ -47,8 +47,8 @@ export function register() {
   define("route", "ticket.rail", { view: Rail }); // the rail button
   define("route", "ticket.status", { view: Status }); // the status block's item
   // window, cmd-K: centred by Herdr (mods get no window size). A window does not take the
-  // keyboard, so Esc reaches the palette only once its field has it: on the first layout, on a
-  // press inside; a press outside closes it. Esc goes back a page (Herdr closes a dialog or popup
+  // keyboard, so Esc reaches the palette only once its field has it: on the first layout, after
+  // 600 ms (ui/keyboard.js), on a press inside; a press outside closes it. Esc goes back a page (Herdr closes a dialog or popup
   // on Esc itself, before the mod could go back); the key keeps it one window
   define("route", "ticket.actions", {
     view: Actions,
