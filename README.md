@@ -75,8 +75,8 @@ socket, it stops before writing anything.
 | Tickets tab | Up/Down select (the panel follows), Enter, cmd-Enter or a double click show the ticket in the panel, `/` filter, N new ticket, R refresh; the filter bar narrows the list: Needs me, Mine, State, Label, Type, Clear |
 | Ticket panel (once clicked into) | A acts on the Needs-you card, E edits, G shows the agent and focuses its run, R moves the run; cmd-Enter sends or saves, Esc cancels |
 
-While a run shows, the panel is 480 px wide unless you resized it; without a run it goes back
-to its width. Hide in the run's header leaves the run alone and gives the ticket the full
+The panel takes half the work area beside the list, also while a run shows; a dragged width
+stays. Hide in the run's header leaves the run alone and gives the ticket the full
 height until Show agent (G).
 
 The run's header is a tab bar: the agent's tab `Run <n>` first, then `Shell 1`, `Shell 2`, ...

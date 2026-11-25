@@ -227,8 +227,8 @@ per shell, the address with `/` as `-`), 1:1, so Herdr's divider between them is
   ordered by opened. They belong to their ticket, survive ticket switches and leave when they
   end. When the run ends they keep running unseen and come back with the next run; Close or
   their own exit ends them.
-- **Width.** While a run shows, the installed width (368 px) becomes 480 px and back without a
-  run; any other width is the user's and stays.
+- **Width.** The panel keeps its size (half of the work area as installed, or the user's drag);
+  the run takes the lower half of the panel.
 - **Show agent** (G, the buttons) selects the ticket, shows the panel and the run, even after
   Hide, switches the run area back to the agent's tab and focuses the run's terminal once it
   shows. Hide goes through the same write memo, so a

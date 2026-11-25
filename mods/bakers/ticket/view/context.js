@@ -1,5 +1,5 @@
-// ticket/view/context: the right panel's ticket child (route ticket.context, 368 px, 480 px while
-// a run shows below it; cmd-shift-T), the ticket's work area. It follows the selected ticket
+// ticket/view/context: the right panel's ticket child (route ticket.context, half of the work area,
+// also while a run shows below it; cmd-shift-T), the ticket's work area. It follows the selected ticket
 // (shared bakers.selected), loads it and its activity and draws, top to bottom: the document's
 // header, title, Needs-you card, Agent and conductor, Properties, Description, Acceptance and
 // Summary (each with Edit..., a popup: ticket/form/section), Comments, Activity and Runs in the
