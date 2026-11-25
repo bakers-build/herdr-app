@@ -36,7 +36,7 @@ import { card, KEY_HINT } from "../presenter/card.js";
 import { emptyText } from "../list/index.js";
 import { toQuery } from "../../list/query.js";
 import { runList } from "../../list/run.js";
-import { currentProject } from "../../project/state.js";
+import { currentProject, projectError, projectResolving } from "../../project/state.js";
 
 const CHECK_MS = 300;
 /** Stands in where a branch only runs with a failure; never shown. */
@@ -88,6 +88,8 @@ export default class TicketList {
   server = { key: null, rows: [], more: false, page: -1 };
   /** @type {any[]} the header.tool views */
   tools = [];
+  /** whether the project was resolving at the last check, to redraw when that ends */
+  resolving = false;
   /** @type {unknown} the shared project the list last followed */
   followed = null;
 
@@ -126,6 +128,12 @@ export default class TicketList {
     if (key !== this.key) {
       this.key = key;
       this.page = 0;
+      cx.notify();
+    }
+    // The poll also ends a resolution past its deadline, so its failure shows without a call.
+    const resolving = projectResolving();
+    if (resolving !== this.resolving) {
+      this.resolving = resolving;
       cx.notify();
     }
     // The picker, another copy, shares the project it switches to: resolve it here once per value.
@@ -399,11 +407,15 @@ export default class TicketList {
     const { list, rows: records, more } = this.result();
     this.syncSelection(records);
     const now = Date.now();
-    const failure = list.def.load
-      ? (this.server.failure ?? null)
-      : getStore().tickets.length
-        ? null
-        : classify(loadError());
+    // Without a project nothing loads: say that it is resolving, or why it failed, never "empty".
+    const loadingProject = !currentProject() && projectResolving();
+    const failure = loadingProject
+      ? null
+      : list.def.load
+        ? (this.server.failure ?? (currentProject() ? null : classify(projectError())))
+        : getStore().tickets.length
+          ? null
+          : classify(loadError());
     return v_flex()
       .id("tickets")
       .size_full()
@@ -454,11 +466,13 @@ export default class TicketList {
               .when(!failure, (el) =>
                 el.child(
                   div().child(
-                    emptyText(
-                      list,
-                      this.filter.value(),
-                      !records.length && isActive(currentFilter(), getStore().user),
-                    ),
+                    loadingProject
+                      ? "Loading the project…"
+                      : emptyText(
+                          list,
+                          this.filter.value(),
+                          !records.length && isActive(currentFilter(), getStore().user),
+                        ),
                   ),
                 ),
               )

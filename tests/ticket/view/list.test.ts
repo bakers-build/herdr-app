@@ -1,7 +1,8 @@
-import { beforeEach, expect, test } from "bun:test";
+import { afterEach, beforeEach, expect, setSystemTime, test } from "bun:test";
 import { activeSpace, backend, list as shop, resetMod } from "../../fixtures/shop";
 import {
   click,
+  cx,
   env,
   find,
   findText,
@@ -23,6 +24,8 @@ beforeEach(() => {
   reset();
   resetMod();
 });
+
+afterEach(() => setSystemTime());
 
 const DEFAULT = { needsMe: false, mine: false, state: "open", label: null, type: null };
 
@@ -318,6 +321,94 @@ test("an empty project shows the hint, no rows and nothing selected", async () =
   expect(findText(root, "No other open tickets.")).toBeDefined();
   expect(texts(root).some((t) => /^SHOP-/.test(t))).toBe(false);
   expect(env.shared["bakers.selected"]).toBe(null);
+});
+
+/** Mounts the list with the given filter; the caller sets up the backend first. */
+async function mountWith(patch: any) {
+  env.shared["bakers.filter"] = { ...DEFAULT, ...patch };
+  const Bakers = await load("bakers/main.js");
+  const copy = mount(Bakers, { view: "ticket.list" });
+  await flush();
+  return copy;
+}
+
+/** Every JSON:API fetch hangs, as when a mod reload strands the project resolution. */
+function hang() {
+  backend();
+  env.fetch = () => new Promise(() => {});
+}
+
+const offline = (root: any) => texts(root).some((t) => t.startsWith("bakers offline"));
+
+test("closed list: a project failure shows the message with Retry", async () => {
+  activeSpace(); // no backend: the CLI is missing
+  const copy = await mountWith({ state: "closed" });
+  const root = copy.render();
+  expect(offline(root)).toBe(true);
+  expect(findText(root, "Nothing matches these filters.")).toBeUndefined();
+  backend();
+  click(find(root, "retry"));
+  await flush();
+  fireTimers();
+  await flush();
+  expect(find(copy.render(), "row-SHOP-49")).toBeDefined();
+});
+
+test("while the project resolves the list says Loading the project…", async () => {
+  activeSpace();
+  hang();
+  const root = (await mountWith({ needsMe: true })).render();
+  expect(findText(root, "Loading the project…")).toBeDefined();
+  expect(findText(root, "Nothing matches these filters.")).toBeUndefined();
+  expect(offline(root)).toBe(false);
+});
+
+test("local list: a project that never resolves fails after 30 s with Retry", async () => {
+  activeSpace();
+  hang();
+  const copy = await mountWith({});
+  expect(offline(copy.render())).toBe(false);
+  setSystemTime(new Date(Date.now() + 31_000));
+  fireTimers();
+  await flush();
+  const root = copy.render();
+  expect(offline(root)).toBe(true);
+  expect(find(root, "retry")).toBeDefined();
+  expect(findText(root, "Loading the project…")).toBeUndefined();
+});
+
+test("the list's poll redraws when the deadline ends the resolution", async () => {
+  activeSpace();
+  hang();
+  await mountWith({ needsMe: true });
+  const poll = env.timers.find((t: any) => t.every);
+  if (!poll) throw new Error("the list registers no poll");
+  poll.fn(cx()); // the first poll takes up the filter
+  const before = cx();
+  poll.fn(before);
+  expect(before.notified).toBe(0); // still resolving: nothing to redraw
+  setSystemTime(new Date(Date.now() + 31_000));
+  const after = cx();
+  poll.fn(after);
+  expect(after.notified).toBe(1);
+});
+
+test("a hung resolution: loading, then failure at 30 s, then Retry loads the rows", async () => {
+  activeSpace();
+  hang();
+  const copy = await mountWith({ state: "closed" });
+  expect(findText(copy.render(), "Loading the project…")).toBeDefined();
+  setSystemTime(new Date(Date.now() + 31_000));
+  fireTimers(); // the list's poll ends the resolution
+  await flush();
+  const root = copy.render();
+  expect(texts(root).some((t) => /did not load within 30 s/.test(t))).toBe(true);
+  backend();
+  click(find(root, "retry"));
+  await flush();
+  fireTimers();
+  await flush();
+  expect(find(copy.render(), "row-SHOP-49")).toBeDefined();
 });
 
 test("offline: the CLI's message inline with Retry", async () => {
