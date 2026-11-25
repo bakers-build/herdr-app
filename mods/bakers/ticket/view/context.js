@@ -186,38 +186,42 @@ export default class Panel {
             .bg(t.raised)
             .text_size(11)
             .child(name)
-            .child(
-              div()
-                .id(`label-x-${name}`)
-                .text_color(t.muted)
-                .cursor_pointer()
-                .on_click((_e, cx) =>
-                  cx.spawn(async (cx) => {
-                    await perform(["ticket.labels", vm.id, { labels_remove: [name] }]);
-                    await this.load(vm.id);
-                    cx.notify();
-                  }),
-                )
-                .child("×"),
+            .when(!p.labelsLocked, (el) =>
+              el.child(
+                div()
+                  .id(`label-x-${name}`)
+                  .text_color(t.muted)
+                  .cursor_pointer()
+                  .on_click((_e, cx) =>
+                    cx.spawn(async (cx) => {
+                      await perform(["ticket.labels", vm.id, { labels_remove: [name] }]);
+                      await this.load(vm.id);
+                      cx.notify();
+                    }),
+                  )
+                  .child("×"),
+              ),
             ),
         ),
       )
-      .child(
-        h_flex()
-          .id("label-add")
-          .h(20)
-          .px(8)
-          .items_center()
-          .rounded(10)
-          .border(1)
-          .border_dashed()
-          .border_color(t.muted)
-          .bg(t.surface)
-          .text_size(11)
-          .text_color(t.muted)
-          .cursor_pointer()
-          .on_click(() => openRoute("ticket.label-picker", { ticket: vm.id }))
-          .child("+"),
+      .when(!p.labelsLocked, (el) =>
+        el.child(
+          h_flex()
+            .id("label-add")
+            .h(20)
+            .px(8)
+            .items_center()
+            .rounded(10)
+            .border(1)
+            .border_dashed()
+            .border_color(t.muted)
+            .bg(t.surface)
+            .text_size(11)
+            .text_color(t.muted)
+            .cursor_pointer()
+            .on_click(() => openRoute("ticket.label-picker", { ticket: vm.id }))
+            .child("+"),
+        ),
       );
     return h_flex()
       .id("properties")

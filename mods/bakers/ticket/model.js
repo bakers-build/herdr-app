@@ -7,7 +7,10 @@
  * @typedef {{ id: string, identifier: string, title: string, state: string, labels: string[],
  *   frozen: boolean, frozen_at: string | null, closed: boolean, closed_date: string | null,
  *   changed: string | null, assignee: string | null, claim_machine: string | null,
- *   conductor: string | null, type: string | null, runs: Run[] }} Ticket
+ *   conductor: string | null, type: string | null, runs: Run[],
+ *   unnamed?: { labels: string[], type: string | null } }} Ticket
+ *   unnamed: the uuids of label and type terms the server related without their names (it
+ *   leaves out of `included` what the reader may not view); the catalog names them (named)
  * @typedef {Ticket & { workflow: string | null, description: string, branch_name: string | null,
  *   links: any[], recipe: string | null, parent: string | null,
  *   reviewers: string[], conductorInfo: any, comments: Comment[] }} TicketDetail
@@ -34,8 +37,13 @@ export const toComment = (c) => ({
   body: c.body ?? "",
 });
 
+/** A related term the document carries only as a reference. @param {any} e */
+const bare = (e) => e?.id != null && nameOf(e) === null;
+
 /** A bb_ticket as the list needs it. @param {any} t */
 export function toTicket(t) {
+  const labels = (t.labels ?? []).filter(bare).map((/** @type {any} */ e) => e.id);
+  const type = bare(t.ticket_type) ? t.ticket_type.id : null;
   return {
     id: t.id,
     identifier: t.identifier,
@@ -52,6 +60,22 @@ export function toTicket(t) {
     claim_machine: t.claim_machine ?? null,
     conductor: t.conductor_id?.id ?? null,
     runs: (t.runs ?? []).filter((/** @type {any} */ r) => r.state).map(toRun),
+    ...(labels.length || type ? { unnamed: { labels, type } } : {}),
+  };
+}
+
+/**
+ * The ticket with the names of its unnamed terms, as far as the catalog knows them.
+ * @template {Ticket} T @param {T} t @param {Record<string, string> | undefined} names uuid -> name
+ * @returns {T}
+ */
+export function named(t, names) {
+  if (!t?.unnamed || !names) return t;
+  const found = t.unnamed.labels.map((id) => names[id]).filter(Boolean);
+  return {
+    ...t,
+    labels: [...new Set([...t.labels, ...found])],
+    type: t.type ?? (t.unnamed.type ? (names[t.unnamed.type] ?? null) : null),
   };
 }
 

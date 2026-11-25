@@ -58,6 +58,9 @@ export function menuRow(t, it, hot, choose) {
     );
 }
 
+/** The rows' height before they scroll: about twelve rows. */
+const ROWS_MAX_H = 320;
+
 /** A popup frame with keyboard choice over `rows`; the slices' pickers use it too. */
 export class PopupList {
   /** @type {any} */ handle = null;
@@ -148,7 +151,16 @@ export class PopupList {
         cx.notify();
       })
       .when(Boolean(top), (el) => el.child(top))
-      .children(items.map((it) => menuRow(t, it, choosable[this.at] === it, (cx) => it.choose(cx))))
+      .child(
+        // a long list (a workspace's labels) scrolls instead of running off the window
+        v_flex()
+          .id("rows")
+          .max_h(ROWS_MAX_H)
+          .overflow_y_scrollbar()
+          .children(
+            items.map((it) => menuRow(t, it, choosable[this.at] === it, (cx) => it.choose(cx))),
+          ),
+      )
       .when(Boolean(bottom), (el) => el.child(bottom));
   }
 }
