@@ -58,6 +58,20 @@ function filter(rows, q) {
     .map((x) => x.r);
 }
 
+/** How far outside the palette a press still lands on the frame Herdr draws around a window. */
+const FRAME_PX = 8;
+
+/** True for a press within FRAME_PX outside the palette's box: Herdr's frame, not the pane behind.
+ *  @param {{ local_position?: { x: number, y: number }, bounds?: { width: number, height: number } }} e */
+function onFrame(e) {
+  const p = e?.local_position;
+  const b = e?.bounds;
+  if (!p || !b) return false;
+  return (
+    p.x >= -FRAME_PX && p.x <= b.width + FRAME_PX && p.y >= -FRAME_PX && p.y <= b.height + FRAME_PX
+  );
+}
+
 /** keys.json's spelling with the last letter upper case: cmd-shift-o reads cmd-shift-O. @param {string} k */
 const keyLabel = (k) => k.replace(/-([a-z])$/, (_m, c) => `-${c.toUpperCase()}`);
 
@@ -519,9 +533,13 @@ export default class Actions {
           this.takeKeyboard();
           cx.stop_propagation();
         })
-        // A press behind gives the keyboard to that pane, where Esc would land: close instead.
-        .on_mouse_down_out(() => {
-          if (!this.closed) this.close();
+        // A press behind gives the keyboard to that pane, where Esc would land: close instead. A
+        // press on Herdr's frame around the palette is outside it too and only takes the
+        // keyboard back.
+        .on_mouse_down_out((e) => {
+          if (this.closed) return;
+          if (onFrame(e)) this.takeKeyboard();
+          else this.close();
         })
         .on_key_down((e, cx) => {
           if (e.key === "escape") {

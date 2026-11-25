@@ -455,3 +455,15 @@ test("a press outside the palette closes it, so Esc never reaches the pane behin
   fireTimers();
   expect(copy.inner.input.focused).toBe(false);
 });
+
+test("a press on Herdr's frame just outside the palette leaves it open; a press farther closes it", async () => {
+  const copy = await palette();
+  env.calls.length = 0;
+  const out = find(copy.render(), "actions").calls.on_mouse_down_out[0];
+  const bounds = { x: 100, y: 100, width: 480, height: 490 };
+  out({ local_position: { x: -3, y: 40 }, bounds }, cx());
+  out({ local_position: { x: 200, y: 494 }, bounds }, cx());
+  expect(closed()).toEqual([]);
+  out({ local_position: { x: -60, y: 40 }, bounds }, cx());
+  expect(closed()).toEqual(["overlay-9"]);
+});
