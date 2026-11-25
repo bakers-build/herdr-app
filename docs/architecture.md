@@ -372,7 +372,7 @@ updates.
   signed-in user (`ticket/store.js`) and the token (`core/api.js`). All are created on first
   use, never at module top level (Herdr's `AGENTS.md`).
 - **Shared between copies (`setShared`):** identifiers, counts and flags only
-  (`bakers.project`, `bakers.filter`, `bakers.selected`, `bakers.needs`, `bakers.runHidden`,
+  (`bakers.project`, `bakers.workspace` (the workspace the picker shows), `bakers.filter`, `bakers.selected`, `bakers.needs`, `bakers.runHidden`,
   `bakers.runFocus`, and core's `bakers.preview` for keyed tabs). No ticket content.
 - **Per copy:** a view's own state, such as the selection, the page, a form's values and
   the open comment folds.

@@ -10,3 +10,9 @@ export function pickerItems(choices, current) {
     action: ["project.choose", p.uuid, p.name],
   }));
 }
+
+/** The workspace switch's segments, the shown one marked.
+ *  @param {{ uuid: string, name: string }[]} workspaces @param {string | null} shown */
+export function workspaceSegments(workspaces, shown) {
+  return workspaces.map((w) => ({ key: w.uuid, label: w.name, current: w.uuid === shown }));
+}
