@@ -5,9 +5,14 @@ import { h_flex } from "gpui-base";
 import { openRoute } from "../../core/router.js";
 import { chip } from "../../ui/components/chip.js";
 import { icons, tokens } from "../../ui/theme.js";
-import { currentProject, pickerAvailable, projectChoices } from "../state.js";
+import { currentProject, ensureChoices, pickerAvailable, projectChoices } from "../state.js";
 
 export default class ProjectButton {
+  /** The list header awaits it, then draws again. */
+  init() {
+    return ensureChoices();
+  }
+
   render() {
     const t = tokens();
     const canPick = pickerAvailable() && projectChoices().length > 1;
