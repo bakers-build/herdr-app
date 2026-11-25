@@ -52,11 +52,8 @@ test("the bound is a few seconds at most", () => {
   expect(FORM_TIMEOUT_MS).toBeLessThanOrEqual(3000);
 });
 
-test("State whose ticket read never answers shows its form from the opener's state after the bound", async () => {
+test("State whose ticket read never answers shows its form from the opener's state at once", async () => {
   const dialog = await hanging({ form: "state", ticket: "SHOP-41", from: "done", to: "review" });
-  expect(texts(dialog.render())).toEqual(["..."]);
-  fireTimers(FORM_TIMEOUT_MS);
-  await flush();
   const root = dialog.render();
   expect(dialog.inner.error).toBeNull();
   expect(texts(root)).toContain("Move SHOP-41 to review?");
@@ -118,21 +115,22 @@ test("a failed build with no fallback shows its reason", async () => {
   expect(dialog.inner.error).toMatch(/offline/);
 });
 
-test("a build that answers after the fallback changes nothing", async () => {
+test("a build that answers after the known form was drawn refines its texts, not its inputs", async () => {
   let answer: (d: any) => void = () => {};
   define("form", "zz-late", {
     build: () => new Promise((ok) => (answer = ok)),
     now: () => form("Fallback"),
   });
   const dialog = await hanging({ form: "zz-late" });
-  fireTimers(FORM_TIMEOUT_MS);
-  await flush();
   expect(texts(dialog.render())).toContain("Fallback");
   const inputs = dialog.inner.inputs;
-  answer(form("Late"));
+  const state = dialog.inner.state;
+  answer({ ...form("Late"), fields: [{ name: "x", type: "input" }] });
   await flush();
-  expect(texts(dialog.render())).toContain("Fallback");
+  expect(texts(dialog.render())).toContain("Late");
   expect(dialog.inner.inputs).toBe(inputs);
+  expect(dialog.inner.state).toBe(state);
+  expect(dialog.inner.def.fields).toEqual([]);
 });
 
 test("a build that answers in time leaves no fallback to fire later", async () => {

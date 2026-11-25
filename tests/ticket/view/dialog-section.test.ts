@@ -356,7 +356,11 @@ test("a dialog takes the keyboard on its loading layout, then its field on the r
   backend(writeTools);
   const Bakers = await load("bakers/main.js");
   defineTestForm();
-  const copy = mount(Bakers, { overlay: "overlay-7", view: "dialog", form: "test-inline" });
+  // Only a build that answers later, with nothing known to draw from, has a loading frame.
+  const { get } = await import("../../../mods/bakers/core/registry.js");
+  const sync = get("form", "test-inline");
+  define("form", "test-inline-later", { build: async (p: any) => sync.build(p) });
+  const copy = mount(Bakers, { overlay: "overlay-7", view: "dialog", form: "test-inline-later" });
   copy.inner.handle.focused = false;
   find(copy.render(), "confirm").calls.on_size_change[0]({ width: 460, height: 80 }, cx());
   expect(copy.inner.handle.focused).toBe(true);
