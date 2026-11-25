@@ -2,17 +2,36 @@
 // says from and to, the consequence in the order it happens, and names the action and what
 // stays; the write happens only after the primary button.
 import * as actions from "../commands.js";
-import { getStore, ready, refresh } from "../store.js";
+import { getStore, refresh } from "../store.js";
 import { CLOSING } from "../rules.js";
 
-/** The ticket's branch and state, for the texts. @param {string} id */
-async function facts(id) {
+/** @typedef {{ branch: string | null, state: string | null }} Facts */
+
+/** What this copy already knows of the ticket's state and branch: the opener's `from`, then the
+ *  last detail read, then the list. @param {{ ticket: string, from?: string }} p @returns {Facts} */
+export function known(p) {
+  const s = getStore();
+  const d = s.cached(p.ticket)?.ticket;
+  return {
+    branch: d?.branch_name ?? null,
+    state: p.from ?? d?.state ?? s.byId(p.ticket)?.state ?? null,
+  };
+}
+
+/** The ticket's branch and state, for the texts. A dialog is a copy of its own and never waits for
+ *  the project load (another copy's, which Herdr may have ended): what is known, else a read of
+ *  this one ticket. @param {{ ticket: string, from?: string }} p @returns {Promise<Facts>} */
+async function facts(p) {
+  const k = known(p);
+  if (k.state && k.branch) return k;
   try {
-    await ready();
-    const d = await getStore().ticket(id);
-    return { branch: d?.ticket?.branch_name ?? null, state: d?.ticket?.state ?? null };
+    const d = await getStore().ticket(p.ticket);
+    return {
+      branch: d?.ticket?.branch_name ?? k.branch,
+      state: p.from ?? d?.ticket?.state ?? k.state,
+    };
   } catch {
-    return { branch: null, state: null };
+    return k;
   }
 }
 
@@ -31,9 +50,13 @@ export function consequence(id, from, to, branch) {
 }
 
 /** Change state (frame 4), also Approve plan... @param {{ ticket: string, from?: string, to: string }} p */
-export async function stateForm(p) {
-  const f = await facts(p.ticket);
-  const from = p.from ?? f.state ?? "";
+export const stateForm = async (/** @type {any} */ p) => stateDef(p, await facts(p));
+/** The state form from what is known, for a build that did not finish. @param {any} p */
+export const stateNow = (p) => stateDef(p, known(p));
+
+/** @param {{ ticket: string, from?: string, to: string }} p @param {Facts} f */
+function stateDef(p, f) {
+  const from = f.state ?? "";
   return {
     kind: "dialog",
     title: `Move ${p.ticket} to ${p.to}?`,
@@ -100,8 +123,12 @@ export const unfreezeForm = (p) => ({
 });
 
 /** Move to (R3-2): cancel the run, then set the conductor. @param {{ ticket: string, conductor: string, name: string }} p */
-export async function moveForm(p) {
-  const f = await facts(p.ticket);
+export const moveForm = async (/** @type {any} */ p) => moveDef(p, await facts(p));
+/** The move form from what is known, for a build that did not finish. @param {any} p */
+export const moveNow = (p) => moveDef(p, known(p));
+
+/** @param {{ ticket: string, conductor: string, name: string }} p @param {Facts} f */
+function moveDef(p, f) {
   return {
     kind: "dialog",
     title: `Move ${p.ticket} to ${p.name}?`,
