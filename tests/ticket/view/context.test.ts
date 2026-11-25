@@ -463,3 +463,31 @@ test("a ticket outside the list opened before shows its cached detail at once", 
   release();
   await flush();
 });
+
+// open:<id> (a toast, Go to ticket) on a ticket outside the list that was read before selects it
+// without waiting for the network; the panel then shows the cached detail.
+test("opening a ticket outside the list read before selects it at once", async () => {
+  const { open }: any = await import("../../../mods/bakers/ticket/view/commands.js");
+  const copy = await panel();
+  env.shared["bakers.selected"] = "SHOP-49";
+  fireTimers();
+  await flush();
+  env.shared["bakers.selected"] = "SHOP-41";
+  fireTimers();
+  await flush();
+  // Hold every ticket read, by uuid or by identifier (a search), until released.
+  const serve = env.fetch;
+  let release = () => {};
+  const gate = new Promise<void>((r) => (release = r));
+  env.fetch = async (url: string, opts?: any) => {
+    if (/\/bb_ticket\/bb_ticket(\/|\?|$)/.test(String(url))) await gate;
+    return serve(url, opts);
+  };
+  void open.run("SHOP-49");
+  await flush();
+  expect(env.shared["bakers.selected"]).toBe("SHOP-49");
+  fireTimers();
+  expect(texts(find(copy.render(), "doc-header")).slice(0, 1)).toEqual(["SHOP-49"]);
+  release();
+  await flush();
+});

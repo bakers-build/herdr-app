@@ -43,7 +43,8 @@ export const panel = {
 
 export const create = { label: "New ticket", run: () => openForm("create") };
 
-/** Shows a ticket in the panel (a toast click, open:<id>). */
+/** Shows a ticket in the panel (a toast click, open:<id>). A ticket outside the list that was read
+ *  before is selected at once; the panel shows its cached detail and refreshes it. */
 export const open = {
   /** @param {string} id */
   async run(id) {
@@ -51,6 +52,8 @@ export const open = {
     await ready();
     const store = getStore();
     let t = store.byId(id);
+    const known = t ? null : store.cached(id)?.ticket?.identifier;
+    if (known) t = { id: known };
     if (!t) {
       const d = await store.ticket(id).catch(() => null);
       t = d ? { id: d.ticket.identifier } : null;
