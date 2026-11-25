@@ -49,6 +49,15 @@ test("openHome creates or selects the home tab", () => {
   expect(runs()).toEqual([["tab.select", { id: "t0" }]]);
 });
 
+test("openHome with no space makes a space, then the home tab", () => {
+  env.spaces = [];
+  tabs.openHome("note");
+  expect(runs()).toEqual([
+    ["space.new", {}],
+    ["tab.new", { mod: "bakers", props: { view: "note.list" }, name: "Notes" }],
+  ]);
+});
+
 test("reconcile keeps home at its index", () => {
   space(tab("t1", "1", 1), tab("t0", "Notes", 2));
   tabs.reconcile();
