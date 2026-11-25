@@ -2,7 +2,19 @@
 // form that uses it: edit the description, acceptance or summary of a ticket in a popup.
 import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, list, NOW, read, resetMod } from "../../fixtures/shop";
-import { env, find, findText, flush, key, load, mount, reset, texts, tools } from "../../harness";
+import {
+  cx,
+  env,
+  find,
+  findText,
+  flush,
+  key,
+  load,
+  mount,
+  reset,
+  texts,
+  tools,
+} from "../../harness";
 
 const { define } = await import("../../../mods/bakers/core/registry.js");
 const { openForm } = await import("../../../mods/bakers/ui/form/dialog.js");
@@ -334,4 +346,31 @@ test("a ticket closed after the popup opened is not written, also on a second cm
     row.state = state;
     row.closed = false;
   }
+});
+
+// HERDRAPP-21: the loading frame takes the keyboard on its first layout, the ready frame gives it
+// to the first field on its own first layout; Esc in that field closes without saving.
+test("a dialog takes the keyboard on its loading layout, then its field on the ready layout", async () => {
+  sent = 0;
+  activeSpace();
+  backend(writeTools);
+  const Bakers = await load("bakers/main.js");
+  defineTestForm();
+  const copy = mount(Bakers, { overlay: "overlay-7", view: "dialog", form: "test-inline" });
+  copy.inner.handle.focused = false;
+  find(copy.render(), "confirm").calls.on_size_change[0]({ width: 460, height: 80 }, cx());
+  expect(copy.inner.handle.focused).toBe(true);
+  await flush();
+  const body = copy.inner.inputs.input("body");
+  body.focused = false;
+  const size = find(copy.render(), "confirm").calls.on_size_change[0];
+  size({ width: 460, height: 240 }, cx());
+  expect(body.focused).toBe(true);
+  body.focused = false;
+  size({ width: 460, height: 260 }, cx());
+  expect(body.focused).toBe(false);
+  key(copy.render(), "escape");
+  await flush();
+  expect(sent).toBe(0);
+  expect(closed()).toBe(true);
 });

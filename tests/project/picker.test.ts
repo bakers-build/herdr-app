@@ -3,10 +3,12 @@ import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, list as tickets, resetMod } from "../fixtures/shop";
 import {
   click,
+  cx,
   env,
   fetched,
   find,
   fireTimers,
+  key,
   flush,
   load,
   mount,
@@ -76,4 +78,15 @@ test("the list follows a project another copy shared, with that project's rows",
   expect(find(root, "row-INFRA-1")).toBeDefined();
   expect(find(root, "row-SHOP-41")).toBeUndefined();
   expect(fetched().some((u) => u.includes("project_id.id") && u.includes("p0"))).toBe(true);
+});
+
+// HERDRAPP-21: the project picker takes the keyboard on its first layout, so Esc closes it.
+test("the project picker takes the keyboard on its first layout; Esc closes it", async () => {
+  const copy = await copyOf("project.picker");
+  copy.inner.handle.focused = false;
+  find(copy.render(), "picker").calls.on_size_change[0]({ width: 220, height: 60 }, cx());
+  expect(copy.inner.handle.focused).toBe(true);
+  env.calls.length = 0;
+  key(copy.render(), "escape");
+  expect(env.calls.some((c) => c.fn === "closeOverlay")).toBe(true);
 });

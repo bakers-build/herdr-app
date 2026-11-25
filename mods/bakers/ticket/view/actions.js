@@ -58,6 +58,20 @@ function filter(rows, q) {
     .map((x) => x.r);
 }
 
+/** How far outside the palette a press still lands on the frame Herdr draws around a window. */
+const FRAME_PX = 8;
+
+/** True for a press within FRAME_PX outside the palette's box: Herdr's frame, not the pane behind.
+ *  @param {{ local_position?: { x: number, y: number }, bounds?: { width: number, height: number } }} e */
+function onFrame(e) {
+  const p = e?.local_position;
+  const b = e?.bounds;
+  if (!p || !b) return false;
+  return (
+    p.x >= -FRAME_PX && p.x <= b.width + FRAME_PX && p.y >= -FRAME_PX && p.y <= b.height + FRAME_PX
+  );
+}
+
 /** keys.json's spelling with the last letter upper case: cmd-shift-o reads cmd-shift-O. @param {string} k */
 const keyLabel = (k) => k.replace(/-([a-z])$/, (_m, c) => `-${c.toUpperCase()}`);
 
@@ -83,6 +97,8 @@ export default class Actions {
   seq = 0;
   /** True once the palette closed; a late refocus then does nothing. */
   closed = false;
+  /** True after the first layout, which takes the keyboard; a later resize leaves it. */
+  mounted = false;
 
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
@@ -108,8 +124,9 @@ export default class Actions {
   }
 
   /** Focuses the front page's field. A window does not take the keyboard when it opens, and a
-   *  focus before its first frame lands on nothing, so init calls this again once mounted, as
-   *  Herdr's picker does; Esc reaches the palette only through its focused field. */
+   *  focus before its first frame lands on nothing, so the first layout calls this again, as do
+   *  ready() and a timer, as Herdr's picker does; Esc reaches the palette only through its
+   *  focused field. A press inside takes the keyboard back; a press outside closes the palette. */
   takeKeyboard() {
     if (!this.closed) this.input.focus();
   }
@@ -505,8 +522,25 @@ export default class Actions {
         .bg(t.popover)
         .font_family(UI_FONT)
         .track_focus(this.handle)
-        // A press Herdr's window gets would drag it.
-        .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+        .on_size_change(() => {
+          if (this.mounted) return;
+          this.mounted = true;
+          this.takeKeyboard();
+        })
+        // A press Herdr's window gets would drag it. A press off the field would leave the
+        // keyboard nowhere, so the field takes it back; its own press still places the caret.
+        .on_mouse_down("left", (_e, cx) => {
+          this.takeKeyboard();
+          cx.stop_propagation();
+        })
+        // A press behind gives the keyboard to that pane, where Esc would land: close instead. A
+        // press on Herdr's frame around the palette is outside it too and only takes the
+        // keyboard back.
+        .on_mouse_down_out((e) => {
+          if (this.closed) return;
+          if (onFrame(e)) this.takeKeyboard();
+          else this.close();
+        })
         .on_key_down((e, cx) => {
           if (e.key === "escape") {
             if (!this.pop()) this.close();
