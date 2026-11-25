@@ -1,12 +1,12 @@
 import { afterEach, expect, test } from "bun:test";
-import { mkdtemp, readFile, readdir, rm, mkdir, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, readdir, rm, mkdir, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import "./harness";
 
 const { bakersLayout, mergeKeys, BAKERS_KEYS } = await import("../scripts/layout.js");
-const { install } = await import("../scripts/install");
+const { install, herdrApp } = await import("../scripts/install");
 
 const main = JSON.parse(
   await readFile(new URL("./fixtures/herdr-main.json", import.meta.url), "utf8"),
@@ -319,6 +319,50 @@ test("install into a running Herdr quits it, installs, then starts it again", as
   expect(layoutAtStart).not.toBeNull();
   expect(lines).toContain("Herdr is running: quitting it to install (terminals keep running)");
   expect(lines).toContain("started Herdr again");
+});
+
+test("an install that fails after the quit still starts Herdr again", async () => {
+  home = await mkdtemp(join(tmpdir(), "herdr-home-"));
+  const herdr = fakeHerdr(1);
+  await expect(
+    install({ home, herdr: herdr.run, pollMs: 1, platform: "darwin", log: () => {} }),
+  ).rejects.toThrow("no layouts/main.json");
+  expect(herdr.calls[1]).toEqual({ args: ["do", "app.quit"], detach: false });
+  expect(herdr.calls.at(-1)).toEqual({ args: [], detach: true });
+});
+
+test("a start that fails says so instead of claiming Herdr started", async () => {
+  await freshHome();
+  const herdr = fakeHerdr(1);
+  const run = async (args: string[], opts: { detach?: boolean } = {}) =>
+    opts.detach ? { code: 127, out: "herdr-app: not found" } : herdr.run(args, opts);
+  const lines: string[] = [];
+  await install({ home, herdr: run, pollMs: 1, log: (l) => lines.push(l) });
+  expect(lines).not.toContain("started Herdr again");
+  expect(lines).toContain("could not start Herdr (herdr-app: not found): run herdr-app");
+});
+
+test("a mod folder the installer cannot read stops the install", async () => {
+  await freshHome();
+  const locked = join(home, "mods", "bakers", "old");
+  await mkdir(locked, { recursive: true });
+  await writeFile(join(locked, "x.js"), "// stale\n");
+  await chmod(locked, 0o000);
+  try {
+    await expect(install({ home, herdr: fakeHerdr().run, log: () => {} })).rejects.toThrow(
+      "EACCES",
+    );
+  } finally {
+    await chmod(locked, 0o755);
+  }
+});
+
+test("a herdr-app call that does not return is killed and counts as not answering", async () => {
+  const slow = herdrApp(home || tmpdir(), ["bun", "-e", "await Bun.sleep(5000)"], 100);
+  const started = Date.now();
+  const r = await slow(["status"]);
+  expect(Date.now() - started).toBeLessThan(2000);
+  expect(r.code).not.toBe(0);
 });
 
 test("on Linux a running Herdr is quit with window.close", async () => {

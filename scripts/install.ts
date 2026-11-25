@@ -29,16 +29,24 @@ type Options = {
   timeoutMs?: number;
 };
 
-/** The real herdr-app, aimed at `home`'s window; a missing binary means no Herdr. */
-function herdrApp(home: string): Herdr {
+/**
+ * The real herdr-app, aimed at `home`'s window; a missing binary means no Herdr. A call that
+ * has not returned after `callMs` is killed, so a hung window counts as not answering.
+ */
+export function herdrApp(home: string, cmd = ["herdr-app"], callMs = 5_000): Herdr {
   return async (args, opts = {}) => {
     const env = { ...process.env, HERDR_APP_HOME: home };
     try {
       if (opts.detach) {
-        Bun.spawn(["herdr-app", ...args], { env, stdio: ["ignore", "ignore", "ignore"] }).unref();
+        Bun.spawn([...cmd, ...args], { env, stdio: ["ignore", "ignore", "ignore"] }).unref();
         return { code: 0, out: "" };
       }
-      const p = Bun.spawn(["herdr-app", ...args], { env, stdout: "pipe", stderr: "pipe" });
+      const p = Bun.spawn([...cmd, ...args], {
+        env,
+        stdout: "pipe",
+        stderr: "pipe",
+        timeout: callMs,
+      });
       const [out, err, code] = await Promise.all([
         new Response(p.stdout).text(),
         new Response(p.stderr).text(),
@@ -80,8 +88,10 @@ async function tree(dir: string, rel = ""): Promise<{ files: string[]; dirs: str
   let entries: import("node:fs").Dirent[];
   try {
     entries = await readdir(join(dir, rel), { withFileTypes: true });
-  } catch {
-    return out;
+  } catch (e) {
+    // Only a missing folder is empty; an unreadable one must not pass as synced.
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return out;
+    throw e;
   }
   for (const e of entries) {
     const r = rel ? `${rel}/${e.name}` : e.name;
@@ -171,8 +181,12 @@ export async function install(options: Options = {}) {
   try {
     return await installFiles(o, repo, String(version));
   } finally {
-    await o.herdr([], { detach: true });
-    o.log("started Herdr again");
+    const start = await o.herdr([], { detach: true });
+    o.log(
+      start.code === 0
+        ? "started Herdr again"
+        : `could not start Herdr (${start.out}): run herdr-app`,
+    );
   }
 }
 
