@@ -123,7 +123,11 @@ function fakeApi(over: any = {}) {
     calls,
     listOpen: async (p: string, tabs: string[] = []) => {
       calls.push(["list", p, ...tabs].join(" "));
-      return rows.map((r) => ({ ...r, runs: details[r.id]?.runs ?? [] }));
+      return rows.map((r) => ({ ...r, runs: [] }));
+    },
+    listRuns: async (p: string, tabs: string[] = []) => {
+      calls.push(["runs", p, ...tabs].join(" "));
+      return new Map(Object.entries(details).map(([id, d]) => [id, d.runs]));
     },
     planComments: async (p: string) => {
       calls.push(`plans ${p}`);
@@ -199,18 +203,30 @@ test("needs() shares identifiers only, longest waiting first", async () => {
   expect(store.needs()).toEqual({ count: 3, ids: ["SHOP-60", "SHOP-41", "SHOP-56"] });
 });
 
-test("a refresh is one list read and one plan read, no read per ticket", async () => {
+test("a refresh is one list, one runs and one plan read, no read per ticket", async () => {
   const api = fakeApi();
   const store = createStore(api, { now: () => NOW });
   await store.load("p1");
-  expect(api.calls).toEqual(["list p1", "plans p1"]);
+  expect(api.calls).toEqual(["list p1", "runs p1", "plans p1"]);
 });
 
 test("a refresh asks for the open tickets together with the tickets of the open tabs", async () => {
   const api = fakeApi();
   const store = createStore(api, { now: () => NOW, tabs: () => ["SHOP-49", "SHOP-41"] });
   await store.load("p1");
-  expect(api.calls).toEqual(["list p1 SHOP-49 SHOP-41", "plans p1"]);
+  expect(api.calls).toEqual(["list p1 SHOP-49 SHOP-41", "runs p1 SHOP-49 SHOP-41", "plans p1"]);
+});
+
+test("the runs read apart are joined to their tickets: active run, since and why as before", async () => {
+  const store = createStore(fakeApi(), { now: () => NOW });
+  await store.load("p1");
+  expect(store.tickets.find((t: any) => t.id === "u41").runs).toEqual(details.u41.runs);
+  expect(store.tickets.find((t: any) => t.id === "u56").runs).toEqual([]);
+  const r41 = store.byId("SHOP-41");
+  expect(r41.run).toEqual(details.u41.runs[0]);
+  expect(r41.since).toBe(NOW - 35 * 60000);
+  expect(store.byId("SHOP-60").run).toBeNull();
+  expect(store.needs()).toEqual({ count: 3, ids: ["SHOP-60", "SHOP-41", "SHOP-56"] });
 });
 
 test("byId finds by identifier or uuid; onChange fires after refresh", async () => {
@@ -228,7 +244,7 @@ test("a failing refresh keeps the error and the old rows", async () => {
   const api = fakeApi({
     listOpen: async () => {
       if (fail) throw Object.assign(new Error("bakers offline: not found"), { offline: true });
-      return rows.map((r) => ({ ...r, runs: details[r.id]?.runs ?? [] }));
+      return rows.map((r) => ({ ...r, runs: [] }));
     },
   });
   const store = createStore(api, { now: () => NOW });

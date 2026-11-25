@@ -1,12 +1,34 @@
 // ticket/repository: reading tickets and what belongs to them through JSON:API
 // (core/api.js), the only place in the module that reads. Returns model objects.
 import { me, read, search } from "../core/api.js";
-import { nameOf, toDetail, toTicket } from "./model.js";
+import { nameOf, toDetail, toRun, toTicket } from "./model.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** @type {[string, string]} */
 const TICKET = ["bb_ticket", "bb_ticket"];
-const LIST_INCLUDE = ["runs", "labels", "ticket_type"];
+const LIST_INCLUDE = ["labels", "ticket_type"];
+/** What the list rows and the store read of a ticket, a run and a plan comment. */
+const LIST_FIELDS = {
+  "bb_ticket--bb_ticket": [
+    "identifier",
+    "title",
+    "state",
+    "labels",
+    "frozen",
+    "frozen_at",
+    "closed",
+    "closed_date",
+    "changed",
+    "assignee_name",
+    "ticket_type",
+    "claim_machine",
+    "conductor_id",
+  ],
+};
+const RUN_FIELDS = {
+  "bb_run--bb_run": ["state", "agent", "harness", "started_at", "closed", "ticket_id"],
+};
+const PLAN_FIELDS = { "bb_comment--bb_comment": ["created", "ticket_id"] };
 const DETAIL_INCLUDE = [
   "comments",
   "runs",
@@ -20,7 +42,7 @@ const DETAIL_INCLUDE = [
 ];
 
 /**
- * The open tickets of a project, with runs and labels: the base of the open lists. The
+ * The open tickets of a project, with labels and type (their runs: listRuns): the base of the open lists. The
  * tickets of open tabs come along, closed or not, so their tabs can follow the state.
  * @param {string} project @param {string[]} [tabs] identifiers read besides the open tickets (the selected one)
  */
@@ -30,6 +52,7 @@ export async function listOpen(project, tabs = []) {
     search(...TICKET, {
       filter: [inProject, ["closed", "=", false]],
       include: LIST_INCLUDE,
+      fields: LIST_FIELDS,
       sort: "-changed",
       limit: 50,
       all: true,
@@ -38,12 +61,44 @@ export async function listOpen(project, tabs = []) {
       ? search(...TICKET, {
           filter: [inProject, ["identifier", "IN", tabs]],
           include: LIST_INCLUDE,
+          fields: LIST_FIELDS,
           limit: 50,
         })
       : [],
   ]);
   const seen = new Set(open.map((t) => t.id));
   return [...open, ...tabbed.filter((t) => !seen.has(t.id))].map(toTicket);
+}
+
+/**
+ * The runs of the project's open tickets and of the tickets of open tabs, all of them (the
+ * newest start counts), by ticket uuid. A search of their own: reading them with the tickets
+ * is by far the slowest part of the list.
+ * @param {string} project @param {string[]} [tabs] identifiers, as for listOpen
+ * @returns {Promise<Map<string, any[]>>}
+ */
+export async function listRuns(project, tabs = []) {
+  const inProject = /** @type {[string, string, string]} */ ([
+    "ticket_id.project_id.id",
+    "=",
+    project,
+  ]);
+  const find = (/** @type {import("../core/api.js").Query["filter"]} */ filter) =>
+    search("bb_run", "bb_run", { filter, fields: RUN_FIELDS, limit: 50, all: true });
+  const [open, tabbed] = await Promise.all([
+    find([inProject, ["ticket_id.closed", "=", false]]),
+    tabs.length ? find([inProject, ["ticket_id.identifier", "IN", tabs]]) : [],
+  ]);
+  /** @type {Map<string, any[]>} */
+  const byTicket = new Map();
+  const seen = new Set();
+  for (const r of [...open, ...tabbed]) {
+    const ticket = r.ticket_id?.id;
+    if (!ticket || !r.state || seen.has(r.id)) continue;
+    seen.add(r.id);
+    byTicket.set(ticket, [...(byTicket.get(ticket) ?? []), toRun(r)]);
+  }
+  return byTicket;
 }
 
 /** Which open tickets of the project have a plan comment, and when the newest was written. @param {string} project */
@@ -54,6 +109,7 @@ export async function planComments(project) {
       ["ticket_id.project_id.id", "=", project],
       ["ticket_id.closed", "=", false],
     ],
+    fields: PLAN_FIELDS,
     limit: 50,
     all: true,
   });
@@ -146,7 +202,9 @@ export async function listConductors(project) {
  * @param {import("../core/api.js").Query} query
  */
 export async function query(query) {
-  return (await search(...TICKET, { include: LIST_INCLUDE, ...query })).map(toTicket);
+  return (await search(...TICKET, { include: LIST_INCLUDE, fields: LIST_FIELDS, ...query })).map(
+    toTicket,
+  );
 }
 
 /**

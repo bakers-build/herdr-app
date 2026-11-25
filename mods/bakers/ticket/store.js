@@ -9,7 +9,7 @@ import * as repository from "./repository.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
 /**
- * @param {any} api the loaders (listOpen, planComments, readTicket)
+ * @param {any} api the loaders (listOpen, listRuns, planComments, readTicket)
  * @param {{ now?: () => number, tabs?: () => string[] }} [options] tabs: identifiers read with the open tickets (the selected one)
  */
 export function createStore(api, options = {}) {
@@ -68,10 +68,14 @@ export function createStore(api, options = {}) {
       if (!store.project) return;
       store.loading = true;
       try {
-        const [list, plans] = await Promise.all([
-          api.listOpen(store.project, tabs()),
+        const open = tabs();
+        const [tickets, runs, plans] = await Promise.all([
+          api.listOpen(store.project, open),
+          api.listRuns(store.project, open),
           api.planComments(store.project),
         ]);
+        // The runs are read apart: every consumer still sees each ticket's runs on the ticket.
+        const list = tickets.map((/** @type {any} */ t) => ({ ...t, runs: runs.get(t.id) ?? [] }));
         facts.clear();
         for (const t of list) {
           const comments = plans.get(t.id) ?? [];
