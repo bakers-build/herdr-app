@@ -375,6 +375,52 @@ test("a refresh of the detail keeps a body the user already opened", async () =>
   expect(store.cached("u41").comments[0].body).toBe("Older plan text");
 });
 
+// HERDRAPP-28: the project changes while a refresh is in flight.
+test("T3: a refresh answering after a project switch is dropped; the new project's rows stay", async () => {
+  const held: (() => void)[] = [];
+  const p0 = [{ ...rows[1], id: "u70", identifier: "INFRA-1", runs: [] }];
+  const api = fakeApi({
+    listOpen: (project: string) =>
+      project === "p1"
+        ? new Promise((ok) => held.push(() => ok(rows.map((r) => ({ ...r, runs: [] })))))
+        : Promise.resolve(p0),
+  });
+  let clock = NOW;
+  const store = createStore(api, { now: () => clock });
+  const first = store.load("p1");
+  await new Promise((r) => setTimeout(r, 0));
+  await store.load("p0");
+  const loadedAt = store.updated;
+  clock += 60000;
+  for (const go of held) go();
+  await first;
+  expect(store.project).toBe("p0");
+  expect(store.records().map((r: any) => r.id)).toEqual(["INFRA-1"]);
+  expect(store.updated).toBe(loadedAt);
+  expect(store.loading).toBe(false);
+});
+
+test("a project switch forgets the previous project's update time and failure", async () => {
+  let fail = true;
+  const api = fakeApi({
+    listOpen: async () => {
+      if (fail) throw new Error("boom");
+      return [];
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  fail = false;
+  await store.load("p1");
+  expect(store.updated).toBe(NOW);
+  fail = true;
+  await store.refresh();
+  expect(store.error).not.toBeNull();
+  const switching = store.load("p0");
+  expect(store.updated).toBeNull();
+  expect(store.error).toBeNull();
+  await switching;
+});
+
 // HERDRAPP-23: the workspace catalog (labels, types) loads with the tickets, apart from them.
 test("a refresh reads the project's catalog with the tickets and keeps it", async () => {
   const api = fakeApi({

@@ -3,10 +3,12 @@
 // tickets with the selected one (also when closed), and the open tickets' plan comments, and
 // derives who needs you from them. Beside them it reads the project's workspace catalog (labels
 // and ticket types) for the menus, in the background: the tickets never wait for it, a failed
-// read is kept as its error, and onCatalog tells when one lands.
+// read is kept as its error, and onCatalog tells when one lands. Loads run in the long-lived
+// copies (the list, the window task): Herdr ends a closed overlay's tasks, so a load started
+// there may never answer.
 import { setShared } from "herdr";
 import { selectedTicket } from "./tabs.js";
-import { ensureProject, projectError } from "../project/state.js";
+import { ensureProject, PROJECT_TIMEOUT_MS, projectError } from "../project/state.js";
 import * as repository from "./repository.js";
 import { named } from "./model.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
@@ -84,10 +86,14 @@ export function createStore(api, options = {}) {
     /** @type {Promise<void>} the catalog read under way (tests await it) */
     catalogRead: Promise.resolve(),
 
-    /** @param {string} project */
+    /** A switch from another project forgets its rows, time, failure and selection.
+     *  @param {string} project */
     async load(project) {
       if (project !== store.project) {
+        if (store.project) setShared("bakers.selected", null);
         store.tickets = [];
+        store.updated = null;
+        store.error = null;
         details.clear();
         facts.clear();
         store.user = null;
@@ -97,11 +103,12 @@ export function createStore(api, options = {}) {
       await store.refresh();
     },
 
-    /** Reads the open tickets, then the signed-in user while it is unknown (a failed read is retried). */
+    /** Reads the open tickets, then the signed-in user while it is unknown (a failed read is
+     *  retried). A read that answers after a project switch is dropped. */
     async refresh() {
-      if (!store.project) return;
-      store.loading = true;
       const project = store.project;
+      if (!project) return;
+      store.loading = true;
       const open = tabs();
       const reads = Promise.all([
         api.listOpen(project, open),
@@ -122,6 +129,7 @@ export function createStore(api, options = {}) {
       });
       try {
         const [tickets, runs, plans] = await reads;
+        if (store.project !== project) return;
         // The runs are read apart: every consumer still sees each ticket's runs on the ticket.
         const list = tickets.map((/** @type {any} */ t) => ({ ...t, runs: runs.get(t.id) ?? [] }));
         facts.clear();
@@ -134,9 +142,10 @@ export function createStore(api, options = {}) {
         store.error = null;
         store.updated = now();
       } catch (e) {
+        if (store.project !== project) return;
         store.error = e;
       } finally {
-        store.loading = false;
+        if (store.project === project) store.loading = false;
       }
       for (const fn of listeners) fn(store);
       await readUser();
@@ -243,8 +252,17 @@ export function createStore(api, options = {}) {
 
 /** @type {any} */
 let store = null;
-/** @type {Promise<any> | null} */
+/**
+ * The load under way, for one project. A load for another project, or one older than
+ * PROJECT_TIMEOUT_MS (a closed copy's that never answers), does not hold up a new one; the new
+ * one releases whoever still waits for the old.
+ * @type {{ project: string, started: number, promise: Promise<void>, settle: () => void } | null}
+ */
 let loading = null;
+
+/** Whether a load of a project under way is recent enough to wait for. @param {string} project */
+const loadingFresh = (project) =>
+  loading?.project === project && Date.now() - loading.started < PROJECT_TIMEOUT_MS;
 
 export function _resetForTests() {
   store = null;
@@ -265,21 +283,46 @@ export function getStore() {
 export async function ready() {
   const p = await ensureProject();
   if (!p) return null;
-  const s = getStore();
-  if (s.project !== p.uuid || loading) {
-    if (!loading) loading = s.load(p.uuid).finally(() => (loading = null));
-    await loading;
-  }
+  if (needsLoad(p.uuid)) await startLoad(p.uuid);
+  else if (loadingFresh(p.uuid)) await loading?.promise;
   return p;
+}
+
+/** Whether the store lacks the project and no recent load of it is under way.
+ *  @param {string} project */
+export function needsLoad(project) {
+  if (loadingFresh(project)) return false;
+  return getStore().project !== project || loading?.project === project;
+}
+
+/** @param {string} project */
+function startLoad(project) {
+  const previous = loading;
+  /** @type {() => void} */
+  let settle = () => {};
+  const promise = new Promise((ok) => (settle = () => ok(undefined)));
+  const own = { project, started: Date.now(), promise, settle };
+  loading = own;
+  previous?.settle();
+  const done = () => {
+    if (loading === own) loading = null;
+    settle();
+  };
+  getStore().load(project).then(done, done);
+  return promise;
 }
 
 /** The failure to show: the project's, else the last refresh's. */
 export const loadError = () => projectError() ?? getStore().error;
 
-/** Refreshes and shares the needs-you count with every copy (rail, tab bar, status). */
+/** Reads the project's tickets again and shares the needs-you count with every copy (rail, tab
+ *  bar, status). It reads anew rather than wait for a load under way, which may never answer. */
 export async function refresh() {
-  if (!(await ready())) return;
-  await getStore().refresh();
+  const p = await ensureProject();
+  if (!p) return;
+  const s = getStore();
+  if (s.project === p.uuid) await s.refresh();
+  else await ready();
   publishNeeds();
 }
 

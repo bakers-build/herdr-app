@@ -17,7 +17,8 @@ export default class TicketStatus {
     const parts = statusParts({
       project: currentProject()?.name ?? null,
       count: store.needs().count,
-      updated: store.updated,
+      // The time of the shown project's load, none while another project's rows are held.
+      updated: store.project === currentProject()?.uuid ? store.updated : null,
       failure: classify(loadError()),
       now: Date.now(),
     });

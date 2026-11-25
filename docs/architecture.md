@@ -378,6 +378,12 @@ updates.
   `bakers.preview` for keyed tabs). No ticket content.
 - **Per copy:** a view's own state, such as the selection, the page, a form's values and
   the open comment folds.
+- **Who loads:** module state is shared by every copy, but a copy's tasks end with it.
+  Herdr ends a closed overlay's tasks, so a load started there may never answer. Overlays
+  (the project picker, menus) only choose; the long-lived copies load: the Tickets list
+  follows a project change, and the window task refreshes. The store's single flight is
+  keyed by project; a load older than `PROJECT_TIMEOUT_MS` is replaced by a new one, which
+  releases its waiters, and a reply for a project that is no longer current is dropped.
 
 ## Tests
 

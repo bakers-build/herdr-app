@@ -3,10 +3,12 @@ import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, list as tickets, resetMod } from "../fixtures/shop";
 import {
   click,
+  closingCopy,
   cx,
   env,
   fetched,
   find,
+  findText,
   fireTimers,
   key,
   flush,
@@ -17,6 +19,7 @@ import {
 } from "../harness";
 
 const actions: any = await import("../../mods/bakers/core/actions.js");
+const herdr: any = await import("herdr");
 
 beforeEach(() => {
   reset();
@@ -197,4 +200,227 @@ test("with one workspace there is no switch and the button shows the project alo
 test("with two workspaces the button names the workspace", async () => {
   const button = find((await copyOf("ticket.list")).render(), "project-button");
   expect(texts(button)).toEqual(["acme / ", "acme-shop"]);
+});
+
+// HERDRAPP-28: the picker is a popup copy; Herdr ends its tasks once it closes, so it only
+// chooses and the long-lived list loads the new project.
+const { default: TicketStatus } = await import("../../mods/bakers/ticket/view/status.js");
+
+/** A list copy on p1 and a picker copy, both of one workspace. */
+async function listAndPicker() {
+  const list = await copyOf("ticket.list", { projects: ONE, tickets: BOTH });
+  expect(find(list.render(), "row-SHOP-41")).toBeDefined();
+  const Bakers = await load("bakers/main.js");
+  const picker = mount(Bakers, { view: "project.picker" });
+  await flush();
+  return { list, picker };
+}
+
+/** Holds every request for p0 until release() is called. */
+function holdP0() {
+  const real = env.fetch;
+  const held: (() => void)[] = [];
+  env.fetch = (url, opts) =>
+    decodeURIComponent(String(url)).includes("p0")
+      ? new Promise((ok, no) => held.push(() => real(url, opts).then(ok, no)))
+      : real(url, opts);
+  return () => {
+    env.fetch = real;
+    for (const go of held.splice(0)) go();
+  };
+}
+
+test("T1: after a picker switch the list shows the new project's tickets, no R needed", async () => {
+  const { list, picker } = await listAndPicker();
+  const restore = closingCopy();
+  click(find(picker.render(), "pick-p0"));
+  await flush();
+  restore();
+  expect(env.shared["bakers.project"]).toBe("p0");
+  fireTimers(300); // the list's poll
+  await flush();
+  const root = list.render();
+  expect(find(root, "row-INFRA-1")).toBeDefined();
+  expect(find(root, "row-SHOP-41")).toBeUndefined();
+});
+
+test("T2: R loads the shown project although a closed copy's load never answers", async () => {
+  const { list } = await listAndPicker();
+  const restore = closingCopy();
+  await actions.perform(["project.choose", "p0", "infra"]);
+  // A popup's refresh (the actions palette's) that its closing strands.
+  void actions.perform(["ticket.refresh"]);
+  herdr.closeOverlay();
+  await flush();
+  restore();
+  env.calls.length = 0;
+  key(list.render(), "r");
+  await flush();
+  const root = list.render();
+  expect(find(root, "row-INFRA-1")).toBeDefined();
+  expect(fetched().some((u) => u.includes("project_id.id") && u.includes("p0"))).toBe(true);
+});
+
+test("T5: while the new project loads the list says so, not that there are no tickets", async () => {
+  const { list, picker } = await listAndPicker();
+  const release = holdP0();
+  click(find(picker.render(), "pick-p0"));
+  await flush();
+  fireTimers(300);
+  await flush();
+  const root = list.render();
+  expect(findText(root, "Loading infra…")).toBeDefined();
+  expect(findText(root, "No other open tickets.")).toBeUndefined();
+  expect(find(root, "row-SHOP-41")).toBeUndefined();
+  expect(
+    new TicketStatus()
+      .render()
+      .flatMap((d: any) => texts(d))
+      .some((t) => t.startsWith("updated")),
+  ).toBe(false);
+  release();
+  await flush();
+  expect(find(list.render(), "row-INFRA-1")).toBeDefined();
+});
+
+test("T6: after the switch the status names the new project and its load time", async () => {
+  const { list, picker } = await listAndPicker();
+  const restore = closingCopy();
+  click(find(picker.render(), "pick-p0"));
+  await flush();
+  restore();
+  const switched = Date.now();
+  fireTimers(300);
+  await flush();
+  list.render();
+  const status = new TicketStatus().render().flatMap((d: any) => texts(d));
+  expect(status[0]).toBe("infra");
+  expect(status.at(-1)).toMatch(/^updated .* ago$/);
+  // The time is the new load's, not the previous project's.
+  const { getStore } = await import("../../mods/bakers/ticket/store.js");
+  expect(getStore().updated).toBeGreaterThanOrEqual(switched);
+});
+
+test("T7: a ticket selected in the previous project is dropped; the new list selects its first row", async () => {
+  const { list, picker } = await listAndPicker();
+  env.shared["bakers.selected"] = "SHOP-41";
+  click(find(picker.render(), "pick-p0"));
+  await flush();
+  fireTimers(300);
+  await flush();
+  list.render();
+  expect(env.shared["bakers.selected"]).toBe("INFRA-1");
+});
+
+test("T8: R on the current project reads its list again", async () => {
+  const { list } = await listAndPicker();
+  env.calls.length = 0;
+  key(list.render(), "r");
+  await flush();
+  expect(fetched().some((u) => u.includes("project_id.id") && u.includes("p1"))).toBe(true);
+});
+
+test("T4: a load still waiting for the previous project does not hold up the new one", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: ONE, tickets: BOTH } });
+  env.shared["bakers.project"] = "p1";
+  const real = env.fetch;
+  // The first list read of p1 never answers.
+  env.fetch = (url, opts) => {
+    const u = decodeURIComponent(String(url));
+    return u.includes("project_id.id") && u.includes("p1")
+      ? new Promise(() => {})
+      : real(url, opts);
+  };
+  const Bakers = await load("bakers/main.js");
+  const list = mount(Bakers, { view: "ticket.list" });
+  await flush();
+  expect(find(list.render(), "row-SHOP-41")).toBeUndefined();
+  await actions.perform(["project.choose", "p0", "infra"]);
+  fireTimers(300);
+  await flush();
+  expect(find(list.render(), "row-INFRA-1")).toBeDefined();
+});
+
+test("a load of the current project older than PROJECT_TIMEOUT_MS is replaced by a new one", async () => {
+  activeSpace();
+  backend({ jsonapi: { projects: ONE, tickets: BOTH } });
+  env.shared["bakers.project"] = "p1";
+  const real = env.fetch;
+  let stranded = true; // the first load's list read never answers
+  env.fetch = (url, opts) => {
+    const u = decodeURIComponent(String(url));
+    return stranded && u.includes("project_id.id") ? new Promise(() => {}) : real(url, opts);
+  };
+  const Bakers = await load("bakers/main.js");
+  mount(Bakers, { view: "ticket.list" });
+  await flush();
+  const store: any = await import("../../mods/bakers/ticket/store.js");
+  const { PROJECT_TIMEOUT_MS } = await import("../../mods/bakers/project/state.js");
+  const later = Date.now() + PROJECT_TIMEOUT_MS + 1000;
+  const now = Date.now;
+  Date.now = () => later;
+  try {
+    stranded = false;
+    const answer = await Promise.race([
+      store.ready().then((p: any) => p?.uuid),
+      new Promise((r) => setTimeout(() => r("held"), 50)),
+    ]);
+    expect(answer).toBe("p1");
+    expect(store.getStore().records().length).toBeGreaterThan(0);
+  } finally {
+    Date.now = now;
+  }
+});
+
+// Review fixes: a stranded load of the current project heals without R; the switch publishes
+// the needs count; a switch back to a project the list followed before still loads.
+test("a closed copy's stranded load of the new project heals by the list's poll, no R", async () => {
+  const { list } = await listAndPicker();
+  const restore = closingCopy();
+  await actions.perform(["project.choose", "p0", "infra"]);
+  void actions.perform(["ticket.refresh"]);
+  herdr.closeOverlay();
+  await flush();
+  restore();
+  const { PROJECT_TIMEOUT_MS } = await import("../../mods/bakers/project/state.js");
+  const later = Date.now() + PROJECT_TIMEOUT_MS + 1000;
+  const now = Date.now;
+  Date.now = () => later;
+  try {
+    fireTimers(300);
+    await flush();
+    expect(find(list.render(), "row-INFRA-1")).toBeDefined();
+  } finally {
+    Date.now = now;
+  }
+});
+
+test("after the list follows a switch, the needs count is the new project's", async () => {
+  const { list, picker } = await listAndPicker();
+  env.shared["bakers.needs"] = undefined;
+  click(find(picker.render(), "pick-p0"));
+  await flush();
+  const switched = Date.now();
+  fireTimers(300);
+  await flush();
+  list.render();
+  expect((env.shared["bakers.needs"] as any)?.updated).toBeGreaterThanOrEqual(switched);
+});
+
+test("a switch back to a project the list followed before loads it", async () => {
+  const { list, picker } = await listAndPicker();
+  const store: any = await import("../../mods/bakers/ticket/store.js");
+  click(find(picker.render(), "pick-p0"));
+  await flush();
+  fireTimers(300);
+  await flush();
+  expect(find(list.render(), "row-INFRA-1")).toBeDefined();
+  // Another copy loads p1 before the list polls.
+  await actions.perform(["project.choose", "p1", "acme-shop"]);
+  await store.ready();
+  await actions.perform(["project.choose", "p0", "infra"]);
+  fireTimers(300);
+  await flush();
+  expect(find(list.render(), "row-INFRA-1")).toBeDefined();
 });
