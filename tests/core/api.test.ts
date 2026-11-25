@@ -262,3 +262,75 @@ test("me is null through bakers dropsh, which has no index", async () => {
   expect(await api.me()).toBeNull();
   expect(fetched()).toEqual([]);
 });
+
+test("search sends a sparse fieldset per type as fields[type--bundle]", async () => {
+  cliWithToken();
+  env.fetch = async () => ({
+    status: 200,
+    ok: true,
+    json: async () => doc([]),
+    text: async () => "",
+  });
+  await api.search("bb_ticket", "bb_ticket", {
+    fields: {
+      "bb_ticket--bb_ticket": ["identifier", "title"],
+      "bb_run--bb_run": ["state"],
+    },
+  });
+  const url = decodeURIComponent(fetched()[0]);
+  expect(url).toContain("fields[bb_ticket--bb_ticket]=identifier,title");
+  expect(url).toContain("fields[bb_run--bb_run]=state");
+});
+
+test("the fake server returns only the listed fields, in data and in included", async () => {
+  const server = jsonapiServer([
+    {
+      type: "bb_ticket--bb_ticket",
+      id: "t1",
+      attributes: { identifier: "SHOP-1", title: "A", body: "long" },
+      relationships: { runs: { data: [{ type: "bb_run--bb_run", id: "r1" }] } },
+    },
+    {
+      type: "bb_run--bb_run",
+      id: "r1",
+      attributes: { state: "done", agent: "x" },
+      relationships: { ticket_id: { data: { type: "bb_ticket--bb_ticket", id: "t1" } } },
+    },
+  ]);
+  cliWithToken();
+  env.fetch = server;
+  const out: any = await (
+    await server(
+      "https://bakers.test/jsonapi/bb_ticket/bb_ticket?include=runs" +
+        "&fields[bb_ticket--bb_ticket]=identifier&fields[bb_run--bb_run]=state",
+      { headers: { Authorization: "Bearer abc" } },
+    )
+  ).json();
+  expect(out.data[0].attributes).toEqual({ identifier: "SHOP-1" });
+  expect(out.data[0].relationships).toBeUndefined();
+  expect(out.data[0]).toMatchObject({ type: "bb_ticket--bb_ticket", id: "t1" });
+  expect(out.included[0].attributes).toEqual({ state: "done" });
+  expect(out.included[0].relationships).toBeUndefined();
+});
+
+test("the fake server keeps listed relationships and supports NOT IN", async () => {
+  const mk = (id: string, kind: string) => ({
+    type: "bb_comment--bb_comment",
+    id,
+    attributes: { kind, body: id },
+    relationships: { ticket_id: { data: { type: "bb_ticket--bb_ticket", id: "t1" } } },
+  });
+  const server = jsonapiServer([mk("c1", "plan"), mk("c2", "note"), mk("c3", "spec")]);
+  const res: any = await (
+    await server(
+      "https://bakers.test/jsonapi/bb_comment/bb_comment?" +
+        "filter[f0][condition][path]=kind&filter[f0][condition][operator]=NOT IN" +
+        "&filter[f0][condition][value][]=plan&filter[f0][condition][value][]=spec" +
+        "&fields[bb_comment--bb_comment]=ticket_id",
+      { headers: { Authorization: "Bearer abc" } },
+    )
+  ).json();
+  expect(res.data.map((r: any) => r.id)).toEqual(["c2"]);
+  expect(res.data[0].attributes).toEqual({});
+  expect(res.data[0].relationships.ticket_id.data.id).toBe("t1");
+});
