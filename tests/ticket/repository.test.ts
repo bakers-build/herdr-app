@@ -294,3 +294,17 @@ test("commentBody reads one comment's body and nothing else", async () => {
   expect(urls.length).toBe(1);
   expect(urls[0]).toContain("fields[bb_comment--bb_comment]=body");
 });
+
+test("the searches that page through everything sort by a unique key", async () => {
+  await repository.listRuns("p1", ["SHOP-49"]);
+  await repository.planComments("p1");
+  await withFoldedComments(() => repository.readTicket("SHOP-56"));
+  const paged = fetched()
+    .map((u) => decodeURIComponent(u))
+    .filter(
+      (u) => /\/bb_(run|comment)\/bb_(run|comment)\?/.test(u) && u.includes("page[limit]=50"),
+    );
+  // two run searches, the plan comments, the two comment searches of the detail
+  expect(paged.length).toBe(5);
+  for (const u of paged) expect(u).toMatch(/[?&]sort=id(&|$)/);
+});

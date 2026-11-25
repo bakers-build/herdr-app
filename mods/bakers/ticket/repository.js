@@ -87,7 +87,7 @@ export async function listRuns(project, tabs = []) {
     project,
   ]);
   const find = (/** @type {import("../core/api.js").Query["filter"]} */ filter) =>
-    search("bb_run", "bb_run", { filter, fields: RUN_FIELDS, limit: 50, all: true });
+    search("bb_run", "bb_run", { filter, fields: RUN_FIELDS, sort: "id", limit: 50, all: true });
   const [open, tabbed] = await Promise.all([
     find([inProject, ["ticket_id.closed", "=", false]]),
     tabs.length ? find([inProject, ["ticket_id.identifier", "IN", tabs]]) : [],
@@ -113,6 +113,7 @@ export async function planComments(project) {
       ["ticket_id.closed", "=", false],
     ],
     fields: PLAN_FIELDS,
+    sort: "id",
     limit: 50,
     all: true,
   });
@@ -145,6 +146,7 @@ export async function readTicket(idOrUuid, byUuid = UUID.test(idOrUuid)) {
     search("bb_comment", "bb_comment", {
       filter: [ofTicket, ...filter],
       fields: { [COMMENT]: fields },
+      sort: "id",
       limit: 50,
       all: true,
     });
