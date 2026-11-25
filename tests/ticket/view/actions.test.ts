@@ -424,3 +424,34 @@ test("after Esc closed the palette, a late refocus does nothing", async () => {
   fireTimers();
   expect(copy.inner.input.focused).toBe(false);
 });
+
+// HERDRAPP-21: the timers above can all land before the first frame; the first layout cannot.
+test("the palette takes the keyboard on its first layout, and a later resize leaves it", async () => {
+  const copy = await palette();
+  copy.inner.input.focused = false;
+  const size = find(copy.render(), "actions").calls.on_size_change[0];
+  size({ width: 480, height: 490 }, cx());
+  expect(copy.inner.input.focused).toBe(true);
+  copy.inner.input.focused = false;
+  size({ width: 480, height: 300 }, cx());
+  expect(copy.inner.input.focused).toBe(false);
+});
+
+test("a press inside the palette gives the keyboard back to its field", async () => {
+  const copy = await palette();
+  copy.inner.input.focused = false;
+  const c = cx();
+  find(copy.render(), "actions").calls["on_mouse_down:left"][1]({}, c);
+  expect(copy.inner.input.focused).toBe(true);
+  expect(c.stopped).toBe(true);
+});
+
+test("a press outside the palette closes it, so Esc never reaches the pane behind", async () => {
+  const copy = await palette();
+  env.calls.length = 0;
+  find(copy.render(), "actions").calls.on_mouse_down_out[0]({}, cx());
+  expect(closed()).toEqual(["overlay-9"]);
+  copy.inner.input.focused = false;
+  fireTimers();
+  expect(copy.inner.input.focused).toBe(false);
+});

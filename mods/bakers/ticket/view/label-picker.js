@@ -19,6 +19,11 @@ export default class LabelPicker extends PopupList {
     this.input.focus();
   }
 
+  /** The filter takes the keyboard; Esc there reaches the popup's root and closes it. */
+  focusTarget() {
+    return this.input;
+  }
+
   /** @param {string} name @param {any} cx */
   add(name, cx) {
     const label = name.trim();

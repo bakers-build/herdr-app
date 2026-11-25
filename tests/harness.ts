@@ -27,8 +27,11 @@ export class El {
           else if (key === "when") {
             if (args[0]) args[1](self);
           } else {
-            // Mouse handlers differ by button: keep them apart.
-            const name = key.startsWith("on_mouse_") ? `${key}:${args[0]}` : key;
+            // Mouse handlers differ by button: keep them apart. on_mouse_down_out has no button.
+            const name =
+              key.startsWith("on_mouse_") && typeof args[0] === "string"
+                ? `${key}:${args[0]}`
+                : key;
             target.calls[name] = args;
             target.all[name] = [...(target.all[name] ?? []), args];
           }

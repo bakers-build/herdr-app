@@ -65,6 +65,8 @@ export class PopupList {
   at = 0;
   /** True while a text field of the popup has the keyboard: Enter belongs to it. */
   typing = false;
+  /** True after the first layout, which takes the keyboard; a later resize leaves it. */
+  mounted = false;
 
   /** @param {unknown} _props @param {any} cx */
   init(_props, cx) {
@@ -72,10 +74,25 @@ export class PopupList {
     this.handle.focus();
     this.at = 0;
     this.typing = false;
+    this.mounted = false;
   }
 
   close() {
     closeOverlay(props().overlay);
+  }
+
+  /** What takes the keyboard: the popup itself, or a picker's text field.
+   *  @returns {{ focus(): void }} */
+  focusTarget() {
+    return this.handle;
+  }
+
+  /** init's focus comes before the first frame and can land on nothing, so the first layout takes
+   *  the keyboard again; Esc reaches the popup only on the focus path. */
+  laidOut() {
+    if (this.mounted) return;
+    this.mounted = true;
+    this.focusTarget()?.focus();
   }
 
   /** @returns {any[]} rows with key, label and choose(cx) */
@@ -108,6 +125,7 @@ export class PopupList {
       .text_size(12)
       .text_color(t.foreground)
       .track_focus(this.handle)
+      .on_size_change(() => this.laidOut())
       .on_key_down((e, cx) => {
         const n = choosable.length;
         if (e.key === "escape") this.close();

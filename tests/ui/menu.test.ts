@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
 import { activeSpace, backend, resetMod } from "../fixtures/shop";
-import { click, env, find, flush, load, mount, reset } from "../harness";
+import { click, cx, env, find, flush, key, load, mount, reset } from "../harness";
 
 const writeTools = {
   bakers_comment_publish: { id: "c9" },
@@ -99,4 +99,22 @@ test("openMenu opens exactly the menu popup, at the given point when there is on
   };
   expect(specs[0]).toEqual(base);
   expect(specs[1]).toEqual({ ...base, at: { x: 5, y: 6 } });
+});
+
+// HERDRAPP-21: init's focus comes before the first frame and can land on nothing; the first layout
+// takes the keyboard so Esc reaches the menu, not the pane behind.
+test("a menu takes the keyboard on its first layout; a resize leaves it; Esc closes", async () => {
+  const copy = await open({
+    view: "menu",
+    items: [{ label: "Refresh", action: ["ticket.refresh"] }],
+  });
+  copy.inner.handle.focused = false;
+  const size = find(copy.render(), "picker").calls.on_size_change[0];
+  size({ width: 220, height: 40 }, cx());
+  expect(copy.inner.handle.focused).toBe(true);
+  copy.inner.handle.focused = false;
+  size({ width: 220, height: 60 }, cx());
+  expect(copy.inner.handle.focused).toBe(false);
+  key(copy.render(), "escape");
+  expect(closed()).toBe(true);
 });

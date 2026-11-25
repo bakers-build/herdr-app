@@ -34,6 +34,8 @@ export default class Dialog {
     this.handle.focus();
     this.def = null;
     this.error = null;
+    /** @type {"loading" | "ready" | null} the frame whose first layout took the keyboard */
+    this.frame = null;
     cx.spawn(async (cx) => {
       try {
         const build = get("form", props()?.form)?.build;
@@ -51,6 +53,21 @@ export default class Dialog {
 
   close() {
     closeOverlay(props().overlay);
+  }
+
+  /** The first text field, or the dialog itself when it has none. Esc reaches the dialog only on
+   *  the focus path, and init's focus comes before the first frame, where it can land on nothing. */
+  takeKeyboard() {
+    if (this.inputs && Object.keys(this.inputs.inputs).length) this.inputs.focus();
+    else this.handle?.focus();
+  }
+
+  /** Takes the keyboard on the first layout of each frame (loading, then ready); a resize leaves
+   *  it. @param {"loading" | "ready"} frame */
+  laidOut(frame) {
+    if (this.frame === frame) return;
+    this.frame = frame;
+    this.takeKeyboard();
   }
 
   /** @param {any} cx */
@@ -84,6 +101,7 @@ export default class Dialog {
       return root
         .p(20)
         .when(Boolean(handle), (el) => el.track_focus(/** @type {any} */ (handle)))
+        .on_size_change(() => this.laidOut("loading"))
         .on_key_down((e, cx) => {
           if (formKey(e.keystroke, "inline") !== "cancel") return;
           this.close();
@@ -113,6 +131,7 @@ export default class Dialog {
       .p(d.size === 15 ? 16 : 20)
       .gap(12)
       .track_focus(handle)
+      .on_size_change(() => this.laidOut("ready"))
       .on_key_down((e, cx) => {
         const k = formKey(e.keystroke, d.keys === "inline" ? "inline" : "dialog");
         if (k === "submit") this.send(cx);
