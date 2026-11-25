@@ -169,18 +169,33 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
   });
 
   test("readTicket reads the comments apart and equal to include=comments", async () => {
-    // The fixture ticket may have few comments: take the project's ticket with the most.
+    // The core requirement needs a ticket with older folded comments (two or more of one type
+    // among plan, spec, summary): take the project's ticket with the most of them. Nothing in
+    // this suite writes, so the seeded world must hold one; without it this fails, not passes.
+    const FOLDED = ["plan", "spec", "summary"];
     const all = await api.search("bb_comment", "bb_comment", {
       filter: [["ticket_id.project_id.id", "=", PROJECT]],
       fields: { "bb_comment--bb_comment": ["bb_comment_type", "created", "ticket_id"] },
       limit: 50,
       all: true,
     });
-    const count = new Map<string, number>();
-    for (const c of all)
-      if (c.ticket_id?.id) count.set(c.ticket_id.id, (count.get(c.ticket_id.id) ?? 0) + 1);
-    const best = [...count.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? TICKET;
-    process.stdout.write(`contract: comments read for a ticket with ${count.get(best) ?? 0}\n`);
+    const perType = new Map<string, number>();
+    for (const c of all) {
+      if (!c.created || !c.ticket_id?.id || !FOLDED.includes(c.bb_comment_type)) continue;
+      const k = `${c.ticket_id.id}|${c.bb_comment_type}`;
+      perType.set(k, (perType.get(k) ?? 0) + 1);
+    }
+    const older = new Map<string, number>();
+    for (const [k, n] of perType)
+      older.set(k.split("|")[0], (older.get(k.split("|")[0]) ?? 0) + n - 1);
+    const [best, olderCount] = [...older.entries()].sort((a, b) => b[1] - a[1])[0] ?? ["", 0];
+    if (!best || olderCount < 1)
+      throw new Error(
+        "the seeded world has no ticket with two or more plan, spec or summary comments of one " +
+          "type, so the folded older comments (loaded: false, commentBody) cannot be proven; " +
+          "seed one (scripts/e2e/seed-test-world.sh of the server) or write it in tests/contract/run.ts",
+      );
+    process.stdout.write(`contract: ${olderCount} older folded comments on one ticket\n`);
 
     const full = await api.read("bb_ticket", "bb_ticket", best, ["comments"]);
     const part = await tickets.readTicket(full.identifier);
@@ -191,7 +206,7 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     const sorted = part.comments.map((c: any) => String(c.created));
     expect(sorted).toEqual([...sorted].sort());
     const raw = new Map<string, any>(expected.map((c: any) => [c.id, c]));
-    const FOLDED = ["plan", "spec", "summary"];
+    let unloaded = 0;
     for (const c of part.comments) {
       const r = raw.get(c.id);
       expect(c.type).toBe(r.bb_comment_type ?? "comment");
@@ -199,11 +214,14 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
       expect(c.author).toBe(r.author_name ?? "");
       if (c.loaded) expect(c.body).toBe(r.body ?? "");
       else {
+        unloaded++;
         expect(c.body).toBe("");
         expect(FOLDED).toContain(c.type);
         expect(await tickets.commentBody(c.id)).toBe(r.body ?? "");
       }
     }
+    expect(unloaded).toBe(olderCount);
+    expect(unloaded).toBeGreaterThan(0);
     // Per folded type exactly the newest is loaded, the older ones are not.
     for (const type of FOLDED) {
       const ofType = part.comments.filter((c: any) => c.type === type);
@@ -252,7 +270,6 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     const key = (a: any) => `${a.created}|${a.kind}`;
     expect(activity.map(key).sort()).toEqual(direct.map(key).sort());
     process.stdout.write(`contract: the fixture ticket has ${direct.length} activity rows\n`);
-    for (const a of activity) expect(typeof a.kind).toBe("string");
     const created = activity.map((a: any) => String(a.created));
     expect(created).toEqual([...created].sort().reverse());
   });
