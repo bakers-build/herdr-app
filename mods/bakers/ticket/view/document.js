@@ -74,6 +74,18 @@ export class TicketDocument {
     this.id = id;
     this.reload = reload ?? (() => this.load());
     this.composer = this.makeComposer("comment");
+    this.seed();
+  }
+
+  /** Starts from what the store has: the ticket read before, else the list's row (partial). */
+  seed() {
+    const store = getStore();
+    this.detail ??= store.cached(this.id) ?? store.partial(this.id);
+  }
+
+  /** The detail is the list's row only: nothing edits or moves the ticket yet. */
+  get partial() {
+    return Boolean(this.detail?.partial);
   }
 
   /** @param {"comment" | "answer"} mode @param {string} [text] */
@@ -86,6 +98,7 @@ export class TicketDocument {
   async load() {
     try {
       await ready();
+      this.seed();
       this.detail = await getStore().ticket(this.id);
       this.failure = null;
     } catch (e) {
@@ -144,7 +157,7 @@ export class TicketDocument {
 
   /** The ticket action a single key (G, R) runs, from the one list of actions. @param {string} k */
   keyAction(k) {
-    if (!this.detail) return null;
+    if (!this.detail || this.partial) return null;
     const reason = runReason(this.runInfo(), this.terminal());
     return ticketActions(this.detail, reason).find((a) => a.keys?.toLowerCase() === k) ?? null;
   }
@@ -161,7 +174,7 @@ export class TicketDocument {
   }
 
   edit() {
-    if (this.detail && !this.editor) {
+    if (this.detail && !this.partial && !this.editor) {
       this.editor = new Inline(editForm(this.detail.ticket));
       this.editor.inputs.focus("title");
     }
@@ -170,6 +183,7 @@ export class TicketDocument {
   /** A: answer a question, approve a plan. */
   act() {
     const d = this.detail;
+    if (this.partial) return;
     if (d?.why === "Asked a question") this.answer();
     else if (d?.why === "Plan ready for approval")
       openForm("state", { ticket: this.id, from: d.ticket.state, to: "working" });
@@ -193,6 +207,7 @@ export class TicketDocument {
   /** The panel's keys; true when one acted. @param {any} e @param {any} cx @returns {boolean} */
   onKey(e, cx) {
     const k = e.keystroke;
+    if (this.partial) return false;
     const active = this.editor ?? (this.composer.focused ? this.composer : null);
     if (active) {
       const what = formKey(k, "inline");
@@ -213,6 +228,7 @@ export class TicketDocument {
 
   /** @param {any} vm */
   header(vm) {
+    const wait = this.partial;
     return h_flex()
       .id("doc-header")
       .items_center()
@@ -225,6 +241,7 @@ export class TicketDocument {
           chevron: true,
           size: 11,
           onClick: () =>
+            wait ||
             openMenu(stateItems(vm.id, vm.state), { footer: STATE_MENU_FOOTER, footerApi: true }),
         }),
       )
@@ -238,10 +255,26 @@ export class TicketDocument {
         }),
       )
       .child(div().flex_1())
-      .child(button("edit", "Edit", () => this.edit(), { h: 24, size: 12 }))
-      .child(button("actions", "Actions", () => run("bakers.actions"), { h: 24, size: 12 }))
       .child(
-        button("more", "...", () => openMenu(moreItems(this.detail)), { h: 24, px: 0 })
+        button("edit", "Edit", wait ? null : () => this.edit(), {
+          h: 24,
+          size: 12,
+          disabled: wait,
+        }),
+      )
+      .child(
+        button("actions", "Actions", wait ? null : () => run("bakers.actions"), {
+          h: 24,
+          size: 12,
+          disabled: wait,
+        }),
+      )
+      .child(
+        button("more", "...", wait ? null : () => openMenu(moreItems(this.detail)), {
+          h: 24,
+          px: 0,
+          disabled: wait,
+        })
           .w(24)
           .justify_center(),
       );

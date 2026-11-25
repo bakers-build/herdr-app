@@ -192,10 +192,10 @@ export async function commentBody(id) {
   return toComment(c).body;
 }
 
-/** The ticket's activity, newest first. @param {string} ticketUuid */
-export async function listActivity(ticketUuid) {
+/** The ticket's activity, newest first. @param {string} identifier */
+export async function listActivity(identifier) {
   const rows = await search("bb_activity", "bb_activity", {
-    filter: [["ticket_id.id", "=", ticketUuid]],
+    filter: [["ticket_id.identifier", "=", identifier]],
     include: ["actor"],
     sort: "-created",
     limit: 20,

@@ -131,6 +131,25 @@ export function createStore(api, options = {}) {
       return details.get(row?.uuid ?? idOrUuid) ?? null;
     },
 
+    /** What the list knows of a ticket, shaped as a detail and marked partial: the panel draws its
+     *  header and title from it until the read lands. Null when the list has no such ticket. @param {string} idOrUuid */
+    partial(idOrUuid) {
+      const t = store.tickets.find(
+        (/** @type {any} */ x) => x.identifier === idOrUuid || x.id === idOrUuid,
+      );
+      if (!t) return null;
+      const f = facts.get(t.id);
+      const why = isClosed(t) ? null : (f?.why ?? null);
+      return {
+        ticket: { ...t },
+        comments: [],
+        runs: t.runs ?? [],
+        why,
+        since: f?.since ?? null,
+        partial: true,
+      };
+    },
+
     /** @param {string} idOrUuid */
     byId(idOrUuid) {
       const t = store.tickets.find(
