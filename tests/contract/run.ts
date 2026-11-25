@@ -1,6 +1,6 @@
 // The contract run: starts the self-hosted bakers server from its release image, installs it
 // on SQLite, seeds the server's own e2e test world (scripts/e2e/seed-test-world.sh), creates an
-// API key for the seeded user fixture-agent, runs tests/contract/*.test.ts against it and
+// API key for the seeded user fixture-agent, two plan comments on the fixture ticket, runs tests/contract/*.test.ts against it and
 // removes the container again. Needs Docker; the image is public.
 //   bun run test:contract          (CI job `contract` runs the same)
 //   KEEP=1 bun run test:contract   keeps the container for a look afterwards
@@ -90,6 +90,12 @@ async function up() {
     "API key",
   ).trim();
   const fixtures = JSON.parse(exec("cat /tmp/e2e/fixtures.json", "fixtures"));
+  // The seeded world has no ticket with two plan comments; the folded older ones need one.
+  sh(["docker", "cp", join(HERE, "comments.php"), `${NAME}:/tmp/comments.php`], "docker cp");
+  exec(
+    `cd /var/www/html && vendor/bin/drush php:script /tmp/comments.php -- ${fixtures.ticket_uuid} fixture-agent`,
+    "plan comments",
+  );
   sh(
     [
       "docker",
