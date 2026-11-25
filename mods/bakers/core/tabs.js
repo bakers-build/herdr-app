@@ -48,13 +48,22 @@ export function isHome(name) {
   return all("tab").find((def) => def.home?.name === name)?.id ?? null;
 }
 
-/** @param {string} kind */
+/**
+ * Selects the kind's home tab, or opens it in the active space. Herdr refuses a mod's tab.new
+ * while no space is open, so with none it makes one first; space.new applies before run()
+ * returns and shows the new space, which the tab.new then targets.
+ * @param {string} kind
+ */
 export function openHome(kind) {
   const home = get("tab", kind)?.home;
   if (!home) return;
   const t = homeTab(kind);
-  if (t) run("tab.select", { id: t.id });
-  else run("tab.new", { mod: "bakers", props: { view: home.route }, name: home.name });
+  if (t) {
+    run("tab.select", { id: t.id });
+    return;
+  }
+  if (!space()) run("space.new", {});
+  run("tab.new", { mod: "bakers", props: { view: home.route }, name: home.name });
 }
 
 /** The shared preview as written: { id, index }, or null. */

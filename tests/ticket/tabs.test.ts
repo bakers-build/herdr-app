@@ -42,6 +42,15 @@ test("ensureTicketsTab creates the Tickets tab when missing", () => {
   ]);
 });
 
+test("ensureTicketsTab with no space opens Tickets in a new space", () => {
+  env.spaces = [];
+  ticketTabs.ensureTicketsTab();
+  expect(runs()).toEqual([
+    ["space.new", {}],
+    ["tab.new", { mod: "bakers", props: { view: "ticket.list" }, name: "Tickets" }],
+  ]);
+});
+
 test("ensureTicketsTab only selects an existing Tickets tab", () => {
   space(tab("t0", "Tickets", 1), tab("t1", "1", 2));
   ticketTabs.ensureTicketsTab();

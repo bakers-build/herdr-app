@@ -66,16 +66,24 @@ export function applyFilter(records, f, { user }) {
 }
 
 /**
- * The counts next to the controls, over the open records and ignoring the other filters.
- * @param {any[]} records @param {User | null} user
+ * The counts next to the controls: for each choice, the open records the list would show with
+ * that choice and the other active parts of the filter. Recently closed lists the server's
+ * records, which these counts cannot see, so they then count as if no part were active.
+ * @param {any[]} records @param {User | null} user @param {Filter} [filter]
  */
-export function counts(records, user) {
+export function counts(records, user, filter = DEFAULT_FILTER) {
+  const base = filter.state === "closed" ? DEFAULT_FILTER : filter;
   const open = records.filter((r) => !r.closed);
+  const n = (/** @type {Partial<Filter>} */ patch) =>
+    applyFilter(open, { ...base, ...patch }, { user }).length;
+  const { labels, types } = choices(records);
   return {
-    needsMe: open.filter((r) => r.why !== null).length,
-    mine: user ? open.filter((r) => assignedTo(r, user)).length : null,
-    open: open.length,
-    states: Object.fromEntries(STATES.map((s) => [s, open.filter((r) => r.state === s).length])),
+    needsMe: n({ needsMe: true }),
+    mine: user ? n({ mine: true }) : null,
+    open: n({ state: "open" }),
+    states: Object.fromEntries(STATES.map((s) => [s, n({ state: s })])),
+    labels: Object.fromEntries(labels.map((v) => [v, n({ label: v })])),
+    types: Object.fromEntries(types.map((v) => [v, n({ type: v })])),
   };
 }
 

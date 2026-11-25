@@ -18,6 +18,9 @@ let lastError = null;
  * @type {{ promise: Promise<any>, started: number, settle: (p: any) => void } | null}
  */
 let pending = null;
+/** @type {Promise<{ uuid: string, name: string }[]> | null} */
+let listing = null;
+let listingStarted = 0;
 
 /** The CLI's own timeout (core/cli.js): a resolution still open after it has failed. */
 export const PROJECT_TIMEOUT_MS = 30000;
@@ -28,6 +31,7 @@ export function _resetForTests() {
   pickerServed = true;
   lastError = null;
   pending = null;
+  listing = null;
 }
 
 export const currentProject = () => project;
@@ -71,6 +75,23 @@ export function chooseProject(p) {
   return p;
 }
 
+/**
+ * Lists the readable projects into projectChoices(), once per copy of the mod: a copy that
+ * draws the choices calls it, since a shared project is read on its own. A failed list is
+ * read again on the next call, as is one still open after PROJECT_TIMEOUT_MS.
+ */
+export function loadChoices() {
+  if (!listing || Date.now() - listingStarted >= PROJECT_TIMEOUT_MS) {
+    const own = listProjects().then((all) => (choices = all.map(asProject)));
+    listing = own;
+    listingStarted = Date.now();
+    own.catch(() => {
+      if (listing === own) listing = null;
+    });
+  }
+  return listing;
+}
+
 async function resolve() {
   const shared_ = /** @type {string | undefined} */ (shared("bakers.project"));
   if (shared_) {
@@ -82,7 +103,7 @@ async function resolve() {
     }
   }
   const name = await configuredName();
-  choices = (await listProjects()).map(asProject);
+  await loadChoices();
   const match = choices.find((p) => p.name === name);
   if (match) return chooseProject(match);
   if (choices.length) {
@@ -91,6 +112,12 @@ async function resolve() {
     return project;
   }
   return null;
+}
+
+/** The project and the choices, as the project button and the picker draw them. A failed
+ *  list leaves no choices: the button then offers no picker, as with one project. */
+export async function ensureChoices() {
+  await Promise.all([ensureProject(), loadChoices().catch(() => null)]);
 }
 
 /** Resolves the project once; concurrent callers share the answer, null after a failure. */
