@@ -569,3 +569,14 @@ test("a detail read for a ticket outside the list is cached under its identifier
   expect(store.cached("SHOP-18")?.ticket.title).toBe("Closed one");
   expect(store.cached("u18")?.ticket.identifier).toBe("SHOP-18");
 });
+
+// With two open runs the list and the panel show the same one, the newest, in any read order.
+test("the active run is the newest open run, whatever order the runs come in", async () => {
+  const { activeRun } = await import("../../mods/bakers/ticket/rules.js");
+  const older = { uuid: "zz", state: "running", started_at: 100, closed: false };
+  const newer = { uuid: "aa", state: "running", started_at: 200, closed: false };
+  const done = { uuid: "mm", state: "done", started_at: 300, closed: true };
+  expect(activeRun([older, newer, done])?.uuid).toBe("aa");
+  expect(activeRun([newer, older, done])?.uuid).toBe("aa");
+  expect(activeRun([done])).toBeNull();
+});
