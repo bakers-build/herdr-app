@@ -92,10 +92,11 @@ async function up() {
   const fixtures = JSON.parse(exec("cat /tmp/e2e/fixtures.json", "fixtures"));
   // The seeded world has no ticket with two plan comments; the folded older ones need one.
   sh(["docker", "cp", join(HERE, "comments.php"), `${NAME}:/tmp/comments.php`], "docker cp");
-  exec(
+  const seeded = exec(
     `cd /var/www/html && vendor/bin/drush php:script /tmp/comments.php -- ${fixtures.ticket_uuid} fixture-agent`,
     "plan comments",
   );
+  process.stdout.write(`contract: seeded plan comments ${seeded.trim()}\n`);
   sh(
     [
       "docker",
