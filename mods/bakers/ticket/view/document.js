@@ -110,8 +110,16 @@ export class TicketDocument {
     if (comment && comment.loaded === false) {
       cx.spawn(async (cx) => {
         try {
-          comment.body = await commentBody(key);
-          comment.loaded = true;
+          const body = await commentBody(key);
+          // A refresh may have replaced the detail meanwhile: write to what is current too.
+          const current = [
+            comment,
+            this.detail?.comments?.find((/** @type {any} */ c) => c.id === key),
+            getStore()
+              .cached(this.id)
+              ?.comments?.find((/** @type {any} */ c) => c.id === key),
+          ];
+          for (const c of current) if (c) Object.assign(c, { body, loaded: true });
         } catch (e) {
           this.open.delete(key);
           this.bodyFailure = classify(e);

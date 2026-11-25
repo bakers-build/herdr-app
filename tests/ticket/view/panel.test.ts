@@ -184,6 +184,31 @@ test("an older plan says Click to read; opening it fetches only its body and sho
   expect(markdownText(copy.render())).toContain("Older plan text");
 });
 
+test("a refresh landing while a body is read keeps the body the user opened", async () => {
+  const copy = await olderPlanPanel();
+  const fetch = env.fetch;
+  let release: () => void = () => {};
+  const gate = new Promise<void>((r) => (release = r));
+  env.fetch = async (url: string, opts?: any) => {
+    const u = decodeURIComponent(url);
+    // Only the single-comment read waits; the refresh's own reads go through.
+    if (u.includes("fields[bb_comment--bb_comment]=body") && !u.includes("operator]=IN"))
+      await gate;
+    return fetch(url, opts);
+  };
+  click(find(copy.render(), "comment-p0"));
+  await flush();
+  // A refresh replaces the detail with fresh, unloaded comments while the request is out.
+  env.shared["bakers.needs"] = { count: 0, ids: [], updated: Date.now() };
+  fireTimers();
+  await flush();
+  release();
+  await flush();
+  const root = copy.render();
+  expect(markdownText(root)).toContain("Older plan text");
+  expect(texts(find(root, "comment-p0"))).not.toContain("Click to read");
+});
+
 test("a failed body read leaves the comment unread and says why", async () => {
   const copy = await olderPlanPanel();
   const root = copy.render();

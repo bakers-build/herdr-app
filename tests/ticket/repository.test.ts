@@ -246,6 +246,35 @@ test("the detail's comments: others with body, the newest plan, spec and summary
   expect(bodies).not.toMatch(/\]\[\]=(p0|s0)/);
 });
 
+test("when summaries tie on created, the one the panel reads as newest is the one loaded", async () => {
+  const before = read.u56.comments;
+  read.u56.comments = [
+    {
+      id: "t1",
+      type: "summary",
+      author: "Claude Code",
+      created: "2026-01-02T11:00:00Z",
+      body: "First post",
+    },
+    {
+      id: "t2",
+      type: "summary",
+      author: "Claude Code",
+      created: "2026-01-02T11:00:00Z",
+      body: "Reposted",
+    },
+    ...before,
+  ];
+  try {
+    const d = await repository.readTicket("SHOP-56");
+    const summaries = d.comments.filter((c: any) => c.type === "summary");
+    expect(summaries.at(-1)).toMatchObject({ id: "t2", body: "Reposted", loaded: true });
+    expect(summaries.find((c: any) => c.id === "t1")).toMatchObject({ loaded: false });
+  } finally {
+    read.u56.comments = before;
+  }
+});
+
 test("a ticket without plan, spec or summary needs no request for newest bodies", async () => {
   await repository.readTicket("SHOP-41");
   const comments = fetched().filter((u) => u.includes("/bb_comment/bb_comment?"));

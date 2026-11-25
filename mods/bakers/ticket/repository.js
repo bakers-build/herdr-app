@@ -163,8 +163,9 @@ export async function readTicket(idOrUuid, byUuid = UUID.test(idOrUuid)) {
   const newest = FOLDED.map((type) =>
     folded
       .filter((c) => c.created && c.bb_comment_type === type)
-      .sort((a, b) => String(b.created).localeCompare(String(a.created)))
-      .at(0),
+      // Ascending and last, as toDetail and its consumers read "newest": a tie is the later entry.
+      .sort((a, b) => String(a.created).localeCompare(String(b.created)))
+      .at(-1),
   ).filter((c) => c !== undefined);
   const bodies = newest.length
     ? await search("bb_comment", "bb_comment", {
