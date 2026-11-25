@@ -270,13 +270,14 @@ export default class TicketList {
       .child(this.filterBar());
   }
 
-  /** Needs me, Mine, State, Label, Type and Clear, with the counts of the open tickets. */
+  /** Needs me, Mine, State, Label, Type and Clear; each count is what its choice would show
+   *  with the other active parts of the filter. */
   filterBar() {
     const t = tokens();
     const f = currentFilter();
     const store = getStore();
     const records = store.records();
-    const n = counts(records, store.user);
+    const n = counts(records, store.user, f);
     const values = choices(records);
     /** @param {string} id @param {boolean} on */
     const control = (id, on) =>
@@ -315,6 +316,7 @@ export default class TicketList {
       { label: "Any", action: filterBy({ [field]: null }), current: f[field] === null },
       ...options.map((v) => ({
         label: v,
+        hint: String(n[field === "label" ? "labels" : "types"][v]),
         action: filterBy({ [field]: v }),
         current: f[field] === v,
       })),
