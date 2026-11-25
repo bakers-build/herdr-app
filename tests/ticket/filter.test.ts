@@ -107,13 +107,75 @@ test("isActive and clearFilter", () => {
   expect(currentFilter()).toEqual(DEFAULT_FILTER);
 });
 
-test("counts: Needs me, Mine, Open and each state", () => {
-  expect(counts(records, user)).toEqual({
+test("counts: Needs me, Mine, Open, each state, label and type", () => {
+  const today = {
     needsMe: 3,
     mine: 3,
     open: 5,
     states: { qualification: 1, plan: 1, working: 2, review: 1 },
+    labels: { Question: 1, auto: 2, ui: 1 },
+    types: { bug: 2, chore: 1, feature: 2 },
+  };
+  expect(counts(records, user)).toEqual(today);
+  expect(counts(records, user, DEFAULT_FILTER)).toEqual(today);
+});
+
+test("Mine counts 0 under Needs me when none of my tickets needs me", () => {
+  const recs = [
+    rec("SHOP-70", "working", { assignee: "pg" }),
+    rec("SHOP-71", "plan", { why: "Plan ready for approval", assignee: "jo" }),
+  ];
+  const f = { ...DEFAULT_FILTER, needsMe: true, mine: true };
+  expect(counts(recs, user, f).mine).toBe(0);
+  expect(applyFilter(recs, f, { user })).toHaveLength(0);
+});
+
+test("a toggle counts with the other active parts", () => {
+  expect(counts(records, user, { ...DEFAULT_FILTER, mine: true }).needsMe).toBe(2);
+  expect(counts(records, user, { ...DEFAULT_FILTER, needsMe: true }).mine).toBe(2);
+});
+
+test("State, Label and Type entries count with the other active parts", () => {
+  const byNeedsMe = counts(records, user, { ...DEFAULT_FILTER, needsMe: true });
+  expect(byNeedsMe.open).toBe(3);
+  expect(byNeedsMe.states).toEqual({ qualification: 0, plan: 1, working: 1, review: 1 });
+  expect(counts(records, user, { ...DEFAULT_FILTER, type: "feature" }).labels).toEqual({
+    Question: 0,
+    auto: 1,
+    ui: 0,
   });
+  expect(counts(records, user, { ...DEFAULT_FILTER, label: "auto" }).types).toEqual({
+    bug: 1,
+    chore: 0,
+    feature: 1,
+  });
+});
+
+test("with Needs me and Mine on, every count is what its choice shows", () => {
+  const f = { ...DEFAULT_FILTER, needsMe: true, mine: true, state: "open" };
+  const n = counts(records, user, f);
+  const shown = (patch: any) => {
+    const g = { ...f, ...patch };
+    const l = listForFilter(g);
+    return runList(l.def, applyFilter(records, g, { user }), { args: l.args }).total;
+  };
+  const { labels, types } = choices(records);
+  const pairs: [number | null, any][] = [
+    [n.needsMe, { needsMe: true }],
+    [n.mine, { mine: true }],
+    [n.open, { state: "open" }],
+    ...Object.entries(n.states).map(([s, c]): [number, any] => [c as number, { state: s }]),
+    ...labels.map((v: string): [number, any] => [n.labels[v], { label: v }]),
+    ...types.map((v: string): [number, any] => [n.types[v], { type: v }]),
+  ];
+  for (const [count, patch] of pairs) expect([patch, count]).toEqual([patch, shown(patch)]);
+});
+
+test("Recently closed keeps today's counts", () => {
+  expect(counts(records, user, { ...DEFAULT_FILTER, state: "closed", needsMe: true })).toEqual(
+    counts(records, user),
+  );
+  expect(counts(records, null, { ...DEFAULT_FILTER, needsMe: true }).mine).toBeNull();
 });
 
 test("closed runs the server list: 50 per page, newest closing first", () => {

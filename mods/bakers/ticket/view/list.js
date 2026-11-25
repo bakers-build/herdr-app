@@ -88,6 +88,8 @@ export default class TicketList {
   server = { key: null, rows: [], more: false, page: -1 };
   /** @type {any[]} the header.tool views */
   tools = [];
+  /** @type {unknown} the shared project the list last followed */
+  followed = null;
 
   /** @param {unknown} _props @param {import("gpui-kit").AsyncContext} cx */
   init(_props, cx) {
@@ -125,6 +127,16 @@ export default class TicketList {
       this.key = key;
       this.page = 0;
       cx.notify();
+    }
+    // The picker, another copy, shares the project it switches to: resolve it here once per value.
+    const sharedProject = shared("bakers.project");
+    if (sharedProject && sharedProject !== this.followed) {
+      this.followed = sharedProject;
+      if (sharedProject !== currentProject()?.uuid)
+        cx.spawn(async (cx) => {
+          await ready();
+          cx.notify();
+        });
     }
     // The rows belong to a project: a switch starts over, and nothing loads before there is one.
     const project = currentProject()?.uuid;
@@ -270,13 +282,14 @@ export default class TicketList {
       .child(this.filterBar());
   }
 
-  /** Needs me, Mine, State, Label, Type and Clear, with the counts of the open tickets. */
+  /** Needs me, Mine, State, Label, Type and Clear; each count is what its choice would show
+   *  with the other active parts of the filter. */
   filterBar() {
     const t = tokens();
     const f = currentFilter();
     const store = getStore();
     const records = store.records();
-    const n = counts(records, store.user);
+    const n = counts(records, store.user, f);
     const values = choices(records);
     /** @param {string} id @param {boolean} on */
     const control = (id, on) =>
@@ -315,6 +328,7 @@ export default class TicketList {
       { label: "Any", action: filterBy({ [field]: null }), current: f[field] === null },
       ...options.map((v) => ({
         label: v,
+        hint: String(n[field === "label" ? "labels" : "types"][v]),
         action: filterBy({ [field]: v }),
         current: f[field] === v,
       })),
