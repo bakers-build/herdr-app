@@ -174,6 +174,18 @@ test("full: header, card and comments", () => {
   ).toMatchObject({ kind: "plan", title: "Plan ready for approval, 12m ago", text: "Plan" });
 });
 
+test("full: the header names the newest open run, as the list and the panel do", () => {
+  const older = { agent: "claude", state: "running", started_at: min(90) / 1000, closed: false };
+  const newer = { agent: "codex", state: "running", started_at: min(10) / 1000, closed: false };
+  for (const runs of [
+    [older, newer],
+    [newer, older],
+  ]) {
+    const d = { ...detail, runs, why: null, since: null };
+    expect(full(d, { terminal: null, now: NOW }).agent.line).toBe("Codex working, 10m");
+  }
+});
+
 test("context: the panel's sections", () => {
   const vm = context(detail, {
     terminal: null,
