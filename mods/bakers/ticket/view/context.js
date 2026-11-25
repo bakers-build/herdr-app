@@ -2,8 +2,8 @@
 // also while a run shows below it; cmd-shift-T), the ticket's work area. It follows the selected ticket
 // (shared bakers.selected), loads it and its activity and draws, top to bottom: the document's
 // header, title, Needs-you card, Agent and conductor, Properties, Description, Acceptance and
-// Summary (each with Edit..., a popup: ticket/form/section), Comments, Activity and Runs in the
-// scroll, the composer pinned below. The document part and its keys (A, E, G, R) are
+// Summary (each with Edit..., a popup: ticket/form/section), Comments, Activity and Runs, all in
+// the one scroll; nothing is pinned below it. The document part and its keys (A, E, G, R) are
 // view/document.js. The panel never takes the focus; its keys work once clicked into.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
@@ -482,7 +482,6 @@ export default class Panel {
               .child(doc.comments(page))
               .children(this.history(vm)),
           ),
-      )
-      .child(doc.composerView());
+      );
   }
 }

@@ -14,6 +14,7 @@ import {
   reset,
   runs,
   texts,
+  tools,
   walk,
 } from "../../harness";
 
@@ -65,20 +66,35 @@ test("title at 18 px, 600", async () => {
   expect(title.calls.font_semibold).toBeDefined();
 });
 
-test("the Needs-you card shows the question with its two answers", async () => {
+test("the Needs-you card shows the question with its one answer, in the run", async () => {
+  env.terminals = [live("t7")];
   const root = (await ticketPanel()).render();
   const card = find(root, "needs-card");
   expect(texts(card)).toEqual([
     "NEEDS YOU",
     "Asked a question, 35m ago",
     "Should an empty cart redirect to the shop home, or show the empty-cart page with suggestions?",
-    "Answer below",
     "Answer in the run",
     "A acts on this card",
   ]);
   expect(card.calls.border_color).toEqual(["accent"]);
   expect(card.calls.rounded).toEqual([8]);
-  expect(find(card, "answer-below").calls.bg).toEqual(["solid"]);
+  expect(find(card, "answer-below")).toBeUndefined();
+  expect(find(card, "answer-in-run").calls.bg).toEqual(["solid"]);
+});
+
+test("an unfrozen ticket labelled Question shows no card", async () => {
+  const tickets = list.map((t) => (t.id === "u41" ? { ...t, frozen: false } : t));
+  const root = (await ticketPanel("SHOP-41", { jsonapi: { tickets } })).render();
+  expect(find(root, "needs-card")).toBeUndefined();
+});
+
+test("a closed ticket draws without a composer and without a card", async () => {
+  const root = (await ticketPanel("SHOP-49")).render();
+  expect(texts(find(root, "doc-header"))[0]).toBe("SHOP-49");
+  expect(find(root, "needs-card")).toBeUndefined();
+  expect(find(root, "composer")).toBeUndefined();
+  expect(texts(root)).not.toContain("cmd-Enter sends");
 });
 
 test("no card when nothing needs you", async () => {
@@ -245,11 +261,25 @@ test("A on a plan card asks before moving to working; nothing is sent before", a
   expect(env.calls.some((c) => c.fn === "exec")).toBe(false);
 });
 
-test("A with a question puts the composer in answer mode and focuses it", async () => {
+test("A with a question shows and focuses the run; nothing is sent", async () => {
+  env.terminals = [live("t7")];
   const copy = await ticketPanel();
+  env.layout = bakersLayout(main);
+  findNode(env.layout, "panel").hidden = false;
+  findNode(env.layout, "panel-body").active = "ticket";
+  env.calls.length = 0;
   key(copy.render(), "a");
-  expect(copy.inner.doc.composer.mode).toBe("answer");
-  expect(copy.inner.doc.composer.inputs.input("body").focused).toBe(true);
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([["pane.focus", { terminal: "t7" }]]);
+  expect(tools().filter(([t]) => t === "bakers_comment_publish")).toEqual([]);
+});
+
+test("A with a question and no live run does nothing", async () => {
+  const copy = await ticketPanel();
+  env.calls.length = 0;
+  expect(() => key(copy.render(), "a")).not.toThrow();
+  expect(runs().filter(([c]) => c === "pane.focus")).toEqual([]);
+  expect(tools().filter(([t]) => !/_(read|list|search)$/.test(t))).toEqual([]);
+  expect(env.calls.some((c) => c.fn === "openOverlay")).toBe(false);
 });
 
 test("Answer in the run and G show and focus the run", async () => {
@@ -329,7 +359,7 @@ test("the Actions button opens the actions palette as cmd-K does", async () => {
   expect(runs()).toEqual([["bakers.actions"]]);
 });
 
-test("the panel draws the whole ticket in order, the composer pinned below the scroll", async () => {
+test("the panel draws the whole ticket in order, nothing pinned below the scroll", async () => {
   const root = (await ticketPanel()).render();
   const order: string[] = [];
   const want = [
@@ -344,15 +374,16 @@ test("the panel draws the whole ticket in order, the composer pinned below the s
     "comments",
     "activity",
     "runs",
-    "composer",
   ];
   walk(root, (n: any) => {
     const id = n?.calls?.id?.[0];
     if (want.includes(id) && !order.includes(id)) order.push(id);
   });
   expect(order).toEqual(want);
-  expect(find(root, "composer").calls.flex_none).toBeDefined();
-  expect(find(find(root, "panel-scroll"), "composer")).toBeUndefined();
+  expect(find(root, "composer")).toBeUndefined();
+  expect(find(root, "composer-form")).toBeUndefined();
+  expect(texts(root)).not.toContain("cmd-Enter sends");
+  expect(root.nodes.at(-1).calls.id).toEqual(["panel-scroll"]);
 });
 
 test("the title's line height is in px: Herdr reads a bare number as a multiple of the text size", async () => {

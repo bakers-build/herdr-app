@@ -1,8 +1,8 @@
 // ticket/view/document: one ticket's document in the panel (view/context.js): the header (ID, state
 // pill and its menu, Frozen, the agent line, Edit, Actions, ...), the title or the edit form, the
-// Needs-you card, the comments and the composer (the comment form). Keys: A acts
-// on the card, E edits, G shows the agent, R moves the run; cmd-Enter and Esc belong to the edit
-// form or the composer while they are used. It never takes the focus on its own.
+// Needs-you card and the comments. Comments are not written from here. Keys: A acts on the card,
+// E edits, G shows the agent, R moves the run; cmd-Enter and Esc belong to the edit form while it
+// is open. It never takes the focus on its own.
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { notify, run } from "herdr";
@@ -10,7 +10,6 @@ import { runReason, runTerminal, showAgent } from "../terminal.js";
 import { ticketActions } from "../operations/actions.js";
 import { perform } from "../../core/actions.js";
 import { classify } from "../../core/errors.js";
-import { tokens } from "../../ui/theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
 import { submit } from "../../form/submit.js";
@@ -27,12 +26,10 @@ import { statusLine } from "../../ui/components/status-line.js";
 import { heading, mono } from "../../ui/components/text.js";
 import { commentBody } from "../repository.js";
 import { getStore, ready } from "../store.js";
-import { commentForm } from "../form/comment.js";
 import { editForm } from "../form/edit.js";
 import { moreItems } from "../operations/more.js";
 import { STATE_MENU_FOOTER, stateItems } from "../operations/state.js";
 
-/** A form in place: its definition, state and inputs. */
 /** A form in place: its definition, state and inputs. */
 class Inline {
   /** @param {any} def */
@@ -40,20 +37,10 @@ class Inline {
     this.def = def;
     this.state = new FormState(def);
     this.inputs = new FormInputs(def, this.state);
-    this.focused = false;
-    /** @type {string | null} */
-    this.mode = null;
-    const text = Object.values(this.inputs.inputs)[0];
-    text?.on("focus", () => {
-      this.focused = true;
-    });
-    text?.on("blur", () => {
-      this.focused = false;
-    });
   }
 }
 
-/** One ticket's document: its detail, the open edit form, the composer and the keys. The panel
+/** One ticket's document: its detail, the open edit form and the keys. The panel
  *  (view/context.js) makes one per followed ticket and draws its parts. */
 export class TicketDocument {
   /** @type {any} */
@@ -66,14 +53,11 @@ export class TicketDocument {
   bodyFailure = null;
   /** @type {Inline | null} the open edit form */
   editor = null;
-  /** @type {Inline} the comment form; init makes it */
-  composer = /** @type {any} */ (null);
 
   /** @param {string} id @param {() => Promise<void> | void} [reload] the panel's reload after a send */
   constructor(id, reload) {
     this.id = id;
     this.reload = reload ?? (() => this.load());
-    this.composer = this.makeComposer("comment");
     this.seed();
   }
 
@@ -86,13 +70,6 @@ export class TicketDocument {
   /** The detail is the list's row only: nothing edits or moves the ticket yet. */
   get partial() {
     return Boolean(this.detail?.partial);
-  }
-
-  /** @param {"comment" | "answer"} mode @param {string} [text] */
-  makeComposer(mode, text = "") {
-    const c = new Inline(commentForm(this.id, mode, text));
-    c.mode = mode;
-    return c;
   }
 
   async load() {
@@ -162,17 +139,6 @@ export class TicketDocument {
     return ticketActions(this.detail, reason).find((a) => a.keys?.toLowerCase() === k) ?? null;
   }
 
-  answer() {
-    if (this.composer.mode !== "answer")
-      this.composer = this.makeComposer("answer", this.composer.state.values.body);
-    this.composer.inputs.focus("body");
-  }
-
-  plain() {
-    if (this.composer.mode !== "comment")
-      this.composer = this.makeComposer("comment", this.composer.state.values.body);
-  }
-
   edit() {
     if (this.detail && !this.partial && !this.editor) {
       this.editor = new Inline(editForm(this.detail.ticket));
@@ -180,16 +146,16 @@ export class TicketDocument {
     }
   }
 
-  /** A: answer a question, approve a plan. */
+  /** A: a question is answered in the run (shown when it is live here); a plan is approved. */
   act() {
     const d = this.detail;
     if (this.partial) return;
-    if (d?.why === "Asked a question") this.answer();
+    if (d?.why === "Asked a question") this.showAgent();
     else if (d?.why === "Plan ready for approval")
       openForm("state", { ticket: this.id, from: d.ticket.state, to: "working" });
   }
 
-  /** Sends an inline form with a variant; afterwards the composer is plain again. @param {Inline} f @param {string} variant @param {import("gpui-kit").Context} cx */
+  /** Sends the edit form with a variant, then closes it. @param {Inline} f @param {string} variant @param {import("gpui-kit").Context} cx */
   send(f, variant, cx) {
     f.state.values.variant = variant;
     cx.spawn(async (cx) => {
@@ -197,7 +163,6 @@ export class TicketDocument {
       if (r.ok) {
         if (r.success) notify({ title: r.success, level: "success" });
         if (f === this.editor) this.editor = null;
-        else this.composer = this.makeComposer("comment");
         await this.reload();
       }
       cx.notify();
@@ -208,14 +173,12 @@ export class TicketDocument {
   onKey(e, cx) {
     const k = e.keystroke;
     if (this.partial) return false;
-    const active = this.editor ?? (this.composer.focused ? this.composer : null);
+    const active = this.editor;
     if (active) {
       const what = formKey(k, "inline");
       if (what === "submit") this.send(active, active.def.defaultVariant, cx);
-      else if (what === "cancel") {
-        if (active === this.editor) this.editor = null;
-        else this.plain();
-      } else return false;
+      else if (what === "cancel") this.editor = null;
+      else return false;
     } else if (k === "a") this.act();
     else if (k === "e") this.edit();
     else {
@@ -288,19 +251,10 @@ export class TicketDocument {
       card.kind === "question"
         ? [
             button(
-              "answer-below",
-              "Answer below",
-              (_e, cx) => {
-                this.answer();
-                cx.notify();
-              },
-              { primary: true },
-            ),
-            button(
               "answer-in-run",
               "Answer in the run",
               why ? null : () => this.showAgent(),
-              why ? { disabled: true, reason: why } : {},
+              why ? { primary: true, disabled: true, reason: why } : { primary: true },
             ),
           ]
         : card.kind === "plan"
@@ -339,28 +293,6 @@ export class TicketDocument {
         vm.comments.map((/** @type {any} */ c) =>
           entry(c, this.open.has(c.key), (cx) => this.toggle(c.key, cx)),
         ),
-      );
-  }
-
-  composerView() {
-    const t = tokens();
-    const answering = this.composer.mode === "answer";
-    return h_flex()
-      .id("composer")
-      .flex_none()
-      .justify_center()
-      .px(12)
-      .py(10)
-      .when(answering, (el) => el.border_t_2().border_color(t.accent))
-      .when(!answering, (el) => el.border_t(1).border_color(t.border))
-      .child(
-        v_flex()
-          .w_full()
-          .child(
-            inlineForm("composer-form", this.composer.def, this.composer.inputs, (v, cx) =>
-              this.send(this.composer, v, cx),
-            ),
-          ),
       );
   }
 }

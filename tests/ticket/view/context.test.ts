@@ -389,11 +389,11 @@ test("a selected ticket shows its header and title from the list row while the d
   expect(texts(root)).not.toContain("Loading SHOP-56...");
   expect(texts(root)).toContain("Loading...");
   // Nothing edits or moves a ticket that is not read yet.
-  expect(find(root, "composer")).toBeUndefined();
+  expect(find(root, "edit").calls.disabled).toEqual([true]);
   release();
   await flush();
   expect(texts(copy.render())).not.toContain("Loading...");
-  expect(find(copy.render(), "composer")).toBeDefined();
+  expect(find(copy.render(), "edit").calls.disabled).toBeUndefined();
 });
 
 test("a ticket read before shows at once and refreshes in the background", async () => {
