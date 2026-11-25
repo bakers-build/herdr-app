@@ -12,9 +12,6 @@ export const comment = (ticket, body) => publish(ticket, "comment", body);
 /** Replaces the description whole (no revision check in the API). @param {string} ticket @param {string} description */
 export const describe = (ticket, description) =>
   call("bakers_ticket_update", { ticket, description });
-/** After an answer: unfreeze and remove the label Question. @param {string} ticket */
-export const resume = (ticket) =>
-  call("bakers_ticket_update", { ticket, frozen: false, labels_remove: ["Question"] });
 /** @param {string} ticket @param {{ title: string, description: string }} fields */
 export const edit = (ticket, fields) => call("bakers_ticket_update", { ticket, ...fields });
 /** @param {string} ticket @param {string} state */

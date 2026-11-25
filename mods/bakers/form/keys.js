@@ -1,4 +1,4 @@
-// form/keys: the same keys for every form. Inline forms (the composer, the editor) send on
+// form/keys: the same keys for every form. Inline forms (the title and description editor) send on
 // cmd-Enter and cancel on Esc. A dialog never writes from a key: Enter takes the default,
 // which keeps things as they are, and Esc does the same; only the primary button writes.
 // A dialog that edits text (keys: "inline", ui/form/dialog) takes the inline keys instead.
