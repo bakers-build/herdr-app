@@ -52,6 +52,8 @@ export function context(detail, o) {
       type: tk.type ?? "-",
       recipe: tk.recipe ?? "-",
       labels: tk.labels ?? [],
+      // the server refuses label changes on a closed ticket
+      labelsLocked: isClosed(tk),
       frozen: tk.frozen
         ? {
             text: `Yes${frozenSince ? `, ${age(o.now - frozenSince)}` : ""}`,

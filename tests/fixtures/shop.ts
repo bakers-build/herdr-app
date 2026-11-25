@@ -130,6 +130,9 @@ export function resources(
     conductors?: any[];
     projects?: any[]; // { id, name, key, workspace?: { id, name } | null }
     users?: any[];
+    // terms of the project's workspace w1 no ticket carries, and terms of another workspace
+    catalog?: { labels?: string[]; types?: string[] };
+    foreign?: { labels?: string[]; types?: string[] };
   } = {},
 ): Resource[] {
   const tickets = o.tickets ?? list;
@@ -159,11 +162,26 @@ export function resources(
     out.push({ type: "bb_workspace--bb_workspace", id, attributes: { name } });
   }
   const terms = new Map<string, Resource>();
-  const term = (bundle: string, name: string) => {
-    const id = `${bundle}-${name}`;
-    if (!terms.has(id)) terms.set(id, { type: `bb_term--${bundle}`, id, attributes: { name } });
+  const term = (bundle: string, name: string, workspace = "w1") => {
+    const id = workspace === "w1" ? `${bundle}-${name}` : `${bundle}-${workspace}-${name}`;
+    if (!terms.has(id))
+      terms.set(id, {
+        type: `bb_term--${bundle}`,
+        id,
+        attributes: { name },
+        relationships: {
+          workspace_id: { data: ref("bb_workspace--bb_workspace", workspace) },
+        },
+      });
     return ref(`bb_term--${bundle}`, id);
   };
+  for (const [set, workspace] of [
+    [o.catalog, "w1"],
+    [o.foreign, "w2"],
+  ] as const) {
+    for (const l of set?.labels ?? []) term("label", l, workspace);
+    for (const t of set?.types ?? []) term("type", t, workspace);
+  }
   for (const t of tickets) {
     const extra = read[t.id] ?? {};
     const comments = extra.comments ?? [];
@@ -282,9 +300,17 @@ export function resources(
 export function backend(extra: Record<string, any> = {}) {
   const { jsonapi, ...tools } = extra;
   cli(tools);
+  // hide: resource types the server does not serve; omit: types it leaves out of `included`
+  // (Drupal drops includes the reader may not view).
+  const { hide = [], omit = [], ...data } = jsonapi ?? {};
   // Built per request, so a test may change the data between requests.
   env.fetch = (url: string, opts?: any) =>
-    jsonapiServer(resources(jsonapi ?? {}), undefined, "u-me")(url, opts);
+    jsonapiServer(
+      resources(data).filter((r) => !hide.includes(r.type)),
+      undefined,
+      "u-me",
+      { omit },
+    )(url, opts);
 }
 
 export function activeSpace(folder = "/work/acme-shop") {

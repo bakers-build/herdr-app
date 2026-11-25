@@ -187,6 +187,18 @@ test("Type and Recipe save at once through ticket_classify", async () => {
   expect(writes()).toEqual([["bakers_ticket_classify", { ticket: "SHOP-41", type: "feature" }]]);
 });
 
+// Developer live check: the server refuses label changes on a closed ticket, so its panel offers none.
+test("a closed ticket's labels have no × and no +", async () => {
+  const tickets = list.map((t) =>
+    t.identifier === "SHOP-41" ? { ...t, state: "done", closed: true } : t,
+  );
+  const copy = await panel(true, { jsonapi: { tickets } });
+  const root = copy.render();
+  expect(findText(root, "Question")).toBeDefined();
+  expect(find(root, "label-add")).toBeUndefined();
+  expect(find(root, "label-x-Question")).toBeUndefined();
+});
+
 test("a label's × removes it at once; + opens the label picker", async () => {
   const copy = await panel();
   env.calls.length = 0;

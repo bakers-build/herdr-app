@@ -11,6 +11,7 @@ import { h_flex, v_flex } from "gpui-base";
 import { closeOverlay, notify, props } from "herdr";
 import { get } from "../../core/registry.js";
 import { openRoute } from "../../core/router.js";
+import { claimLater } from "../keyboard.js";
 import { icons, tokens, UI_FONT } from "../theme.js";
 import { formKey } from "../../form/keys.js";
 import { FormState } from "../../form/state.js";
@@ -36,6 +37,11 @@ export default class Dialog {
     this.error = null;
     /** @type {"loading" | "ready" | null} the frame whose first layout took the keyboard */
     this.frame = null;
+    /** True once the dialog closed; the late claim then takes nothing. */
+    this.closed = false;
+    /** True after a press inside: the person placed the keyboard, and the late claim leaves it. */
+    this.pressed = false;
+    claimLater(cx, () => this.takeKeyboard());
     cx.spawn(async (cx) => {
       try {
         const build = get("form", props()?.form)?.build;
@@ -52,12 +58,16 @@ export default class Dialog {
   }
 
   close() {
+    this.closed = true;
     closeOverlay(props().overlay);
   }
 
   /** The first text field, or the dialog itself when it has none. Esc reaches the dialog only on
-   *  the focus path, and init's focus comes before the first frame, where it can land on nothing. */
+   *  the focus path, and init's focus comes before the first frame, where it can land on nothing;
+   *  after a Herdr start or after R the first layout's can too, so a late claim (ui/keyboard.js)
+   *  follows. Nothing once the dialog closed or a press inside placed the keyboard. */
   takeKeyboard() {
+    if (this.closed || this.pressed) return;
     if (this.inputs && Object.keys(this.inputs.inputs).length) this.inputs.focus();
     else this.handle?.focus();
   }
@@ -93,7 +103,11 @@ export default class Dialog {
       .bg(t.popover)
       .font_family(UI_FONT)
       .text_size(13)
-      .text_color(t.foreground);
+      .text_color(t.foreground)
+      // Propagates, so a field or button under the press still gets it.
+      .on_mouse_down("left", () => {
+        this.pressed = true;
+      });
     // init sets the handle; def, state and inputs are set together, without an await between.
     const handle = this.handle;
     if (!this.def || !this.state || !this.inputs || !handle)

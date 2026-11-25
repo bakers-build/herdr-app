@@ -275,3 +275,33 @@ export async function currentUser() {
     return null;
   }
 }
+
+/**
+ * The labels and ticket types of the project's workspace, every page: names sorted for the
+ * menus, and each term's uuid to its name for tickets the server sent without them.
+ * @param {string} project
+ * @returns {Promise<{ labels: string[], types: string[], names: Record<string, string> }>}
+ */
+export async function listCatalog(project) {
+  const p = await read("bb_project", "bb_project", project, ["group_id"]);
+  const workspace = p?.group_id?.workspace_id?.id;
+  if (!workspace) throw new Error("The project's workspace could not be read.");
+  /** @param {string} bundle */
+  const terms = async (bundle) =>
+    (
+      await search("bb_term", bundle, {
+        filter: [["workspace_id.id", "=", workspace]],
+        limit: 50,
+        all: true,
+      })
+    )
+      .map((t) => ({ uuid: t.id, name: nameOf(t) }))
+      .filter((t) => t.name);
+  const [labels, types] = await Promise.all([terms("label"), terms("type")]);
+  const sorted = (/** @type {any[]} */ v) => [...new Set(v.map((t) => String(t.name)))].sort();
+  return {
+    labels: sorted(labels),
+    types: sorted(types),
+    names: Object.fromEntries([...labels, ...types].map((t) => [t.uuid, String(t.name)])),
+  };
+}

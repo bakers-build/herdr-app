@@ -69,6 +69,70 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     }
   });
 
+  test("listOpen keeps every label and the type the server relates to a ticket", async () => {
+    const { token: bearer } = await token();
+    const get = async (path: string) => {
+      const r = await realFetch(`${URL}/jsonapi/${path}`, {
+        headers: { Authorization: `Bearer ${bearer}`, Accept: "application/vnd.api+json" },
+      });
+      return { status: r.status, doc: (await r.json().catch(() => null)) as any };
+    };
+    const q = new URLSearchParams({
+      "filter[p][condition][path]": "project_id.id",
+      "filter[p][condition][value]": PROJECT,
+      "filter[c][condition][path]": "closed",
+      "filter[c][condition][value]": "0",
+      include: "runs,labels,ticket_type",
+      "page[limit]": "50",
+    });
+    const raw = await get(`bb_ticket/bb_ticket?${q}`);
+    // The raw shape, for the record (HERDRAPP-23): omitted includes and the terms' fields.
+    const included = raw.doc?.included ?? [];
+    const terms = included.filter((r: any) => String(r.type).startsWith("bb_term"));
+    console.log(
+      "HERDRAPP-23 raw listOpen:",
+      JSON.stringify({
+        status: raw.status,
+        meta: raw.doc?.meta ?? null,
+        included: [...new Set(included.map((r: any) => r.type))],
+        term: terms[0] ?? null,
+        labelled: (raw.doc?.data ?? [])
+          .filter((t: any) => t.relationships?.labels?.data?.length)
+          .map((t: any) => ({
+            identifier: t.attributes.identifier,
+            labels: t.relationships.labels.data,
+            ticket_type: t.relationships.ticket_type?.data ?? null,
+          })),
+      }),
+    );
+    for (const bundle of ["label", "type"]) {
+      const one = await get(`bb_term/${bundle}?page[limit]=2`);
+      console.log(
+        `HERDRAPP-23 raw bb_term/${bundle}:`,
+        JSON.stringify({ status: one.status, meta: one.doc?.meta ?? null, data: one.doc?.data }),
+      );
+    }
+
+    const byId = new Map((raw.doc?.data ?? []).map((t: any) => [t.id, t]));
+    const list = await tickets.listOpen(PROJECT);
+    for (const t of list) {
+      const rel = (byId.get(t.id) as any)?.relationships;
+      if (!rel) continue;
+      expect(t.labels).toHaveLength(rel.labels?.data?.length ?? 0);
+      if (rel.ticket_type?.data) expect(typeof t.type).toBe("string");
+    }
+  });
+
+  test("listCatalog: the labels and types of the project's workspace, each named by uuid", async () => {
+    const c = await tickets.listCatalog(PROJECT);
+    expect(c.labels.length).toBeGreaterThan(0);
+    expect(c.types.length).toBeGreaterThan(0);
+    expect(c.labels).toEqual([...c.labels].sort());
+    for (const name of [...c.labels, ...c.types]) expect(Object.values(c.names)).toContain(name);
+    // every type an open ticket carries is in the catalog
+    for (const t of await tickets.listOpen(PROJECT)) if (t.type) expect(c.types).toContain(t.type);
+  });
+
   test("sort, limit and offset page through the tickets without overlap", async () => {
     const q = { sort: "-changed", limit: 2 };
     const first = await api.search("bb_ticket", "bb_ticket", { ...q, offset: 0 });

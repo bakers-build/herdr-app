@@ -6,6 +6,7 @@ import { h_flex, v_flex } from "gpui-base";
 import { closeOverlay, props } from "herdr";
 import { perform } from "../../core/actions.js";
 import { openRoute } from "../../core/router.js";
+import { claimLater } from "../keyboard.js";
 import { tokens, UI_FONT } from "../theme.js";
 import { chip } from "./chip.js";
 
@@ -58,6 +59,9 @@ export function menuRow(t, it, hot, choose) {
     );
 }
 
+/** The rows' height before they scroll: about twelve rows. */
+const ROWS_MAX_H = 320;
+
 /** A popup frame with keyboard choice over `rows`; the slices' pickers use it too. */
 export class PopupList {
   /** @type {any} */ handle = null;
@@ -67,6 +71,11 @@ export class PopupList {
   typing = false;
   /** True after the first layout, which takes the keyboard; a later resize leaves it. */
   mounted = false;
+  /** True once the popup closed; the late claim then takes nothing. */
+  closed = false;
+  /** True after a press inside: the person placed the keyboard, and the late claim leaves it.
+   *  The press propagates, so the row under it still gets its click. */
+  pressed = false;
 
   /** @param {unknown} _props @param {any} cx */
   init(_props, cx) {
@@ -75,10 +84,20 @@ export class PopupList {
     this.at = 0;
     this.typing = false;
     this.mounted = false;
+    this.closed = false;
+    this.pressed = false;
+    claimLater(cx, () => this.takeKeyboard());
   }
 
   close() {
+    this.closed = true;
     closeOverlay(props().overlay);
+  }
+
+  /** Gives focusTarget() the keyboard, unless the popup closed or a press inside placed it. */
+  takeKeyboard() {
+    if (this.closed || this.pressed) return;
+    this.focusTarget()?.focus();
   }
 
   /** What takes the keyboard: the popup itself, or a picker's text field.
@@ -88,11 +107,12 @@ export class PopupList {
   }
 
   /** init's focus comes before the first frame and can land on nothing, so the first layout takes
-   *  the keyboard again; Esc reaches the popup only on the focus path. */
+   *  the keyboard again, and so does the late claim (ui/keyboard.js): after a Herdr start or after
+   *  R both early claims can miss. Esc reaches the popup only on the focus path. */
   laidOut() {
     if (this.mounted) return;
     this.mounted = true;
-    this.focusTarget()?.focus();
+    this.takeKeyboard();
   }
 
   /** @returns {any[]} rows with key, label and choose(cx) */
@@ -132,6 +152,9 @@ export class PopupList {
       .text_color(t.foreground)
       .track_focus(this.handle)
       .on_size_change(() => this.laidOut())
+      .on_mouse_down("left", () => {
+        this.pressed = true;
+      })
       .on_key_down((e, cx) => {
         const n = choosable.length;
         if (this.onKey(e)) {
@@ -148,7 +171,16 @@ export class PopupList {
         cx.notify();
       })
       .when(Boolean(top), (el) => el.child(top))
-      .children(items.map((it) => menuRow(t, it, choosable[this.at] === it, (cx) => it.choose(cx))))
+      .child(
+        // a long list (a workspace's labels) scrolls instead of running off the window
+        v_flex()
+          .id("rows")
+          .max_h(ROWS_MAX_H)
+          .overflow_y_scrollbar()
+          .children(
+            items.map((it) => menuRow(t, it, choosable[this.at] === it, (cx) => it.choose(cx))),
+          ),
+      )
       .when(Boolean(bottom), (el) => el.child(bottom));
   }
 }

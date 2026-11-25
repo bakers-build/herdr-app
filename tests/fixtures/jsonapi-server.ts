@@ -17,6 +17,7 @@ export function jsonapiServer(
   resources: Resource[],
   base = "https://bakers.test",
   me: string | null = null,
+  o: { omit?: string[] } = {},
 ) {
   const byKey = new Map(resources.map((r) => [`${r.type}:${r.id}`, r]));
   const get = (x: any) => (x ? byKey.get(`${x.type}:${x.id}`) : undefined);
@@ -71,7 +72,7 @@ export function jsonapiServer(
           for (const y of Array.isArray(d) ? d : d ? [d] : []) {
             const res = get(y);
             if (res) {
-              into.set(`${res.type}:${res.id}`, res);
+              if (!o.omit?.includes(res.type)) into.set(`${res.type}:${res.id}`, res);
               next.push(res);
             }
           }
