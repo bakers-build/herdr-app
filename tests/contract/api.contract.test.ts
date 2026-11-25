@@ -122,6 +122,16 @@ describe.skipIf(!URL)("contract with the bakers server", () => {
     }
   });
 
+  test("listCatalog: the labels and types of the project's workspace, each named by uuid", async () => {
+    const c = await tickets.listCatalog(PROJECT);
+    expect(c.labels.length).toBeGreaterThan(0);
+    expect(c.types.length).toBeGreaterThan(0);
+    expect(c.labels).toEqual([...c.labels].sort());
+    for (const name of [...c.labels, ...c.types]) expect(Object.values(c.names)).toContain(name);
+    // every type an open ticket carries is in the catalog
+    for (const t of await tickets.listOpen(PROJECT)) if (t.type) expect(c.types).toContain(t.type);
+  });
+
   test("sort, limit and offset page through the tickets without overlap", async () => {
     const q = { sort: "-changed", limit: 2 };
     const first = await api.search("bb_ticket", "bb_ticket", { ...q, offset: 0 });

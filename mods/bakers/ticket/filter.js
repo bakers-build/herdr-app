@@ -31,6 +31,11 @@ export const setFilter = (patch) => setShared("bakers.filter", { ...currentFilte
 export const clearFilter = () => setShared("bakers.filter", { ...DEFAULT_FILTER });
 
 /** @typedef {{ name: string, names?: string[] }} User the signed-in user; names: every name the assignee may show */
+/**
+ * @typedef {{ labels: string[], types: string[], names?: Record<string, string>, error: unknown }} Catalog
+ * the workspace's labels and ticket types (ticket/repository.js listCatalog), names: term uuid
+ * -> name; error when it could not be read
+ */
 
 /** Whether a record is assigned to the user, by any of the user's names. @param {any} r @param {User} user */
 const assignedTo = (r, user) =>
@@ -69,14 +74,14 @@ export function applyFilter(records, f, { user }) {
  * The counts next to the controls: for each choice, the open records the list would show with
  * that choice and the other active parts of the filter. Recently closed lists the server's
  * records, which these counts cannot see, so they then count as if no part were active.
- * @param {any[]} records @param {User | null} user @param {Filter} [filter]
+ * @param {any[]} records @param {User | null} user @param {Filter} [filter] @param {Catalog | null} [catalog]
  */
-export function counts(records, user, filter = DEFAULT_FILTER) {
+export function counts(records, user, filter = DEFAULT_FILTER, catalog = null) {
   const base = filter.state === "closed" ? DEFAULT_FILTER : filter;
   const open = records.filter((r) => !r.closed);
   const n = (/** @type {Partial<Filter>} */ patch) =>
     applyFilter(open, { ...base, ...patch }, { user }).length;
-  const { labels, types } = choices(records);
+  const { labels, types } = choices(records, catalog);
   return {
     needsMe: n({ needsMe: true }),
     mine: user ? n({ mine: true }) : null,
@@ -87,12 +92,31 @@ export function counts(records, user, filter = DEFAULT_FILTER) {
   };
 }
 
-/** The labels and types present in the open records, for the menus. @param {any[]} records */
-export function choices(records) {
+/**
+ * The values of the Label and Type menus: the workspace's catalog with those the open records
+ * carry, so a value outside the catalog, or every value when the catalog is missing, still shows.
+ * @param {any[]} records @param {Catalog | null} [catalog]
+ */
+export function choices(records, catalog = null) {
   const open = records.filter((r) => !r.closed);
   const sorted = (/** @type {Iterable<string>} */ v) => [...new Set(v)].sort();
   return {
-    labels: sorted(open.flatMap((r) => r.labels ?? [])),
-    types: sorted(open.map((r) => r.type).filter(Boolean)),
+    labels: sorted([...(catalog?.labels ?? []), ...open.flatMap((r) => r.labels ?? [])]),
+    types: sorted([...(catalog?.types ?? []), ...open.map((r) => r.type).filter(Boolean)]),
   };
+}
+
+/**
+ * Why a Label or Type menu, or the label picker, has no value to offer: the catalog is still
+ * loading, could not be read, or holds none. Shown as a disabled row, never a bare empty menu.
+ * @param {"label" | "type"} field @param {Catalog | null} catalog
+ */
+export function noValues(field, catalog) {
+  const what = field === "label" ? "labels" : "types";
+  if (!catalog) return `Loading ${what}`;
+  if (catalog.error) {
+    const e = /** @type {any} */ (catalog.error);
+    return `${what === "labels" ? "Labels" : "Types"} could not be loaded: ${e?.message ?? e}`;
+  }
+  return `No ${what} in this workspace`;
 }

@@ -336,3 +336,76 @@ test("a user read finishing after a project switch is not kept for the new proje
   expect(store.project).toBe("p2");
   expect(store.user).toBeNull();
 });
+
+// HERDRAPP-23: the workspace catalog (labels, types) loads with the tickets, apart from them.
+test("a refresh reads the project's catalog with the tickets and keeps it", async () => {
+  const api = fakeApi({
+    listCatalog: async (p: string) => {
+      api.calls.push(`catalog ${p}`);
+      return { labels: ["auto", "idea"], types: ["bug"] };
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  expect(store.catalog).toBeNull();
+  await store.load("p1");
+  expect(api.calls).toEqual(["list p1", "plans p1", "catalog p1"]);
+  expect(store.catalog).toEqual({
+    labels: ["auto", "idea"],
+    types: ["bug"],
+    names: {},
+    error: null,
+  });
+});
+
+test("a failing catalog read keeps its error and leaves the tickets loading", async () => {
+  const api = fakeApi({
+    listCatalog: async () => {
+      throw new Error("HTTP 403");
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  await store.load("p1");
+  expect(store.error).toBeNull();
+  expect(store.records().length).toBe(6);
+  expect(store.catalog.labels).toEqual([]);
+  expect(store.catalog.types).toEqual([]);
+  expect(store.catalog.error.message).toBe("HTTP 403");
+});
+
+test("a project switch forgets the old project's catalog", async () => {
+  let gate: (() => void) | null = null;
+  const api = fakeApi({
+    listCatalog: async (p: string) => {
+      if (p === "p2") await new Promise<void>((r) => (gate = r));
+      return { labels: [p], types: [] };
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  await store.load("p1");
+  expect(store.catalog.labels).toEqual(["p1"]);
+  const switching = store.load("p2");
+  expect(store.catalog).toBeNull();
+  (gate as unknown as () => void)();
+  await switching;
+  expect(store.catalog.labels).toEqual(["p2"]);
+});
+
+test("a failed catalog read keeps the project's last good catalog", async () => {
+  let fail = false;
+  const api = fakeApi({
+    listCatalog: async () => {
+      if (fail) throw new Error("HTTP 502");
+      return { labels: ["auto"], types: ["bug"], names: { l1: "auto" } };
+    },
+  });
+  const store = createStore(api, { now: () => NOW });
+  await store.load("p1");
+  fail = true;
+  await store.refresh();
+  expect(store.catalog).toEqual({
+    labels: ["auto"],
+    types: ["bug"],
+    names: { l1: "auto" },
+    error: null,
+  });
+});

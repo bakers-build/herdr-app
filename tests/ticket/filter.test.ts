@@ -171,6 +171,25 @@ test("with Needs me and Mine on, every count is what its choice shows", () => {
   for (const [count, patch] of pairs) expect([patch, count]).toEqual([patch, shown(patch)]);
 });
 
+// HERDRAPP-23: the menus offer the workspace's catalog, also values no open ticket carries.
+const catalog = { labels: ["auto", "human-review", "idea"], types: ["bug", "idea"], error: null };
+
+test("choices: the catalog's labels and types with the open tickets' own, sorted once each", () => {
+  expect(choices(records, catalog)).toEqual({
+    labels: ["Question", "auto", "human-review", "idea", "ui"],
+    types: ["bug", "chore", "feature", "idea"],
+  });
+  expect(choices(records, null)).toEqual(choices(records));
+});
+
+test("counts: a catalog value no open ticket carries counts 0, under the same rule", () => {
+  const n = counts(records, user, DEFAULT_FILTER, catalog);
+  expect(n.labels).toEqual({ Question: 1, auto: 2, "human-review": 0, idea: 0, ui: 1 });
+  expect(n.types).toEqual({ bug: 2, chore: 1, feature: 2, idea: 0 });
+  const byType = counts(records, user, { ...DEFAULT_FILTER, type: "feature" }, catalog);
+  expect(byType.labels).toEqual({ Question: 0, auto: 1, "human-review": 0, idea: 0, ui: 0 });
+});
+
 test("Recently closed keeps today's counts", () => {
   expect(counts(records, user, { ...DEFAULT_FILTER, state: "closed", needsMe: true })).toEqual(
     counts(records, user),

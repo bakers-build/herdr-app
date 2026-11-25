@@ -1,15 +1,18 @@
 // ticket/store: the tickets of the window's project, in memory, shared by every copy of the
 // mod (created on first use, never at module top level, AGENTS.md). A refresh reads the open
 // tickets with the selected one (also when closed), and the open tickets' plan comments, and
-// derives who needs you from them.
+// derives who needs you from them. Beside them it reads the project's workspace catalog (labels
+// and ticket types) for the menus; a failed catalog read is kept as its error and never fails
+// the tickets.
 import { setShared } from "herdr";
 import { selectedTicket } from "./tabs.js";
 import { ensureProject, projectError } from "../project/state.js";
 import * as repository from "./repository.js";
+import { named } from "./model.js";
 import { activeRun, deriveWhy, isClosed, since } from "./rules.js";
 
 /**
- * @param {any} api the loaders (listOpen, planComments, readTicket)
+ * @param {any} api the loaders (listOpen, planComments, readTicket; listCatalog when served)
  * @param {{ now?: () => number, tabs?: () => string[] }} [options] tabs: identifiers read with the open tickets (the selected one)
  */
 export function createStore(api, options = {}) {
@@ -41,6 +44,16 @@ export function createStore(api, options = {}) {
     })();
     return readingUser;
   };
+  /** The project's catalog, or its error with no values; null when the api serves none. @param {string} project */
+  const readCatalog = async (project) => {
+    if (!api.listCatalog) return null;
+    try {
+      const c = await api.listCatalog(project);
+      return { labels: c?.labels ?? [], types: c?.types ?? [], names: c?.names ?? {}, error: null };
+    } catch (error) {
+      return { labels: [], types: [], names: {}, error };
+    }
+  };
   /** @type {any} */
   const store = {
     project: null,
@@ -50,6 +63,8 @@ export function createStore(api, options = {}) {
     updated: null,
     /** @type {{ uuid: string, name: string, names: string[] } | null} the signed-in user */
     user: null,
+    /** @type {import("./filter.js").Catalog | null} the workspace's labels and types; null until read */
+    catalog: null,
 
     /** @param {string} project */
     async load(project) {
@@ -58,6 +73,7 @@ export function createStore(api, options = {}) {
         details.clear();
         facts.clear();
         store.user = null;
+        store.catalog = null;
       }
       store.project = project;
       await store.refresh();
@@ -67,11 +83,11 @@ export function createStore(api, options = {}) {
     async refresh() {
       if (!store.project) return;
       store.loading = true;
+      const project = store.project;
+      const reads = Promise.all([api.listOpen(project, tabs()), api.planComments(project)]);
+      const catalog = readCatalog(project);
       try {
-        const [list, plans] = await Promise.all([
-          api.listOpen(store.project, tabs()),
-          api.planComments(store.project),
-        ]);
+        const [list, plans] = await reads;
         facts.clear();
         for (const t of list) {
           const comments = plans.get(t.id) ?? [];
@@ -86,13 +102,20 @@ export function createStore(api, options = {}) {
       } finally {
         store.loading = false;
       }
+      const read = await catalog;
+      if (read && store.project === project) {
+        // A failed read keeps the last good catalog of the project; the error shows only without one.
+        if (!read.error || !store.catalog || store.catalog.error) store.catalog = read;
+        const names = store.catalog.names;
+        store.tickets = store.tickets.map((/** @type {any} */ t) => named(t, names));
+      }
       for (const fn of listeners) fn(store);
       await readUser();
     },
 
     /** Reads one ticket with everything a tab or the panel shows. @param {string} id @param {boolean} [byUuid] */
     async enrich(id, byUuid) {
-      const ticket = await api.readTicket(id, byUuid);
+      const ticket = named(await api.readTicket(id, byUuid), store.catalog?.names);
       const comments = ticket?.comments ?? [];
       const runs = ticket?.runs ?? [];
       const why = deriveWhy(ticket, comments, runs);
