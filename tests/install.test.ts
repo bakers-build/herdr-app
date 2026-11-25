@@ -1,7 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, mkdir, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import "./harness";
 
 const { bakersLayout, mergeKeys, BAKERS_KEYS } = await import("../scripts/layout.js");
@@ -186,14 +187,24 @@ test("install copies the mods, writes the bakers layout and merges keys; --dry-r
     JSON.stringify({ global: { "cmd-shift-o": "pane.split:right" } }),
   );
   const lines: string[] = [];
-  const dry = await install({ home, dryRun: true, log: (l: string) => lines.push(l) });
+  const dry = await install({
+    home,
+    herdr: fakeHerdr().run,
+    dryRun: true,
+    log: (l: string) => lines.push(l),
+  });
   expect(lines[0]).toBe("would install bakers 0.0.0-dev");
   expect(lines.at(-1)).toEndWith("(bakers 0.0.0-dev)");
   expect(dry.version).toBe("0.0.0-dev");
   expect(dry.written).toEqual([]);
   expect(dry.conflicts).toEqual(["cmd-shift-o is pane.split:right, not bakers.goto"]);
   lines.length = 0;
-  const done = await install({ home, dryRun: false, log: (l: string) => lines.push(l) });
+  const done = await install({
+    home,
+    herdr: fakeHerdr().run,
+    dryRun: false,
+    log: (l: string) => lines.push(l),
+  });
   expect(lines[0]).toBe("installing bakers 0.0.0-dev");
   expect(lines.at(-1)).toEndWith("(bakers 0.0.0-dev)");
   expect(done.written).toContain(join(home, "layouts", "bakers.json"));
@@ -208,6 +219,154 @@ test("install copies the mods, writes the bakers layout and merges keys; --dry-r
   expect(
     await readFile(join(home, "mods", "bakers", "shell", "view", "tabs.js"), "utf8"),
   ).toContain("bakers tab bar");
-  const again = await install({ home, dryRun: false, log: () => {} });
+  const again = await install({ home, herdr: fakeHerdr().run, dryRun: false, log: () => {} });
   expect(again.written.filter((p: string) => !p.includes("/mods/"))).toEqual([]);
+});
+
+type Call = { args: string[]; detach: boolean };
+/** A recording herdr-app: `status` answers 0 for the first `runningFor` calls, then 1. */
+function fakeHerdr(runningFor = 0, statusOut = "") {
+  const calls: Call[] = [];
+  let statuses = 0;
+  const run = async (args: string[], opts: { detach?: boolean } = {}) => {
+    calls.push({ args, detach: !!opts.detach });
+    if (args[0] === "status") {
+      statuses++;
+      if (statusOut) return { code: 1, out: statusOut };
+      return statuses <= runningFor
+        ? { code: 0, out: "window: bakers" }
+        : { code: 1, out: "herdr-app: no Herdr window at x.sock: No such file or directory" };
+    }
+    return { code: 0, out: "" };
+  };
+  return { run, calls };
+}
+
+async function freshHome() {
+  home = await mkdtemp(join(tmpdir(), "herdr-home-"));
+  await mkdir(join(home, "layouts"), { recursive: true });
+  await writeFile(join(home, "layouts", "main.json"), JSON.stringify(main));
+  return home;
+}
+
+async function files(dir: string, rel = ""): Promise<string[]> {
+  const out: string[] = [];
+  for (const e of await readdir(join(dir, rel), { withFileTypes: true })) {
+    const r = rel ? `${rel}/${e.name}` : e.name;
+    if (e.isDirectory()) out.push(...(await files(dir, r)));
+    else out.push(r);
+  }
+  return out.sort();
+}
+
+const exists = (p: string) =>
+  stat(p).then(
+    () => true,
+    () => false,
+  );
+
+test("install removes stale mod files and keeps the files Herdr generates", async () => {
+  await freshHome();
+  const mod = join(home, "mods", "bakers");
+  await mkdir(join(mod, "shell", "view"), { recursive: true });
+  await mkdir(join(mod, "ticket", "controller"), { recursive: true });
+  await mkdir(join(mod, "ui"), { recursive: true });
+  await writeFile(join(mod, "shell", "view", "sidebar.js"), "// stale\n");
+  await writeFile(join(mod, "ticket", "controller", "x.js"), "// stale\n");
+  await writeFile(join(mod, "gpui-kit.d.ts"), "// generated\n");
+  await writeFile(join(mod, "ui", "gpui-kit.d.ts"), "// generated\n");
+  await writeFile(join(mod, "jsconfig.json"), "{}\n");
+
+  const lines: string[] = [];
+  const dry = await install({
+    home,
+    herdr: fakeHerdr().run,
+    dryRun: true,
+    log: (l) => lines.push(l),
+  });
+  expect(dry.written).toEqual([]);
+  expect(lines).toContain("would remove mods/bakers/shell/view/sidebar.js");
+  expect(await exists(join(mod, "shell", "view", "sidebar.js"))).toBe(true);
+
+  await install({ home, herdr: fakeHerdr().run, log: () => {} });
+  expect(await exists(join(mod, "shell", "view", "sidebar.js"))).toBe(false);
+  expect(await exists(join(mod, "ticket", "controller"))).toBe(false);
+  const repo = await files(fileURLToPath(new URL("../mods/bakers", import.meta.url)));
+  const generated = ["gpui-kit.d.ts", "jsconfig.json", "ui/gpui-kit.d.ts"];
+  expect(await files(mod)).toEqual([...new Set([...repo, ...generated])].sort());
+});
+
+test("install into a running Herdr quits it, installs, then starts it again", async () => {
+  await freshHome();
+  const herdr = fakeHerdr(2);
+  const lines: string[] = [];
+  let layoutAtStart: string | null = null;
+  const run = async (args: string[], opts: { detach?: boolean } = {}) => {
+    if (opts.detach)
+      layoutAtStart = await readFile(join(home, "layouts", "bakers.json"), "utf8").catch(
+        () => null,
+      );
+    return herdr.run(args, opts);
+  };
+  await install({ home, herdr: run, pollMs: 1, platform: "darwin", log: (l) => lines.push(l) });
+  expect(herdr.calls).toEqual([
+    { args: ["status"], detach: false },
+    { args: ["do", "app.quit"], detach: false },
+    { args: ["status"], detach: false },
+    { args: ["status"], detach: false },
+    { args: [], detach: true },
+  ]);
+  expect(layoutAtStart).not.toBeNull();
+  expect(lines).toContain("Herdr is running: quitting it to install (terminals keep running)");
+  expect(lines).toContain("started Herdr again");
+});
+
+test("on Linux a running Herdr is quit with window.close", async () => {
+  await freshHome();
+  const herdr = fakeHerdr(1);
+  await install({ home, herdr: herdr.run, pollMs: 1, platform: "linux", log: () => {} });
+  expect(herdr.calls[1]).toEqual({ args: ["do", "window.close"], detach: false });
+});
+
+test("a Herdr that does not quit stops the install before anything is written", async () => {
+  await freshHome();
+  const herdr = fakeHerdr(1000);
+  await expect(
+    install({ home, herdr: herdr.run, pollMs: 1, timeoutMs: 20, log: () => {} }),
+  ).rejects.toThrow("Herdr did not quit; quit it and run again");
+  expect(await exists(join(home, "mods"))).toBe(false);
+  expect(await exists(join(home, "layouts", "bakers.json"))).toBe(false);
+});
+
+test("an install that cannot reach Herdr stops before anything is written", async () => {
+  await freshHome();
+  const out = "herdr-app: no Herdr window at x.sock: Operation not permitted (os error 1)";
+  await expect(install({ home, herdr: fakeHerdr(0, out).run, log: () => {} })).rejects.toThrow(
+    `cannot reach Herdr (${out}): run the installer outside a sandbox`,
+  );
+  expect(await exists(join(home, "mods"))).toBe(false);
+  expect(await exists(join(home, "layouts", "bakers.json"))).toBe(false);
+});
+
+test("with Herdr not running the installer only asks for its status", async () => {
+  await freshHome();
+  const herdr = fakeHerdr(0);
+  const lines: string[] = [];
+  await install({ home, herdr: herdr.run, log: (l) => lines.push(l) });
+  expect(herdr.calls).toEqual([{ args: ["status"], detach: false }]);
+  expect(await exists(join(home, "mods", "bakers", "main.js"))).toBe(true);
+  expect(await exists(join(home, "layouts", "bakers.json"))).toBe(true);
+  expect(await exists(join(home, "keys.json"))).toBe(true);
+  expect(lines.some((l) => l.includes("Herdr"))).toBe(false);
+});
+
+test("a dry run into a running Herdr neither quits nor starts it and writes nothing", async () => {
+  await freshHome();
+  const herdr = fakeHerdr(5);
+  const lines: string[] = [];
+  const dry = await install({ home, herdr: herdr.run, dryRun: true, log: (l) => lines.push(l) });
+  expect(herdr.calls).toEqual([{ args: ["status"], detach: false }]);
+  expect(dry.written).toEqual([]);
+  expect(lines).toContain("would quit Herdr, install and start it again");
+  expect(await exists(join(home, "mods"))).toBe(false);
 });

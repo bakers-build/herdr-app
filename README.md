@@ -35,9 +35,11 @@ herdr-app do layout.switch --name bakers
 
 The first line it prints is `installing bakers <version>`.
 
-**Update.** Download the newer ZIP and run its installer the same way. It copies the new mod files
-over the installed ones and rewrites `layouts/bakers.json`; your keys are kept. Files that a newer
-release dropped stay behind; for a clean copy, delete `mods/bakers` in the Herdr home first.
+**Update.** Download the newer ZIP and run its installer the same way. It replaces the installed
+mod files, removes the ones a newer release dropped and rewrites `layouts/bakers.json`; your keys
+are kept. If Herdr is open, the installer quits it first and starts it again at the end, and says
+so; your terminals keep running. An open window would otherwise write its old layout back and lose
+the project while the mod reloads.
 
 **Check the version.** The installed version is the `version` in
 `~/.config/herdr-app/mods/bakers/mod.json` (`$HERDR_APP_HOME/mods/bakers/mod.json`). A copy
@@ -54,9 +56,11 @@ bun run install:herdr            # --dry-run shows what it would write; --from <
 herdr-app do layout.switch --name bakers
 ```
 
-The installer copies the mod into `~/.config/herdr-app/mods/` (`$HERDR_APP_HOME` honored),
+The installer syncs the mod into `~/.config/herdr-app/mods/` (`$HERDR_APP_HOME` honored),
 writes `layouts/bakers.json` from your `main` layout and adds the keys below to `keys.json`.
-It never overwrites a key you already use; it prints the ones it kept.
+It never overwrites a key you already use; it prints the ones it kept. An open Herdr is quit
+and started again, as under *Update*. Run it outside a sandbox: if it cannot reach Herdr's
+socket, it stops before writing anything.
 
 ## Keys
 
