@@ -31,6 +31,21 @@ test("e2eEnv keeps every home under the temp directory", () => {
   expect(env.DISPLAY).toBe(":99");
 });
 
+test("e2eEnv points the XDG directories under the temp directory, not the developer's", () => {
+  const env = e2eEnv(
+    { XDG_RUNTIME_DIR: "/run/user/1000", XDG_CONFIG_HOME: "/home/dev/.config", PATH: "/bin" },
+    "/tmp/he2e-x",
+  );
+  for (const k of [
+    "XDG_RUNTIME_DIR",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "XDG_STATE_HOME",
+    "XDG_CACHE_HOME",
+  ])
+    expect(env[k]).toStartWith("/tmp/he2e-x/");
+});
+
 test("e2eEnv drops the developer's own bakers and dropsh selection", () => {
   const env = e2eEnv(
     { BAKERS_CONFIG: "/x.js", DROPSH_CONFIG: "/y.js", DROPSH_CONNECTION: "prod", PATH: "/bin" },

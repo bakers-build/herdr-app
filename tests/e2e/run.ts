@@ -115,6 +115,7 @@ if (import.meta.main) {
   const env = e2eEnv(process.env, tmp);
   for (const dir of [env.HOME, env.HERDR_APP_HOME, env.BAKERS_HOME])
     mkdirSync(dir, { recursive: true });
+  mkdirSync(env.XDG_RUNTIME_DIR, { recursive: true, mode: 0o700 });
   let server: Server | null = null;
   let app: ReturnType<typeof Bun.spawn> | null = null;
   let bin = "";

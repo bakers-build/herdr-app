@@ -11,16 +11,23 @@ type Env = Record<string, string | undefined>;
 const DROPPED = /^(BAKERS_CONFIG|BAKERS_CONNECTION|BAKERS_HOME|DROPSH_.*)$/;
 
 /**
- * The environment for Herdr and the bakers CLI: every home under `tmp` (HOME isolates
+ * The environment for Herdr and the bakers CLI: every home under `tmp` (HOME and XDG_* isolate
  * herdr-core and the CLI's session store, ~/.config/dropsh), the rest of `base` kept (PATH,
  * DISPLAY from xvfb-run).
  */
 export function e2eEnv(base: Env, tmp: string): Record<string, string> {
   const env: Record<string, string> = {};
   for (const [k, v] of Object.entries(base)) if (v !== undefined && !DROPPED.test(k)) env[k] = v;
+  const home = join(tmp, "home");
   return {
     ...env,
-    HOME: join(tmp, "home"),
+    HOME: home,
+    // herdr-core and the CLI may follow XDG over HOME: never the developer's directories.
+    XDG_CONFIG_HOME: join(home, ".config"),
+    XDG_DATA_HOME: join(home, ".local", "share"),
+    XDG_STATE_HOME: join(home, ".local", "state"),
+    XDG_CACHE_HOME: join(home, ".cache"),
+    XDG_RUNTIME_DIR: join(tmp, "run"),
     HERDR_APP_HOME: join(tmp, "herdr"),
     BAKERS_HOME: join(tmp, "bakers"),
     BAKERS_CONNECTION: "e2e",
