@@ -7,7 +7,9 @@ import {
   buildUrl,
   checkMods,
   checksumOk,
+  coreUrl,
   download,
+  downloadCore,
   linuxTarget,
 } from "../scripts/check/herdr-check";
 
@@ -37,6 +39,58 @@ test("a download counts only with the pinned checksum", () => {
 test("both Linux builds of the pinned Herdr have a checksum", () => {
   for (const t of ["linux-x86_64", "linux-aarch64"])
     expect(pin.builds[t]).toMatch(/^[0-9a-f]{64}$/);
+});
+
+test("herdr-core is pinned with a checksum for both Linux builds", () => {
+  expect(pin.core).toBe("0.1.22");
+  for (const t of ["linux-x86_64", "linux-aarch64"])
+    expect(pin.coreBuilds[t]).toMatch(/^[0-9a-f]{64}$/);
+});
+
+test("herdr-core comes from Herdr's releases for the pinned version", () => {
+  expect(coreUrl("0.1.22", "linux-x86_64")).toBe(
+    "https://releases.herdr.dev/core/0.1.22/herdr-core-linux-x86_64.tar.gz",
+  );
+});
+
+/** A herdr-core tarball like Herdr's: the binary at the top, printing its arguments. */
+function coreTarball(): Uint8Array {
+  const dir = mkdtempSync(join(tmpdir(), "herdr-core-tar-"));
+  writeFileSync(join(dir, "herdr-core"), '#!/bin/sh\necho core "$@"\n');
+  chmodSync(join(dir, "herdr-core"), 0o755);
+  Bun.spawnSync(["tar", "-czf", "core.tar.gz", "herdr-core"], { cwd: dir });
+  return new Uint8Array(readFileSync(join(dir, "core.tar.gz")));
+}
+
+test("downloadCore verifies and unpacks the pinned Linux herdr-core", async () => {
+  const bytes = coreTarball();
+  const asked: string[] = [];
+  const fetch = async (url: string) => {
+    asked.push(url);
+    return new Response(bytes);
+  };
+  const bin = await downloadCore(
+    "0.1.22",
+    { "linux-x86_64": sha(bytes) },
+    { fetch, platform: "linux", arch: "x64" },
+  );
+  expect(asked).toEqual(["https://releases.herdr.dev/core/0.1.22/herdr-core-linux-x86_64.tar.gz"]);
+  expect(bin.endsWith("/herdr-core")).toBe(true);
+  expect(Bun.spawnSync([bin, "version"]).stdout.toString()).toBe("core version\n");
+});
+
+test("downloadCore refuses a wrong checksum or another OS", async () => {
+  const ok = async () => new Response(coreTarball());
+  await expect(
+    downloadCore(
+      "0.1.22",
+      { "linux-x86_64": "0".repeat(64) },
+      { fetch: ok, platform: "linux", arch: "x64" },
+    ),
+  ).rejects.toThrow(/checksum/);
+  await expect(
+    downloadCore("0.1.22", {}, { fetch: ok, platform: "darwin", arch: "arm64" }),
+  ).rejects.toThrow(/herdr-core/);
 });
 
 /** A herdr-app tarball like Herdr's, whose binary prints its arguments. */

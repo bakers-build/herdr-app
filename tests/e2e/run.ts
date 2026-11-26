@@ -4,13 +4,13 @@
 // home in a temp directory, installs the mod as a developer does (scripts/install.ts), switches
 // to the bakers layout and runs tests/e2e/*.e2e.test.ts against the window.
 // Needs Docker, the bakers CLI on PATH and Herdr (HERDR_APP, an installed herdr-app, or on Linux
-// the pinned build). Locally on macOS a real (isolated) Herdr window opens.
+// the pinned build), plus herdr-core (on PATH, beside herdr-app, or on Linux the pinned build). Locally on macOS a real (isolated) Herdr window opens.
 //   bun run test:e2e          (CI job `e2e` runs it under xvfb-run)
 //   KEEP=1 bun run test:e2e   keeps the window, the container and the temp directory
 
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { download } from "../../scripts/check/herdr-check";
+import { download, downloadCore } from "../../scripts/check/herdr-check";
 import { install } from "../../scripts/install";
 import { E2E_SERVER, type Server, startServer } from "../server/bakers-server";
 import { e2eEnv, herdrCli, readShared, tempRoot, waitFor } from "./herdr";
@@ -64,9 +64,21 @@ function signIn(env: Record<string, string>, tmp: string, server: Server) {
     throw new Error(`bakers auth token failed (${token.code}): ${token.err}`);
 }
 
+const pin = () => JSON.parse(readFileSync(join(ROOT, "types/herdr-version.json"), "utf8"));
+
 async function herdrBinary(): Promise<string> {
-  const pin = JSON.parse(readFileSync(join(ROOT, "types/herdr-version.json"), "utf8"));
-  return process.env.HERDR_APP || Bun.which("herdr-app") || (await download(pin.herdr, pin.builds));
+  const p = pin();
+  return process.env.HERDR_APP || Bun.which("herdr-app") || (await download(p.herdr, p.builds));
+}
+
+/** The window needs herdr-core; Herdr's Linux app build lacks it, so fetch the pinned one. */
+async function ensureCore(bin: string, env: Record<string, string>) {
+  const found = coreBinary(bin, env);
+  if (found) return step(`herdr-core: ${found}`);
+  const p = pin();
+  const core = await downloadCore(p.core, p.coreBuilds);
+  env.PATH = `${dirname(core)}:${env.PATH}`;
+  step(`herdr-core ${p.core} (pinned): ${core}`);
 }
 
 /** herdr-core's binary: on PATH or beside herdr-app, as `hc` or `herdr-core`; null when none. */
@@ -117,6 +129,7 @@ if (import.meta.main) {
       JSON.stringify({ "bakers.project": server.project, "bakers.view": "open" }),
     );
     bin = await herdrBinary();
+    await ensureCore(bin, env);
     app = Bun.spawn([bin], {
       env,
       stdout: Bun.file(join(tmp, "herdr.log")),

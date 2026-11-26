@@ -4,5 +4,10 @@
   "builds": {
     "linux-x86_64": "282d2632196b238206cfe66bfb61c0faf299ca1c91843bd076521bbe36571216",
     "linux-aarch64": "efeef4f1759b0e8900f205c2c22b14287a112f874406539b4ea1b3be24b73631"
+  },
+  "core": "0.1.22",
+  "coreBuilds": {
+    "linux-x86_64": "3054ec3992ce80c5715d721caa9dcefa6056721d15dc113f4750afce763ba5df",
+    "linux-aarch64": "98757985245d45f8d73dd85e68b139b7f167c28488bb89edd9834c3f5a5cf4cf"
   }
 }
