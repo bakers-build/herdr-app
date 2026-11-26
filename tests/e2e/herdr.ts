@@ -97,3 +97,20 @@ export function herdrCli(
   }
   return { code: r.exitCode ?? 1, json, text };
 }
+
+/**
+ * The mod's pattern for a ticket tab's name (`<ID> <state>`), read from its source
+ * (mods/bakers/ticket/register.js), so the test opens only tickets the mod names a tab after.
+ */
+export function ticketTabPattern(): RegExp {
+  const src = readFileSync(join(import.meta.dir, "../../mods/bakers/ticket/register.js"), "utf8");
+  const m = /define\("tab", "ticket",[\s\S]*?match: \/(.+)\/,/.exec(src);
+  if (!m) throw new Error("no ticket tab pattern in mods/bakers/ticket/register.js");
+  return new RegExp(m[1]);
+}
+
+/** `prefer` when the mod keys its tab, else the first of `ids` it keys; null when none. */
+export function keyedTicket(ids: string[], prefer: string, pattern: RegExp): string | null {
+  const keyed = (id: string) => pattern.test(`${id} x`);
+  return keyed(prefer) ? prefer : (ids.find(keyed) ?? null);
+}

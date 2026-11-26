@@ -3,7 +3,16 @@
 // a plain `bun test` skips it. Observes no pixels: `herdr-app ls`/`status` and the window's
 // shared.json, which Herdr writes from the mod's shared state.
 import { describe, expect, test } from "bun:test";
-import { herdrCli, layoutName, readShared, statusErrors, tabNames, waitFor } from "./herdr";
+import {
+  herdrCli,
+  keyedTicket,
+  layoutName,
+  readShared,
+  statusErrors,
+  tabNames,
+  ticketTabPattern,
+  waitFor,
+} from "./herdr";
 
 const HOME = process.env.BAKERS_E2E_HOME ?? "";
 const URL = process.env.BAKERS_E2E_URL ?? "";
@@ -93,11 +102,15 @@ describe.skipIf(!HOME)("the bakers mod in the real Herdr window", () => {
 
   test('opens a ticket as "<ID> <state>"', async () => {
     expect(selected).not.toBe("");
-    const want = `${selected} ${open.get(selected)}`;
+    // The mod names a tab "<ID> <state>" only for identifiers its tab pattern keys (PROJECT-N);
+    // the seed also has others (GL-E2E-DERIVE), whose tab it leaves as opened.
+    const id = keyedTicket([...open.keys()], selected, ticketTabPattern());
+    if (!id) throw new Error(`no open seed ticket the mod names a tab after: ${[...open.keys()]}`);
+    const want = `${id} ${open.get(id)}`;
     run("tab.new", {
       mod: "bakers",
-      props: { view: "ticket.view", ticket: selected },
-      name: `${selected} opening`,
+      props: { view: "ticket.view", ticket: id },
+      name: `${id} opening`,
     });
     await waitFor(
       async () => (tabNames(herdr("ls").json).includes(want) ? true : null),
