@@ -7,13 +7,11 @@ import { join } from "node:path";
 import {
   e2eEnv,
   herdrCli,
-  keyedTicket,
   layoutName,
   readShared,
   statusErrors,
   tabNames,
   tempRoot,
-  ticketTabPattern,
   waitFor,
 } from "./e2e/herdr";
 
@@ -124,18 +122,4 @@ test("herdrCli runs the binary and parses its JSON answer", () => {
 test("bun run test:e2e starts the E2E runner", () => {
   const pkg = JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf8"));
   expect(pkg.scripts["test:e2e"]).toBe("bun tests/e2e/run.ts");
-});
-
-test("ticketTabPattern is the mod's own pattern for a ticket tab", () => {
-  const p = ticketTabPattern();
-  expect(p.test("GLE2E-5 open")).toBe(true);
-  expect(p.test("GL-E2E-DERIVE open")).toBe(false);
-  expect(p.test("Tickets")).toBe(false);
-});
-
-test("keyedTicket picks a ticket the mod can name a tab after, the preferred one first", () => {
-  const p = ticketTabPattern();
-  expect(keyedTicket(["GL-E2E-DERIVE", "GLE2E-5", "GLE2E-6"], "GLE2E-6", p)).toBe("GLE2E-6");
-  expect(keyedTicket(["GL-E2E-DERIVE", "GLE2E-5"], "GL-E2E-DERIVE", p)).toBe("GLE2E-5");
-  expect(keyedTicket(["GL-E2E-DERIVE"], "GL-E2E-DERIVE", p)).toBeNull();
 });

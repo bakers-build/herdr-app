@@ -3,16 +3,7 @@
 // a plain `bun test` skips it. Observes no pixels: `herdr-app ls`/`status` and the window's
 // shared.json, which Herdr writes from the mod's shared state.
 import { describe, expect, test } from "bun:test";
-import {
-  herdrCli,
-  keyedTicket,
-  layoutName,
-  readShared,
-  statusErrors,
-  tabNames,
-  ticketTabPattern,
-  waitFor,
-} from "./herdr";
+import { herdrCli, layoutName, readShared, statusErrors, tabNames, waitFor } from "./herdr";
 
 const HOME = process.env.BAKERS_E2E_HOME ?? "";
 const URL = process.env.BAKERS_E2E_URL ?? "";
@@ -22,8 +13,8 @@ const BIN = process.env.HERDR_APP ?? "herdr-app";
 const env = process.env;
 
 const herdr = (...args: string[]) => herdrCli(BIN, env, ...args);
-function run(command: string, args: object) {
-  const r = herdr("do", command, JSON.stringify(args));
+function run(command: string, args?: object) {
+  const r = herdr("do", command, ...(args ? [JSON.stringify(args)] : []));
   if (r.code !== 0) throw new Error(`herdr-app do ${command}: ${r.text}`);
   return r.json;
 }
@@ -100,22 +91,26 @@ describe.skipIf(!HOME)("the bakers mod in the real Herdr window", () => {
     );
   });
 
-  test('opens a ticket as "<ID> <state>"', async () => {
+  test("opens a ticket in the right panel with its server state", async () => {
     expect(selected).not.toBe("");
-    // The mod names a tab "<ID> <state>" only for identifiers its tab pattern keys (PROJECT-N);
-    // the seed also has others (GL-E2E-DERIVE), whose tab it leaves as opened.
-    const id = keyedTicket([...open.keys()], selected, ticketTabPattern());
-    if (!id) throw new Error(`no open seed ticket the mod names a tab after: ${[...open.keys()]}`);
-    const want = `${id} ${open.get(id)}`;
-    run("tab.new", {
-      mod: "bakers",
-      props: { view: "ticket.view", ticket: id },
-      name: `${id} opening`,
-    });
+    // Another open ticket than the list's first row, so the panel has to follow the open.
+    const id = [...open.keys()].find((k) => k !== selected) ?? selected;
+    const want = { id, state: open.get(id) };
+    // As a toast click does: the mod's own command, which selects the ticket and shows the panel.
+    run(`bakers.open:${id}`);
     await waitFor(
-      async () => (tabNames(herdr("ls").json).includes(want) ? true : null),
-      90_000,
-      `the tab "${want}" in herdr-app ls`,
+      async () => (readShared(HOME)["bakers.selected"] === id ? true : null),
+      30_000,
+      `bakers.selected in shared.json to be ${id}`,
+    );
+    // The panel publishes the ticket it draws, read in full from the server: bakers.panelTicket.
+    await waitFor(
+      async () => {
+        const shown: any = readShared(HOME)["bakers.panelTicket"];
+        return shown?.id === want.id && shown?.state === want.state ? true : null;
+      },
+      60_000,
+      `bakers.panelTicket in shared.json to be ${JSON.stringify(want)}`,
     );
     expect(statusErrors(herdr("status").json)).toEqual([]);
   });
