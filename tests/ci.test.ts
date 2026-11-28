@@ -105,3 +105,18 @@ test("the herdr-check job loads the mod in the pinned Herdr on Linux", () => {
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   expect(pkg.scripts["herdr-check"]).toBe("bun scripts/check/herdr-check.ts");
 });
+
+test("the e2e job runs the real app against the seeded server", () => {
+  const job = ci.jobs.e2e;
+  expect(job).toBeDefined();
+  expect(job["runs-on"]).toMatch(/^ubuntu-/);
+  expect(job["timeout-minutes"]).toBeLessThanOrEqual(25);
+  expect(job.permissions ?? ci.permissions).toEqual({ contents: "read" });
+  const all = runs("e2e");
+  expect(all).toContain("npm install -g @bakers-build/bakers@0.11.0");
+  expect(all).toContain("xvfb-run -a bun run test:e2e");
+  // The same runtime libraries as herdr-check.
+  const libs = (j: string) => runs(j).find((r) => r.includes("apt-get install"));
+  expect(libs("e2e")).toBe(libs("herdr-check"));
+  expect(all.some((r) => r.includes("bun install --frozen-lockfile"))).toBe(true);
+});

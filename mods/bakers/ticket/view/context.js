@@ -4,10 +4,11 @@
 // header, title, Needs-you card, Agent and conductor, Properties, Description, Acceptance and
 // Summary (each with Edit..., a popup: ticket/form/section), Comments, Activity and Runs, all in
 // the one scroll; nothing is pinned below it. The document part and its keys (A, E, G, R) are
-// view/document.js. The panel never takes the focus; its keys work once clicked into.
+// view/document.js. The panel never takes the focus; its keys work once clicked into. It publishes
+// the ticket it shows as shared bakers.panelTicket ({ id, state }).
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { exec, shared, window } from "herdr";
+import { exec, setShared, shared, window } from "herdr";
 import { perform } from "../../core/actions.js";
 import { openRoute } from "../../core/router.js";
 import { classify } from "../../core/errors.js";
@@ -52,6 +53,8 @@ export default class Panel {
   activity = null;
   activityServed = true;
   runsOpen = false;
+  /** @type {string | null} the ticket and state last published as bakers.panelTicket */
+  shown = null;
   /** @type {import("gpui-kit").FocusHandle} init sets it; never focused from here */
   handle = /** @type {any} */ (null);
 
@@ -405,6 +408,16 @@ export default class Panel {
     return [activity, runs];
   }
 
+  /** Publishes the ticket the panel shows, read in full, as shared bakers.panelTicket ({ id, state }):
+   *  what the window shows without pixels (the E2E test reads it from shared.json). Only on a
+   *  change, since a shared write redraws every copy. @param {string} id @param {string} state */
+  publish(id, state) {
+    const key = `${id}|${state}`;
+    if (key === this.shown) return;
+    this.shown = key;
+    setShared("bakers.panelTicket", { id, state });
+  }
+
   render() {
     const t = tokens();
     const root = v_flex()
@@ -458,6 +471,7 @@ export default class Panel {
               .child(loading("Loading...")),
           ),
       );
+    this.publish(page.id, page.state);
     const card = doc.card(page.needs);
     return root.child(
       v_flex()

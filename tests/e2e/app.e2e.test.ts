@@ -1,0 +1,117 @@
+// The bakers mod in the real Herdr window against the seeded bakers server, nothing stubbed.
+// Runs only from tests/e2e/run.ts (bun run test:e2e), which starts both and sets BAKERS_E2E_*;
+// a plain `bun test` skips it. Observes no pixels: `herdr-app ls`/`status` and the window's
+// shared.json, which Herdr writes from the mod's shared state.
+import { describe, expect, test } from "bun:test";
+import { herdrCli, layoutName, readShared, statusErrors, tabNames, waitFor } from "./herdr";
+
+const HOME = process.env.BAKERS_E2E_HOME ?? "";
+const URL = process.env.BAKERS_E2E_URL ?? "";
+const KEY = process.env.BAKERS_E2E_KEY ?? "";
+const PROJECT = process.env.BAKERS_E2E_PROJECT ?? "";
+const BIN = process.env.HERDR_APP ?? "herdr-app";
+const env = process.env;
+
+const herdr = (...args: string[]) => herdrCli(BIN, env, ...args);
+function run(command: string, args?: object) {
+  const r = herdr("do", command, ...(args ? [JSON.stringify(args)] : []));
+  if (r.code !== 0) throw new Error(`herdr-app do ${command}: ${r.text}`);
+  return r.json;
+}
+
+/** The seeded project's open tickets as the server returns them: identifier → state. */
+async function openTickets(): Promise<Map<string, string>> {
+  const sep = KEY.indexOf(":");
+  const t = await fetch(`${URL}/oauth/token`, {
+    method: "POST",
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: KEY.slice(0, sep),
+      client_secret: KEY.slice(sep + 1),
+    }),
+  });
+  if (!t.ok) throw new Error(`token: HTTP ${t.status}`);
+  const { access_token } = (await t.json()) as any;
+  const q = new URLSearchParams({
+    "filter[p][condition][path]": "project_id.id",
+    "filter[p][condition][value]": PROJECT,
+    "filter[c][condition][path]": "closed",
+    "filter[c][condition][value]": "0",
+    "page[limit]": "50",
+  });
+  const tickets = new Map<string, string>();
+  let next: string | null = `${URL}/jsonapi/bb_ticket/bb_ticket?${q}`;
+  while (next) {
+    const r = await fetch(next, {
+      headers: { Authorization: `Bearer ${access_token}`, Accept: "application/vnd.api+json" },
+    });
+    if (!r.ok) throw new Error(`tickets: HTTP ${r.status}`);
+    const doc: any = await r.json();
+    for (const d of doc.data) tickets.set(d.attributes.identifier, d.attributes.state);
+    next = doc.links?.next?.href ?? null;
+  }
+  return tickets;
+}
+
+describe.skipIf(!HOME)("the bakers mod in the real Herdr window", () => {
+  let open = new Map<string, string>();
+  let selected = "";
+
+  test("opens the Tickets tab in the bakers layout", async () => {
+    run("tab.new", { mod: "bakers", props: { view: "ticket.list" }, name: "Tickets" });
+    await waitFor(
+      async () => (tabNames(herdr("ls").json).includes("Tickets") ? true : null),
+      30_000,
+      "the Tickets tab in herdr-app ls",
+    );
+    const status = herdr("status").json;
+    expect(layoutName(status)).toBe("bakers");
+    expect(statusErrors(status)).toEqual([]);
+  });
+
+  test("lists the seeded project's open tickets", async () => {
+    open = await openTickets();
+    expect(open.size).toBeGreaterThan(0);
+    selected = await waitFor(
+      async () => {
+        const id = readShared(HOME)["bakers.selected"];
+        return typeof id === "string" && open.has(id) ? id : null;
+      },
+      60_000,
+      `bakers.selected in shared.json to be one of ${[...open.keys()].join(", ")}`,
+    );
+    // The window task publishes it after the same load, possibly a moment later.
+    await waitFor(
+      async () => {
+        const needs: any = readShared(HOME)["bakers.needs"];
+        return typeof needs?.updated === "number" ? true : null;
+      },
+      70_000,
+      "bakers.needs.updated in shared.json",
+    );
+  });
+
+  test("opens a ticket in the right panel with its server state", async () => {
+    expect(selected).not.toBe("");
+    // Another open ticket than the list's first row, so the panel has to follow the open.
+    const id = [...open.keys()].find((k) => k !== selected) ?? selected;
+    const want = { id, state: open.get(id) };
+    // As a toast click does: the mod's own command, which selects the ticket and shows the panel.
+    run(`bakers.open:${id}`);
+    await waitFor(
+      async () => (readShared(HOME)["bakers.selected"] === id ? true : null),
+      30_000,
+      `bakers.selected in shared.json to be ${id}`,
+    );
+    // The panel publishes the ticket it draws, read in full from the server: bakers.panelTicket.
+    await waitFor(
+      async () => {
+        const shown: any = readShared(HOME)["bakers.panelTicket"];
+        return shown?.id === want.id && shown?.state === want.state ? true : null;
+      },
+      60_000,
+      `bakers.panelTicket in shared.json to be ${JSON.stringify(want)}`,
+    );
+    expect(statusErrors(herdr("status").json)).toEqual([]);
+  });
+});

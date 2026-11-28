@@ -375,8 +375,9 @@ updates.
   use, never at module top level (Herdr's `AGENTS.md`).
 - **Shared between copies (`setShared`):** identifiers, counts and flags only
   (`bakers.project`, `bakers.workspace` (the workspace the picker shows), `bakers.filter`,
-  `bakers.selected`, `bakers.needs`, `bakers.runHidden`, `bakers.runFocus`, and core's
-  `bakers.preview` for keyed tabs). No ticket content.
+  `bakers.selected`, `bakers.needs`, `bakers.runHidden`, `bakers.runFocus`, `bakers.panelTicket` (the
+  identifier and state of the ticket the panel shows; the E2E test reads it), and core's
+  `bakers.preview` for keyed tabs). No other ticket content.
 - **Per copy:** a view's own state, such as the selection, the page, a form's values and
   the open comment folds.
 - **Who loads:** module state is shared by every copy, but a copy's tasks end with it.

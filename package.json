@@ -16,6 +16,7 @@
     "check": "bun run lint && bun run format:check && bun run typecheck && bun run hygiene && bun run herdr-types && bun run test",
     "lint:ci": "docker run --rm -v \"$PWD:/repo\" -w /repo rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 -no-color",
     "test:contract": "bun tests/contract/run.ts",
+    "test:e2e": "bun tests/e2e/run.ts",
     "hygiene": "bun scripts/check/hygiene.ts",
     "herdr-types": "bun scripts/check/herdr-types.ts",
     "herdr-check": "bun scripts/check/herdr-check.ts",
