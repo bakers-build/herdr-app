@@ -419,3 +419,30 @@ test("a click into the panel focuses it, so its keys reach it", async () => {
   root.calls["on_mouse_down:left"][1]({}, { stop_propagation() {} });
   expect(copy.inner.handle.focused).toBe(true);
 });
+
+test("the panel publishes the ticket it shows (bakers.panelTicket), once per ticket and state", async () => {
+  const copy = await ticketPanel();
+  copy.render();
+  expect(env.shared["bakers.panelTicket"]).toEqual({ id: "SHOP-41", state: "working" });
+  const writes = () =>
+    env.calls.filter((c) => c.fn === "setShared" && c.args[0] === "bakers.panelTicket").length;
+  expect(writes()).toBe(1);
+  env.shared["bakers.selected"] = "SHOP-56";
+  fireTimers();
+  await flush();
+  copy.render();
+  await flush();
+  const head = texts(find(copy.render(), "doc-header"));
+  expect(env.shared["bakers.panelTicket"]).toEqual({ id: "SHOP-56", state: head[1] });
+  expect(writes()).toBe(2);
+});
+
+test("the panel publishes nothing while no ticket is selected", async () => {
+  const copy = await ticketPanel();
+  env.shared["bakers.selected"] = null;
+  env.shared["bakers.panelTicket"] = undefined;
+  fireTimers();
+  await flush();
+  copy.render();
+  expect(env.shared["bakers.panelTicket"]).toBeUndefined();
+});
